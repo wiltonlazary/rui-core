@@ -1,7 +1,7 @@
 # rui-core
 
-Read the workspace layer first: `../../../AGENTS.md` and
-`../../../.ai/config/` (stability.md first). Then [README.md](README.md)
+Read the workspace layer first: [`../../../AGENTS.md`](https://github.com/wiltonlazary/rui/blob/main/AGENTS.md) and
+[`../../../.ai/config/`](https://github.com/wiltonlazary/rui/tree/main/.ai/config) (stability.md first). Then [README.md](README.md)
 and [TODO.md](TODO.md).
 
 rui-core is rui's complete set of components and extensions; rui-show
