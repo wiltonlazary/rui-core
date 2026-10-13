@@ -1,0 +1,245 @@
+{
+ "digests": [
+  {
+   "text": "",
+   "level": "L",
+   "version": 1,
+   "mask": 0,
+   "modules": "7530ca2a66cb158a2e93e6f30fb73194",
+   "codewords": "0ef3537a53a352ececd883ca32cd6438",
+   "masks": [
+    "7530ca2a66cb158a2e93e6f30fb73194",
+    "a80e9bd10e84f0639a1e6e225204bfd5",
+    "a010ccd6a3985ad2cb03124393a2e8f5",
+    "b7d57871a5c265f81e7ad5e461f0d8d9",
+    "67d18066f4820cebfee7d41f7e7e79cc",
+    "37d0c7812332959213aa7af6749592d4",
+    "7c1ccd9a3cedb8e758e6e018cae16abc",
+    "308b489df089010767ed5eb19ac55b5b"
+   ]
+  },
+  {
+   "text": "a",
+   "level": "M",
+   "version": 1,
+   "mask": 5,
+   "modules": "20c5121183b26a4b1c7b088fc94a60ac",
+   "codewords": "e93acae221715bd20ec4323be2f35c10",
+   "masks": [
+    "5c5269362e40abd2e687c68d5192362a",
+    "f1bc2fce5eee3555a0d0c859504111e1",
+    "3a9a45330095ac7884228e7014314e9d",
+    "e5b9c4d8219983018b03b0466000696e",
+    "db053e7b200a9e4a7a0f62d3f2427f75",
+    "20c5121183b26a4b1c7b088fc94a60ac",
+    "161b766b0fae8f4b28f154b1f332dc90",
+    "a010332702b9f7c675547e60c72c7ceb"
+   ]
+  },
+  {
+   "text": "HELLO WORLD",
+   "level": "Q",
+   "version": 1,
+   "mask": 2,
+   "modules": "3750cdb2a3cd6d3a67cd3f667a77a438",
+   "codewords": "0ec8f57a7b4f4f01f751f6b08a8225ea",
+   "masks": [
+    "42957e797d26df0860e744d87ef4065c",
+    "fb70523ab0141afe12da2b2a63b9c39a",
+    "3750cdb2a3cd6d3a67cd3f667a77a438",
+    "ad2d53b44c94019c4eb63072ec233457",
+    "ff569ffc52f059ed013094258df86a28",
+    "15f1108e21c1507bf139552fa411bd08",
+    "54f4acc608e73c5ff73734d3645fb05e",
+    "b6b82c0af28a143c2afc679980cc1306"
+   ]
+  },
+  {
+   "text": "https://example.dev",
+   "level": "Q",
+   "version": 2,
+   "mask": 0,
+   "modules": "64972926244e36638a32908f09d3e779",
+   "codewords": "61704412338874c8177a7e9494a973be",
+   "masks": [
+    "64972926244e36638a32908f09d3e779",
+    "70093f6937421b13a89e02efa8ca58bd",
+    "cd24e60779be8e79c78e2816eab04e7b",
+    "58d4e376b4f7936f287b82c94cd1c241",
+    "d617c3f088fff808a288bbf38d7d1346",
+    "607f4223c7852fdb7e89edf2f0bfa787",
+    "02ad89661d41d1f40c419f16f978d12c",
+    "0678eebff8bfa1de4ccfc119fed37290"
+   ]
+  },
+  {
+   "text": "rui draws this on every renderer",
+   "level": "H",
+   "version": 4,
+   "mask": 2,
+   "modules": "d0329ff20d73a743dad881f48637dfaa",
+   "codewords": "b6c60be02a068cf39ca5128a4e6dfd90",
+   "masks": [
+    "c44bc60a9261593c957604b68870675d",
+    "eb14b4d0527f4c96ea608ca0a3b0f63f",
+    "d0329ff20d73a743dad881f48637dfaa",
+    "d1aaad36f23d8171150cb433d6557264",
+    "22cd4b92887ab03b9192ab6ed9cfb15d",
+    "0aa82bcac63df513b1f9b7eab1671573",
+    "df44c4769255697512814f4be193c954",
+    "78be32391ef93aae7bd14dd3cb3ba9a4"
+   ]
+  },
+  {
+   "text": "é ü ñ 漢字 🙂",
+   "level": "M",
+   "version": 2,
+   "mask": 6,
+   "modules": "9762fdfe9c98be04e59e2f7e973dc74d",
+   "codewords": "51381e67c7c55c806b0b86706ae3803b",
+   "masks": [
+    "156f20b7ee9cb40b1ceb88c58957feeb",
+    "8868636fc0cecb8c7346b1f81b7b3ab8",
+    "01c446ce907747c5120d3d12232dd755",
+    "c1c265a0ff4b500f4babcfd9cb5079d4",
+    "3fe38c7ad23fa4dc753a25d0a8cedd1e",
+    "3776195a7887253584681f2a2953a283",
+    "9762fdfe9c98be04e59e2f7e973dc74d",
+    "def56721796df70c6cfe8ba30c36c075"
+   ]
+  },
+  {
+   "text": {
+    "repeat": "0123456789",
+    "times": 12
+   },
+   "level": "L",
+   "version": 6,
+   "mask": 2,
+   "modules": "01c4fbf393ebcd420de7f1e8d092e111",
+   "codewords": "7718dec8a7f64117dae68a29572a8323",
+   "masks": [
+    "4a2c732e026a25f3b2a0a28b7b6af3ee",
+    "c9e70446c85a77e3847aa2e638d960a9",
+    "01c4fbf393ebcd420de7f1e8d092e111",
+    "b7f3a114999ed503ea2a17619941137f",
+    "bda903ae7966503c0ec0328b6014b8ff",
+    "25c757a8b62363585c2710fc75a543e3",
+    "489a493cb3b380811beab2f5bcd30d52",
+    "0c28e0375974172db081520079d0d492"
+   ]
+  },
+  {
+   "text": {
+    "repeat": "x",
+    "times": 200
+   },
+   "level": "M",
+   "version": 10,
+   "mask": 2,
+   "modules": "d83b99da7009c014503f4b3194089e35",
+   "codewords": "70d4cf4d64a1191b4ec34606557ecb86",
+   "masks": [
+    "21207b3d600bf79e6d3ac2354bd92313",
+    "eb1da4a03731b43cffe1c35e46e95f51",
+    "d83b99da7009c014503f4b3194089e35",
+    "a54051edfebaac0049d71b261358e11b",
+    "5301535e5b8e3c20fede2eae518a3f47",
+    "7d374935076e2f7b56dc519784828967",
+    "6d802932e7761ee956bb7fde0d1de049",
+    "7b92a48dd4a18afe9d56036fb718bbb1"
+   ]
+  },
+  {
+   "text": {
+    "repeat": "z",
+    "times": 400
+   },
+   "level": "H",
+   "version": 21,
+   "mask": 1,
+   "modules": "7436f2104f956643702fd9b78bad852b",
+   "codewords": "57355d9887afd85e0fe3f4af62916e3c",
+   "masks": [
+    "6a8eb7c16264ca7b38ad96d3fb170a5e",
+    "7436f2104f956643702fd9b78bad852b",
+    "fea095c40389b51532ef2a0b1989ab38",
+    "a537046cb6466dc1294a8a581769645e",
+    "b3d2fe327ce707a892a33340e4d57b38",
+    "9be4bb46221e16cf3259a25d56b4f210",
+    "13e2bd004e8826b4d80b2138a89519fb",
+    "dc31911d4c655823a040692d388e5878"
+   ]
+  },
+  {
+   "text": {
+    "repeat": "Ω",
+    "times": 300
+   },
+   "level": "Q",
+   "version": 23,
+   "mask": 4,
+   "modules": "501e32f343e0c054034bd37141714411",
+   "codewords": "c59bf245023280c57f296f45e36c82c1",
+   "masks": [
+    "97769bf83c048a0741a1d748961a19c5",
+    "740f2def928a9822096db5972f0f45e5",
+    "95b398ebebb0fa6b194d693e80da90b4",
+    "a946e0a0a7ca51f872c87855dac2a81a",
+    "501e32f343e0c054034bd37141714411",
+    "4eb213eee2af06cf018e1fd230d50f5d",
+    "2883a7873d8827ecab91aa0a62cb8e6a",
+    "905ab1c3d91b882c542d67eb708d47b4"
+   ]
+  },
+  {
+   "text": {
+    "repeat": "y",
+    "times": 2953
+   },
+   "level": "L",
+   "version": 40,
+   "mask": 1,
+   "modules": "6ad7bee7fade646d5f95bb8515a4a72a",
+   "codewords": "e922f7dc6955b3354c1588edbb2ab362",
+   "masks": [
+    "2ea2c361e0ffe940cbc3327204fad92b",
+    "6ad7bee7fade646d5f95bb8515a4a72a",
+    "ad1c42ae45d88608f975b7122906cdc0",
+    "3565210d72f29d67990686f99f915830",
+    "b68045bbfd7c653e079a2265c64aed1f",
+    "0534cb568e6aa77a0fe80dbd68cb312a",
+    "569e1902df6555feb7c602a18aa335a4",
+    "7c9ec5fb18f88cdbb8978f6f8ba01628"
+   ]
+  }
+ ],
+ "full": {
+  "text": "rui",
+  "level": "M",
+  "mask": 2,
+  "rows": [
+   "#######.......#######",
+   "#.....#..#..#.#.....#",
+   "#.###.#.###...#.###.#",
+   "#.###.#.##....#.###.#",
+   "#.###.#.##..#.#.###.#",
+   "#.....#.####..#.....#",
+   "#######.#.#.#.#######",
+   "........#............",
+   "#.#####...##..#####..",
+   "#.###...#..####..####",
+   "....####..#.#.##.###.",
+   ".##.##.....####..##.#",
+   ".##.###..##.#..#.....",
+   "........###.#..#...##",
+   "#######..#.#.#..####.",
+   "#.....#.###....##.###",
+   "#.###.#.##.#.#..#.#..",
+   "#.###.#.##.####..#...",
+   "#.###.#.###.#.##.....",
+   "#.....#..######..#...",
+   "#######.#.#.#..#..##."
+  ]
+ }
+}

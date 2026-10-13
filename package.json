@@ -1,0 +1,98 @@
+{
+  "name": "rui-core",
+  "version": "0.1.0",
+  "description": "rui's components: a complete set of layout, inputs, combobox, buttons, navigation, feedback, overlays, data display and typography, with hooks, forms and extensions (dates, charts, notifications, launcher, carousel, dropzone, modals, snippet, load bar, editor), built on ren-core's portable primitives so each renders the same on ren-dom, ren-skia and ren-three.",
+  "type": "module",
+  "private": true,
+  "license": "UNLICENSED",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=22.15"
+  },
+  "files": [
+    "src",
+    "types",
+    "README.md"
+  ],
+  "types": "./types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "default": "./src/index.js"
+    },
+    "./hooks": {
+      "types": "./types/hooks/index.d.ts",
+      "default": "./src/hooks/index.js"
+    },
+    "./form": {
+      "types": "./types/form/index.d.ts",
+      "default": "./src/form/index.js"
+    },
+    "./dates": {
+      "types": "./types/ext/dates/index.d.ts",
+      "default": "./src/ext/dates/index.js"
+    },
+    "./charts": {
+      "types": "./types/ext/charts/index.d.ts",
+      "default": "./src/ext/charts/index.js"
+    },
+    "./notifications": {
+      "types": "./types/ext/notifications/index.d.ts",
+      "default": "./src/ext/notifications/index.js"
+    },
+    "./launcher": {
+      "types": "./types/ext/launcher/index.d.ts",
+      "default": "./src/ext/launcher/index.js"
+    },
+    "./carousel": {
+      "types": "./types/ext/carousel/index.d.ts",
+      "default": "./src/ext/carousel/index.js"
+    },
+    "./dropzone": {
+      "types": "./types/ext/dropzone/index.d.ts",
+      "default": "./src/ext/dropzone/index.js"
+    },
+    "./modals": {
+      "types": "./types/ext/modals/index.d.ts",
+      "default": "./src/ext/modals/index.js"
+    },
+    "./snippet": {
+      "types": "./types/ext/snippet/index.d.ts",
+      "default": "./src/ext/snippet/index.js"
+    },
+    "./load-bar": {
+      "types": "./types/ext/load-bar/index.d.ts",
+      "default": "./src/ext/load-bar/index.js"
+    },
+    "./editor": {
+      "types": "./types/ext/editor/index.d.ts",
+      "default": "./src/ext/editor/index.js"
+    },
+    "./more": {
+      "types": "./types/ext/more/index.d.ts",
+      "default": "./src/ext/more/index.js"
+    }
+  },
+  "scripts": {
+    "types": "node scripts/types.mjs",
+    "check": "tsc -p tsconfig.json",
+    "test": "node scripts/types.mjs && tsc -p tsconfig.json && tsc -p test/types/tsconfig.json && node --import ren-core/loader --test test/*.test.js test/*.test.jsx && node --import ren-core/compiled --test test/*.test.jsx",
+    "prepare": "node scripts/types.mjs",
+    "lock": "node --import ren-core/loader scripts/lock.mjs",
+    "prepack": "node scripts/types.mjs"
+  },
+  "dependencies": {
+    "ren-core": "file:../../../ren-core/wtree/_repo_",
+    "rrx-core": "file:../../../rrx-core/wtree/_repo_"
+  },
+  "devDependencies": {
+    "canvaskit-wasm": "0.40.0",
+    "esbuild": "0.28.2",
+    "happy-dom": "20.14.5",
+    "ren-canv": "file:../../../ren-canv/wtree/_repo_",
+    "ren-dom": "file:../../../ren-dom/wtree/_repo_",
+    "ren-json": "file:../../../ren-json/wtree/_repo_",
+    "ren-skia": "file:../../../ren-skia/wtree/_repo_",
+    "typescript": "7.0.2"
+  }
+}
