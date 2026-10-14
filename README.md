@@ -30,6 +30,9 @@ const Counter = () => {
 };
 ```
 
+The package is published on npm as `@maxenve/rui-core` under the MIT license;
+install it under its import name: `npm install rui-core@npm:@maxenve/rui-core`.
+
 ## Theme
 
 `BASE_THEME` is the theme every component starts from:

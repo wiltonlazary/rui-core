@@ -3,8 +3,15 @@
   "version": "0.1.0",
   "description": "rui's components: a complete set of layout, inputs, combobox, buttons, navigation, feedback, overlays, data display and typography, with hooks, forms and extensions (dates, charts, notifications, launcher, carousel, dropzone, modals, snippet, load bar, editor), built on ren-core's portable primitives so each renders the same on ren-dom, ren-skia and ren-three.",
   "type": "module",
-  "private": true,
-  "license": "UNLICENSED",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wiltonlazary/rui-core.git"
+  },
+  "homepage": "https://github.com/wiltonlazary/rui-core#readme",
+  "bugs": {
+    "url": "https://github.com/wiltonlazary/rui-core/issues"
+  },
   "sideEffects": false,
   "engines": {
     "node": ">=22.15"
