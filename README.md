@@ -32,6 +32,10 @@ const Counter = () => {
 
 The package is published on npm as `@maxenve/rui-core` under the MIT license;
 install it under its import name: `npm install rui-core@npm:@maxenve/rui-core`.
+Its components ship as `.jsx` source, which the application's JSX build
+compiles (ren-core's README, "Components and JSX"): a bundle built with
+`--jsx=automatic --jsx-import-source=ren-core` or with the `ren-core/esbuild`
+plugin, or `node --import ren-core/loader` under Node.
 
 ## Theme
 
