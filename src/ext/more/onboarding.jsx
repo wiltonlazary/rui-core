@@ -16,6 +16,7 @@ import { textual } from '../../core/data/badge.jsx';
 import { DECOR, named } from '../../theme/meaning.js';
 import { LAYERS } from '../../theme/layers.js';
 import { handOn } from '../../core/ref.js';
+import { labelsIn } from '../../theme/labels.js';
 
 /** @typedef {{ spot: string, title?: any, content?: any }} OnboardingStep */
 /** @typedef {{ x: number, y: number, width: number, height: number }} Box */
@@ -188,15 +189,15 @@ export function Onboarding(props) {
               <View style={() => ({ direction: 'row', align: 'center', gap: ui.theme().spacing.xs, margin: [ui.theme().spacing.xs, 0, 0, 0] })}>
                 <Label text={() => `${step.get() + 1} / ${steps().length}`} style={styled({}, (theme, scheme) => ({ grow: 1, color: pageColors(theme, scheme).quiet, fontSize: theme.fontSizes.xs }))} />
                 <Button variant="ghost" size="xs" onPress={skip}>
-                  {() => read(props.skipLabel) ?? 'Skip'}
+                  {() => read(props.skipLabel) ?? labelsIn().skip}
                 </Button>
                 <Show when={() => step.get() > 0}>
                   <Button variant="neutral" size="xs" onPress={() => go($untrack(R, step.get) - 1)}>
-                    {() => read(props.previousLabel) ?? 'Back'}
+                    {() => read(props.previousLabel) ?? labelsIn().back}
                   </Button>
                 </Show>
                 <Button size="xs" onPress={() => go($untrack(R, step.get) + 1)}>
-                  {() => (last() ? (read(props.finishLabel) ?? 'Finish') : (read(props.nextLabel) ?? 'Next'))}
+                  {() => (last() ? (read(props.finishLabel) ?? labelsIn().finish) : (read(props.nextLabel) ?? labelsIn().next))}
                 </Button>
               </View>
             </View>

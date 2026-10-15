@@ -12,6 +12,7 @@ import { FieldBox, Outer, Opener, Clear, editStyle, $focused, comboOf } from './
 import { marks, named } from '../../theme/meaning.js';
 import { parseData, shown } from './data.js';
 import { firstIndex, comboboxOf, storeOf } from './select.jsx';
+import { labelsIn } from '../../theme/labels.js';
 
 /** A tag's remove button: a circle 2 px inside the tag's height on every side. @param {number} h */
 const removeSide = h => h - 4;
@@ -73,7 +74,7 @@ export function Tag(props) {
       {() =>
         read(props.removable) && !read(props.disabled) ? (
           <Action
-            label={() => `Remove ${read(props.children)}`}
+            label={() => labelsIn().remove(String(read(props.children)))}
             onPointerDown={(/** @type {any} */ e) => e?.stopPropagation?.()}
             onPress={() => props.onRemove?.()}
             style={remove}

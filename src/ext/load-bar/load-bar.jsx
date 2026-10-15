@@ -12,6 +12,7 @@ import { MOTION, durationOf } from '../../theme/motion.js';
 import { $delay } from '../../core/overlays/shared.jsx';
 import { $elapsed } from '../../core/feedback/anim.js';
 import { $follow } from '../../core/misc/tween.js';
+import { labelsIn } from '../../theme/labels.js';
 
 /** @typedef {import('ren-core').Graph} Root */
 /** @typedef {'idle' | 'running' | 'held' | 'finishing'} LoadBarPhase */
@@ -164,7 +165,7 @@ export function LoadBar(props) {
   const bar = (
     <View
       role="progressbar"
-      aria-label="Page loading"
+      aria-label={() => labelsIn().pageLoading}
       aria-valuenow={() => Math.round(store.value())}
       aria-valuemin={0}
       aria-valuemax={100}

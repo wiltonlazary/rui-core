@@ -9,6 +9,7 @@ import { styled } from '../../theme/style.js';
 import { alpha } from '../../theme/colors.js';
 import { MOTION } from '../../theme/motion.js';
 import { $elapsed } from './anim.js';
+import { labelsIn } from '../../theme/labels.js';
 
 /**
  * A loader's size in pixels: px, or a step of `theme`'s `sizes.loader`
@@ -115,7 +116,7 @@ export function Loader(props) {
   return (
     <Shape
       role="status"
-      aria-label="Loading"
+      aria-label={() => labelsIn().loading}
       {...marks(props)}
       shapes={() => loaderFigures(kind(), size(), color(), time(), ui.theme())}
       style={styled(props, () => ({ width: size(), height: height(), shrink: 0 }))}

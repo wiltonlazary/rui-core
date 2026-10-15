@@ -12,6 +12,7 @@ import { $tween, boxOf, capture } from './tween.js';
 import { handOn } from '../ref.js';
 import { DECOR } from '../../theme/meaning.js';
 import { $reducedMotion } from '../../hooks/platform.js';
+import { labelsIn } from '../../theme/labels.js';
 
 /**
  * A line between content: `orientation` (horizontal or vertical), `size`
@@ -204,7 +205,7 @@ export function ScrollRow(props) {
     const icon = side < 0 ? props.previousIcon : props.nextIcon;
     return () =>
       shown() ? (
-        <View {...{ label: side < 0 ? 'Scroll back' : 'Scroll forward' }} onPress={() => step(side)} style={style}>
+        <View {...{ label: () => (side < 0 ? labelsIn().scrollBack : labelsIn().scrollForward) }} onPress={() => step(side)} style={style}>
           {icon ?? <Arrow side={side} size={() => size() * ui.theme().ratios.icon} color={() => String(ink().color)} />}
         </View>
       ) : null;

@@ -15,6 +15,7 @@ import { Pagination } from '../../core/navigation/pagination.jsx';
 import { Busy } from '../../core/overlays/backdrop.jsx';
 import { $controlled, partOf } from '../../core/overlays/shared.jsx';
 import { DECOR } from '../../theme/meaning.js';
+import { labelsIn } from '../../theme/labels.js';
 
 /**
  * A field of `fields`, keyed by its row path ('a.b' reads a nested one).
@@ -254,7 +255,7 @@ export function DataTable(props) {
               <View onPress={(/** @type {any} */ e) => e?.stopPropagation?.()} style={() => ({ padding: ui.theme().spacing.xs / 2 })}>
                 <Checkbox
                   size="xs"
-                  aria-label={() => `Select row ${index() + 1}`}
+                  aria-label={() => labelsIn().selectRow(index() + 1)}
                   checked={() => isSelected(record())}
                   disabled={() => !canSelect(record())}
                   onChange={() => toggle($untrack(R, record))}
@@ -319,7 +320,7 @@ export function DataTable(props) {
               </View>
             );
           },
-          () => <Checkbox size="xs" aria-label="Select all rows" checked={allSelected} indeterminate={someSelected} onChange={toggleAll} />,
+          () => <Checkbox size="xs" aria-label={() => labelsIn().selectAllRows} checked={allSelected} indeterminate={someSelected} onChange={toggleAll} />,
           'columnheader',
         )}
       </View>
@@ -360,7 +361,7 @@ export function DataTable(props) {
     <Show when={() => shown().length === 0 && read(props.loading) !== true}>
       <View style={styled({}, (theme, scheme) => ({ minHeight: 2 * theme.sizes.control.md, align: 'center', justify: 'center', padding: theme.spacing.md, color: pageColors(theme, scheme).quiet }))}>
         {() => {
-          const text = read(props.empty) ?? 'Nothing here yet';
+          const text = read(props.empty) ?? labelsIn().nothingHere;
           return typeof text === 'string' ? <Label text={text} /> : text;
         }}
       </View>

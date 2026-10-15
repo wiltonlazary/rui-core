@@ -13,6 +13,7 @@ import { Loader } from '../feedback/loader.jsx';
 import { textual, textOf } from '../feedback/feedback.jsx';
 import { $navValue, flat } from './state.js';
 import { DECOR, flag, named } from '../../theme/meaning.js';
+import { labelsIn } from '../../theme/labels.js';
 
 /** Whether a child is an element of `component`. @param {any} child @param {Function} component */
 const partOf = (child, component) => child instanceof Lazy && child.component === component;
@@ -72,7 +73,7 @@ export function Stepper(props) {
       const reach = read(props.reach) ?? 'back';
       return reach === 'any' || (reach === 'back' && phase() === 'done');
     };
-    const name = () => named(stage.label)() ?? `Step ${i + 1} of ${n}`;
+    const name = () => named(stage.label)() ?? labelsIn().step(i + 1, n);
     const glyph = () => Math.round(chip() * ui.theme().ratios.glyph);
     const dim = () => (disabled() ? { opacity: ui.theme().opacity.disabled } : null);
     const box = styled({}, (theme, scheme) => ({

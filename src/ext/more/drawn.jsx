@@ -12,6 +12,7 @@ import { arc } from '../../core/feedback/loader.jsx';
 import { $elapsed } from '../../core/feedback/anim.js';
 import { textual } from '../../core/data/badge.jsx';
 import { DECOR, UNSEEN, named } from '../../theme/meaning.js';
+import { labelsIn } from '../../theme/labels.js';
 
 /** @typedef {Record<string, any>} Figure */
 
@@ -149,7 +150,7 @@ export function Spinner(props) {
       t: time(),
       faint: ui.theme().opacity.faint,
     });
-  return <Shape role="status" aria-label="Loading" {...pass(props)} shapes={figures} style={styled(props, () => ({ width: size(), height: size(), shrink: 0 }))} />;
+  return <Shape role="status" aria-label={() => labelsIn().loading} {...pass(props)} shapes={figures} style={styled(props, () => ({ width: size(), height: size(), shrink: 0 }))} />;
 }
 
 /**

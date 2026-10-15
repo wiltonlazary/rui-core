@@ -10,6 +10,7 @@ import { Close, $controlled, keyOf, partOf, handled } from '../../core/overlays/
 import { LAYERS } from '../../theme/layers.js';
 import { dragger, clamp, $stack } from './shared.js';
 import { DECOR, named } from '../../theme/meaning.js';
+import { labelsIn } from '../../theme/labels.js';
 
 /** @typedef {{ x: number, y: number }} Point */
 /** @typedef {{ width: number, height: number }} Size */
@@ -189,7 +190,7 @@ export function Window(props) {
         {read(props.collapsible) === false ? null : (
           <Action
             onPointerDown={stop}
-            label={() => (collapsed.get() ? 'Restore' : 'Minimize')}
+            label={() => (collapsed.get() ? labelsIn().restore : labelsIn().minimize)}
             onPress={() => collapsed.set(!$untrack(R, collapsed.get))}
             style={styled({}, (theme, scheme) => ({ width: theme.sizes.icon.md, height: theme.sizes.icon.md, minHeight: theme.sizes.icon.md, padding: 0, border: 0, radius: theme.radius.sm, background: 'transparent', align: 'center', justify: 'center', cursor: 'pointer', hover: { background: pageColors(theme, scheme).hover } }))}
           >
@@ -200,7 +201,7 @@ export function Window(props) {
           const closable = partOf(read(props.closable), true);
           return closable === null ? null : (
             <View onPointerDown={stop} style={{ shrink: 0 }}>
-              <Close size="md" label={closable.label ?? 'Close window'} onPress={close} />
+              <Close size="md" label={closable.label ?? (() => labelsIn().closeWindow)} onPress={close} />
             </View>
           );
         }}

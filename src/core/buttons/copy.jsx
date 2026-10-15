@@ -8,6 +8,7 @@
 import { $active, $closed, read } from 'ren-core';
 import { $clipboard } from '../../hooks/platform.js';
 import { Button } from './button.jsx';
+import { labelsIn } from '../../theme/labels.js';
 
 /**
  * What a CopyButton does, from `getHandle`.
@@ -42,7 +43,7 @@ export function CopyButton(props) {
   const { value, label, done, hold, onCopy, onError, getHandle, children, ...rest } = props;
   return (
     <Button {...rest} onPress={() => void copy()}>
-      {() => String(copied() ? (read(props.done) ?? 'Done') : (read(props.label) ?? 'Copy'))}
+      {() => String(copied() ? (read(props.done) ?? labelsIn().done) : (read(props.label) ?? labelsIn().copy))}
     </Button>
   );
 }

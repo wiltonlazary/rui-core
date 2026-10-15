@@ -12,6 +12,7 @@ import { $controlled, $presence, timingOf, motionOf, moved, rectOf, measurable, 
 import { $tween, $nextFrame } from '../misc/tween.js';
 import { DECOR } from '../../theme/meaning.js';
 import { handOn } from '../ref.js';
+import { labelsIn } from '../../theme/labels.js';
 
 /**
  * Content pinned to a corner of the viewport (`position: fixed`,
@@ -114,7 +115,7 @@ export function ActionBarDivider(props) {
 /** A close button that closes the bar (or calls `onPress`). @param {Record<string, any>} props */
 export function ActionBarClose(props) {
   const bar = /** @type {Record<string, any> | null} */ ($lookup(ActionBarContext));
-  return <Close size={props.size ?? 'md'} label={props.label ?? 'Close'} onPress={() => (props.onPress ?? bar?.close)?.()} />;
+  return <Close size={props.size ?? 'md'} label={props.label} onPress={() => (props.onPress ?? bar?.close)?.()} />;
 }
 
 ActionBar.Divider = ActionBarDivider;
@@ -434,7 +435,7 @@ export function FloaterGrip(props) {
   };
   return (
     <Action
-      label={read(props.label) ?? 'Drag to resize'}
+      label={() => read(props.label) ?? labelsIn().dragToResize}
       style={style}
       onPointerDown={ctx?.resize.down}
       onPointerMove={ctx?.resize.move}

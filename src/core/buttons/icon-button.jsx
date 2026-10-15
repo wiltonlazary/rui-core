@@ -11,6 +11,7 @@ import { CloseIcon, inkOf } from './icons.jsx';
 import { JoinedGroup, $joined, joinedStyle, unjoined } from './joined.jsx';
 import { pressOf, colorsOf, buttonBox } from './button.jsx';
 import { flag, marks, TriggerMeaning } from '../../theme/meaning.js';
+import { labelsIn } from '../../theme/labels.js';
 
 /**
  * A square side: pixels, a step of the theme's `sizes.icon`, or with `field` the height of
@@ -143,7 +144,7 @@ export function CloseButton(props) {
     return i ?? (typeof s === 'number' || read(props.field) === true ? Math.round(size() * ui.theme().ratios.icon) : sized(ui.theme().sizes.closeIcon, s, 'md'));
   };
   return (
-    <Action ref={props.ref} label={props.label ?? 'Close'} {...$lookup(TriggerMeaning)} {...marks(props)} aria-disabled={flag(props.disabled)} onPress={onPress} style={style}>
+    <Action ref={props.ref} label={() => read(props.label) ?? labelsIn().close} {...$lookup(TriggerMeaning)} {...marks(props)} aria-disabled={flag(props.disabled)} onPress={onPress} style={style}>
       {props.children === undefined ? (
         <CloseIcon size={icon} color={ink} />
       ) : (

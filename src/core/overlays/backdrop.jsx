@@ -11,6 +11,7 @@ import { gradientOf } from '../buttons/gradient.js';
 import { LAYERS } from '../../theme/layers.js';
 import { $presence, timingOf, partOf, shadeColor, shadeOpacity } from './shared.jsx';
 import { DECOR } from '../../theme/meaning.js';
+import { labelsIn } from '../../theme/labels.js';
 
 /**
  * The Backdrop's `gradient` as the portable style's: a portable gradient
@@ -87,7 +88,7 @@ export function Busy(props) {
   const backdrop = () => partOf(read(props.backdrop));
   return (
     <Show when={presence.mounted}>
-      <View role="status" aria-label="Loading" style={style}>
+      <View role="status" aria-label={() => labelsIn().loading} style={style}>
         {() => {
           const b = backdrop();
           return b === null ? null : b.node !== undefined ? b.node : <BusyBackdrop {...b} />;

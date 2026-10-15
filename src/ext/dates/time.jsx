@@ -18,6 +18,7 @@ import { state as aria, flag } from '../../theme/meaning.js';
 import { handled } from '../../core/overlays/shared.jsx';
 import { $breakpoints } from '../../theme/breakpoints.js';
 import { $ui } from '../../theme/theme.jsx';
+import { labelsIn } from '../../theme/labels.js';
 
 /** An empty digit: a middle dot, so an unset segment reads as a blank slot, not a dash or a minus. */
 const DOT = '\u00b7';
@@ -444,7 +445,7 @@ export function TimePicker(props) {
           </For>
           <View style={{ grow: 1 }} />
           <Show when={() => read(props.clearable) === true && !empty() && !disabled()}>
-            <CloseButton size="sm" label="Clear time" onPress={clear} />
+            <CloseButton size="sm" label={() => labelsIn().clearTime} onPress={clear} />
           </Show>
         </View>
           )}

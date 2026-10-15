@@ -228,5 +228,5 @@ export function Heatmap(props) {
     if (typeof tipOf === 'function') return { label: String(tipOf({ date: c.date, value: c.value })), rows: [], at };
     return { label: c.date, rows: [{ name: String(read(props.label) ?? ''), color: m.fills[i], value: m.format(c.value) }], at };
   };
-  return <Frame props={props} kind="Heatmap" model={() => $read(model)} hit={hit} tooltip={partOf(read(props.tooltip), false) !== null} />;
+  return <Frame props={props} kind="heatmap" model={() => $read(model)} hit={hit} tooltip={partOf(read(props.tooltip), false) !== null} />;
 }

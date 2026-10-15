@@ -19,6 +19,7 @@ import { $barRoom } from '../more/shared.js';
 import { tokenize, lines } from './tokenize.js';
 import { SYNTAX_LIGHT, SYNTAX_DARK, MONOSPACE, tokenColor } from './palette.js';
 import { DECOR, state } from '../../theme/meaning.js';
+import { labelsIn } from '../../theme/labels.js';
 
 /** @typedef {import('./palette.js').SyntaxColors} SyntaxColors */
 
@@ -131,7 +132,7 @@ function block(props, code, language, lead = null) {
   const quiet = () => pageColors(ui.theme(), scheme()).quiet;
   const glyph = () => ui.theme().sizes.glyph.sm;
   const ink = () => syntaxColors(scheme()).text;
-  const more = () => String(read(props.moreLabel) ?? 'Show all lines');
+  const more = () => String(read(props.moreLabel) ?? labelsIn().showAllLines);
   const body = styled({}, theme => ({
     direction: 'column',
     overflow: 'hidden',
@@ -175,7 +176,7 @@ function block(props, code, language, lead = null) {
           {lead ?? <View style={{ grow: 1 }} />}
           <View style={controls}>
             <Show when={copyable}>
-              <IconButton variant="ghost" color={quiet} size="sm" label={() => String(copied() ? (read(props.doneLabel) ?? 'Done') : (read(props.copyLabel) ?? 'Copy'))} onPress={() => void clip.copy(code())}>
+              <IconButton variant="ghost" color={quiet} size="sm" label={() => String(copied() ? (read(props.doneLabel) ?? labelsIn().done) : (read(props.copyLabel) ?? labelsIn().copy))} onPress={() => void clip.copy(code())}>
                 <Show when={copied} fallback={<CopyIcon size={glyph} color={quiet} />}>
                   <CheckIcon size={glyph} color="teal" />
                 </Show>
@@ -186,7 +187,7 @@ function block(props, code, language, lead = null) {
                 variant="ghost"
                 color={quiet}
                 size="sm"
-                label={() => (collapsed() ? more() : String(read(props.lessLabel) ?? 'Fold'))}
+                label={() => (collapsed() ? more() : String(read(props.lessLabel) ?? labelsIn().fold))}
                 onPress={toggle}
               >
                 <ChevronIcon size={glyph} color={quiet} rotate={() => (collapsed() ? 0 : 180)} />

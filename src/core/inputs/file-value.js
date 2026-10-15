@@ -4,17 +4,18 @@
 export const countFiles = n => `${n} files`;
 
 /**
- * The field's text for a non-empty list: one file's name ('file' when it
+ * The field's text for a non-empty list: one file's name (`unnamed` when it
  * has none), or the count through `countText` for two or more.
  * @param {ReadonlyArray<{ name?: string } | null | undefined>} files
  * @param {(n: number) => string} [countText]
+ * @param {string} [unnamed]
  * @returns {string}
  */
-export function fileText(files, countText = countFiles) {
+export function fileText(files, countText = countFiles, unnamed = 'file') {
   if (files.length === 0) return '';
   if (files.length > 1) return String(countText(files.length));
   const name = files[0]?.name;
-  return typeof name === 'string' && name !== '' ? name : 'file';
+  return typeof name === 'string' && name !== '' ? name : unnamed;
 }
 
 /**

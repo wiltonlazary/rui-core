@@ -187,7 +187,7 @@ function Round(props, donut) {
         )}
       </View>
     );
-  return <Frame props={props} kind={donut ? 'Donut chart' : 'Pie chart'} model={() => $read(model)} hit={hit} tooltip={tip !== null} center={center} />;
+  return <Frame props={props} kind={donut ? 'donutChart' : 'pieChart'} model={() => $read(model)} hit={hit} tooltip={tip !== null} center={center} />;
 }
 
 /**

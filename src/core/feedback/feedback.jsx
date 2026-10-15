@@ -13,6 +13,7 @@ import { MOTION } from '../../theme/motion.js';
 import { DECOR, flag } from '../../theme/meaning.js';
 import { $reducedMotion } from '../../hooks/platform.js';
 import { partOptions } from '../data/parts.jsx';
+import { labelsIn } from '../../theme/labels.js';
 
 /** Whether children are plain text (a string, a number, or an accessor of one). @param {any} children */
 export const textual = children => typeof children === 'string' || typeof children === 'number' || typeof children === 'function';
@@ -58,7 +59,7 @@ function closer(props, fallback, own) {
     if (c === false || c == null) return null;
     if (c !== true && !partOptions(c)) return c;
     const o = c === true ? {} : c;
-    return <CloseButton {...own} {...o} label={o.label ?? 'Close'} onPress={props.onClose} />;
+    return <CloseButton {...own} {...o} label={o.label ?? (() => labelsIn().close)} onPress={props.onClose} />;
   };
 }
 

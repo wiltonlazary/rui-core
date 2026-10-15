@@ -16,6 +16,7 @@ import { LAYERS } from '../../theme/layers.js';
 import { MOTION, durationOf } from '../../theme/motion.js';
 import { EFFECTS, transitionStyle } from '../../core/misc/collapse.jsx';
 import { NOTIFICATION_PLACES, NotificationsContext, $notifications } from './store.js';
+import { labelsIn } from '../../theme/labels.js';
 
 /** @typedef {import('./store.js').NotificationsStore} NotificationsStore */
 /** @typedef {import('./store.js').NotificationData} NotificationData */
@@ -101,7 +102,7 @@ export function Notifications(props) {
     const mine = () => /** @type {Row[]} */ ($read(rows)).filter(r => placeOf(r.data) === position);
     return (
       <Show when={() => mine().length > 0}>
-        <View role="region" aria-label="Notifications" style={style}>
+        <View role="region" aria-label={() => labelsIn().notifications} style={style}>
           <For each={mine} by={(/** @type {Row} */ r) => r.key}>
             {(/** @type {() => Row} */ row) => {
               return <Item row={row} data={() => row().data} store={store} props={props} position={position} duration={duration} gone={gone} />;

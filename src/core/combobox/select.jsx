@@ -11,6 +11,7 @@ import { $combobox } from './store.js';
 import { Combobox, ComboboxTrigger, ComboboxPanel, ComboboxFilter, OptionsList, $comboboxContext } from './combobox.jsx';
 import { FieldBox, Outer, Opener, Clear, editStyle, sizeOf, $focused, comboOf } from './field.jsx';
 import { parseData, shown, grouped } from './data.js';
+import { labelsIn } from '../../theme/labels.js';
 
 /** @typedef {import('./data.js').Option} Option */
 
@@ -284,7 +285,7 @@ export function Picker(props) {
         {read(props.searchable) ? (
           <ComboboxFilter
             value={search.get}
-            placeholder={props.searchPlaceholder ?? 'Search'}
+            placeholder={() => read(props.searchPlaceholder) ?? labelsIn().search}
             onChange={(/** @type {{ value: string }} */ e) => {
               search.set(e.value);
               store.activate(firstIndex($untrack(R, options)));

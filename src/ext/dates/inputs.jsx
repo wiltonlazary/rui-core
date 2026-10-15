@@ -19,6 +19,7 @@ import { flag, state } from '../../theme/meaning.js';
 import { DatePanel, MonthPanel, YearPanel } from './calendar.jsx';
 import { TimeInput } from './time.jsx';
 import { handled, composing } from '../../core/overlays/shared.jsx';
+import { labelsIn } from '../../theme/labels.js';
 
 /**
  * Props that belong to the field, not the picker in the panel: the Field's
@@ -165,7 +166,7 @@ function field(props, o) {
         </Popover>
         </Show>
         <Show when={() => read(props.clearable) === true && !o.empty() && !disabled()}>
-          <CloseButton size="sm" label="Clear" onPress={o.clear} mr="xs" />
+          <CloseButton size="sm" label={() => labelsIn().clear} onPress={o.clear} mr="xs" />
         </Show>
       </View>
     </Field>
@@ -320,7 +321,7 @@ export function DateInput(props) {
             end={
               read(props.clearable) === true ? (
                 <Show when={() => toDate(value.get()) !== null && !disabled()}>
-                  <CloseButton size="sm" label="Clear" onPress={() => pick(null)} />
+                  <CloseButton size="sm" label={() => labelsIn().clear} onPress={() => pick(null)} />
                 </Show>
               ) : props.end
             }
@@ -405,7 +406,7 @@ export function DateTimeSelect(props) {
               $write(open, false);
             }}
           >
-            {read(props.done)?.children ?? 'Done'}
+            {read(props.done)?.children ?? (() => labelsIn().done)}
           </Button>
         </View>
       </View>

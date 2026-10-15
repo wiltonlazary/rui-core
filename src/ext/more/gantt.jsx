@@ -10,6 +10,7 @@ import { pageColors, colorOf, radiusOf } from '../../theme/resolve.js';
 import { pass } from '../../core/layout/layout.jsx';
 import { dragger, $barRoom } from './shared.js';
 import { DECOR } from '../../theme/meaning.js';
+import { labelsIn } from '../../theme/labels.js';
 
 const DAY = 86400000; // ms: one day
 
@@ -264,7 +265,7 @@ export function Gantt(props) {
         <View style={() => ({ direction: 'column', width: labelWidth() + 1 + width(), shrink: 0 })}>
           <View role="row" style={() => ({ direction: 'row', height: headerHeight(), shrink: 0, fontWeight: ui.theme().weights.strong })}>
             <View role="columnheader" style={names}>
-              <Label text={() => read(props.taskLabel) ?? 'Task'} />
+              <Label text={() => read(props.taskLabel) ?? labelsIn().task} />
             </View>
             <View role="columnheader" aria-label={() => `${isoDay(first())} to ${isoDay(last())}`} style={() => ({ direction: 'row', width: width(), shrink: 0 })}>
               <For by="position" each={days}>

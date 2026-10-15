@@ -11,6 +11,7 @@ import { flat, isPart } from '../data/parts.jsx';
 import { $controlled, keyOf } from '../overlays/shared.jsx';
 import { boxOf, capture, insetsOf } from '../misc/tween.js';
 import { handOn } from '../ref.js';
+import { labelsIn } from '../../theme/labels.js';
 
 /** @typedef {{ min: number, max: number }} Bounds */
 
@@ -232,7 +233,7 @@ export function Panes(props) {
     };
     return (
       <Action
-        label={`Resize pane ${i + 1}`}
+        label={() => labelsIn().resizePane(i + 1)}
         role="separator"
         aria-orientation={() => (vertical() ? 'horizontal' : 'vertical')}
         aria-valuenow={() => sizes()[i]}

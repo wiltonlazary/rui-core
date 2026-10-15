@@ -90,7 +90,7 @@ export function RadialBarChart(props) {
     return { label: '', rows: [{ name: String(m.data[i].label ?? ''), color: m.colors[i], value: m.format(m.data[i][m.key]) }], at: beside(x, y, m.width, ui.theme().spacing.sm) };
   };
   const legend = () => $read(model).data.map((d, i) => ({ name: String(d.label ?? ''), label: String(d.label ?? ''), color: $read(model).colors[i] }));
-  return <Frame props={props} kind="Radial bar chart" model={() => $read(model)} hit={hit} tooltip={read(props.tooltip) !== false} legend={legend} ref={size.ref} onResize={size.onResize} rootWidth="100%" />;
+  return <Frame props={props} kind="radialBarChart" model={() => $read(model)} hit={hit} tooltip={read(props.tooltip) !== false} legend={legend} ref={size.ref} onResize={size.onResize} rootWidth="100%" />;
 }
 
 /**
@@ -193,5 +193,5 @@ export function RadarChart(props) {
     return { label: String(row[m.key] ?? ''), rows: m.series.map(s => ({ name: s.label, color: s.color, value: m.format(row[s.name]) })), at: beside(x, y, m.width, ui.theme().spacing.sm) };
   };
   const legend = () => $read(model).series.map(s => ({ name: s.name, label: s.label, color: s.color }));
-  return <Frame props={props} kind="Radar chart" model={() => $read(model)} hit={hit} tooltip={partOf(read(props.tooltip), true) !== null} legend={legend} legendOn={() => $read(model).series.length >= 2} ref={size.ref} onResize={size.onResize} rootWidth="100%" />;
+  return <Frame props={props} kind="radarChart" model={() => $read(model)} hit={hit} tooltip={partOf(read(props.tooltip), true) !== null} legend={legend} legendOn={() => $read(model).series.length >= 2} ref={size.ref} onResize={size.onResize} rootWidth="100%" />;
 }

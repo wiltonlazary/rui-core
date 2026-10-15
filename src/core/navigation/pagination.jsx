@@ -11,6 +11,7 @@ import { ChevronIcon, DotsIcon } from '../buttons/icons.jsx';
 import { $navValue } from './state.js';
 import { pageItems } from '../../hooks/state.js';
 import { DECOR, flag } from '../../theme/meaning.js';
+import { labelsIn } from '../../theme/labels.js';
 
 /**
  * Page controls: `total` pages, `value` (a value, an accessor or a signal)
@@ -90,7 +91,7 @@ export function Pagination(props) {
   const style = styled(props, theme => ({ direction: 'row', wrap: true, align: 'center', gap: spacing(theme, read(props.gap) ?? theme.spacing.xs / 2) }));
   const ink = () => pageColors(ui.theme(), ui.scheme()).text;
   const icon = () => Math.round(side() / 2);
-  /** An arrow control. @param {string} label @param {number} rotate @param {boolean} edge @param {() => number} to @param {() => boolean} off */
+  /** An arrow control. @param {() => string} label @param {number} rotate @param {boolean} edge @param {() => number} to @param {() => boolean} off */
   const arrow = (label, rotate, edge, to, off) => (
     <Action label={label} aria-disabled={flag(() => off() || disabled())} onPress={() => go(to())} style={/** @type {any} */ (control(() => false, off))}>
       <ChevronIcon size={icon} rotate={rotate} edge={edge} color={ink} />
@@ -100,9 +101,9 @@ export function Pagination(props) {
   const last = () => current() >= total();
   return (
     <Show when={() => !(read(props.single) === false && total() <= 1)}>
-      <View role="navigation" aria-label="Pagination" {...pass(props)} onKey={keys} style={style}>
-        {read(props.edges) ? arrow('First page', 90, true, () => 1, first) : null}
-        {read(props.controls) === false ? null : arrow('Previous page', 90, false, () => current() - 1, first)}
+      <View role="navigation" aria-label={() => labelsIn().pagination} {...pass(props)} onKey={keys} style={style}>
+        {read(props.edges) ? arrow(() => labelsIn().firstPage, 90, true, () => 1, first) : null}
+        {read(props.controls) === false ? null : arrow(() => labelsIn().previousPage, 90, false, () => current() - 1, first)}
         <For by="position" each={items}>
           {item => (
             <Show
@@ -123,8 +124,8 @@ export function Pagination(props) {
             </Show>
           )}
         </For>
-        {read(props.controls) === false ? null : arrow('Next page', -90, false, () => current() + 1, last)}
-        {read(props.edges) ? arrow('Last page', -90, true, () => total(), last) : null}
+        {read(props.controls) === false ? null : arrow(() => labelsIn().nextPage, -90, false, () => current() + 1, last)}
+        {read(props.edges) ? arrow(() => labelsIn().lastPage, -90, true, () => total(), last) : null}
       </View>
     </Show>
   );

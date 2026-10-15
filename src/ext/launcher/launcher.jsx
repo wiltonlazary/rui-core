@@ -16,6 +16,7 @@ import { Highlight } from '../../core/typography/index.js';
 import { LauncherContext, $launcher, launcherMatch, firstActions, matching, isGroup } from './store.js';
 import { DECOR, flag, state, $uid } from '../../theme/meaning.js';
 import { $nextFrame } from '../../core/misc/tween.js';
+import { labelsIn } from '../../theme/labels.js';
 
 /** @typedef {import('./store.js').LauncherAction} LauncherAction */
 /** @typedef {import('./store.js').LauncherItem} LauncherItem */
@@ -167,7 +168,7 @@ export function Launcher(props) {
         )}
       </For>
       <Show when={() => count() === 0 && props.empty !== null && props.empty !== false}>
-        {props.empty === undefined || typeof props.empty === 'string' || typeof props.empty === 'function' ? <Label text={props.empty ?? 'No matches'} style={none} /> : <View style={none}>{props.empty}</View>}
+        {props.empty === undefined || typeof props.empty === 'string' || typeof props.empty === 'function' ? <Label text={props.empty ?? (() => labelsIn().noMatches)} style={none} /> : <View style={none}>{props.empty}</View>}
       </Show>
     </View>
   );
@@ -199,7 +200,7 @@ export function Launcher(props) {
           <Edit
             ref={(/** @type {any} */ n) => (field = n)}
             value={search}
-            label={() => String(read(props.placeholder) ?? 'Find an action')}
+            label={() => String(read(props.placeholder) ?? labelsIn().findAction)}
             role="combobox"
             aria-expanded="true"
             aria-activedescendant={() => list.activeId()}

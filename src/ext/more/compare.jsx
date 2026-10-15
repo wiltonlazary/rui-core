@@ -11,6 +11,7 @@ import { $controlled, keyOf } from '../../core/overlays/shared.jsx';
 import { $width, pointOf, boxOf, capture, clamp } from './shared.js';
 import { bordersOf } from '../../core/misc/tween.js';
 import { DECOR } from '../../theme/meaning.js';
+import { labelsIn } from '../../theme/labels.js';
 
 
 /**
@@ -135,13 +136,13 @@ export function Compare(props) {
       onPointerCancel={onPointerUp}
       style={style}
     >
-      <View style={{ position: 'absolute', inset: 0 }}>{side(props.after, read(props.afterLabel) ?? 'After')}</View>
+      <View style={{ position: 'absolute', inset: 0 }}>{side(props.after, read(props.afterLabel) ?? labelsIn().after)}</View>
       <View style={clip}>
-        <View style={inner}>{side(props.before, read(props.beforeLabel) ?? 'Before')}</View>
+        <View style={inner}>{side(props.before, read(props.beforeLabel) ?? labelsIn().before)}</View>
       </View>
       <View style={line} />
       {read(props.handle) === false ? null : (
-        <Action label="Compare" role="slider" aria-valuenow={value} aria-valuemin={0} aria-valuemax={100} aria-orientation={() => (vertical() ? 'vertical' : 'horizontal')} onKey={onKey} style={knob}>
+        <Action label={() => labelsIn().compare} role="slider" aria-valuenow={value} aria-valuemin={0} aria-valuemax={100} aria-orientation={() => (vertical() ? 'vertical' : 'horizontal')} onKey={onKey} style={knob}>
           <Shape {...DECOR} shapes={grip} style={() => ({ width: ui.theme().sizes.glyph.md, height: ui.theme().sizes.glyph.md })} />
         </Action>
       )}

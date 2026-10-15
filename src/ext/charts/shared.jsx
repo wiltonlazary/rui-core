@@ -13,6 +13,7 @@ import { boxOf, insetsOf, bordersOf } from '../../core/misc/tween.js';
 import { styled } from '../../theme/style.js';
 import { DECOR, UNSEEN } from '../../theme/meaning.js';
 import { handOn } from '../../core/ref.js';
+import { labelsIn } from '../../theme/labels.js';
 
 /** @typedef {import('../../theme/theme.jsx').RuiThemeValue} RuiThemeValue */
 /** @typedef {'light' | 'dark'} Scheme */
@@ -364,8 +365,9 @@ export function pointIn(event) {
 
 /**
  * A chart's name: its `aria-label`, else what it is and what it shows (its
- * series, or its data's names, and how many points).
- * @param {Record<string, any>} props @param {string} kind ('Area chart')
+ * series, or its data's names, and how many points), in the labels'
+ * `chartSummary` of the labels' word for its kind.
+ * @param {Record<string, any>} props @param {ChartKind} kind ('areaChart')
  * @returns {() => string}
  */
 export const summaryOf = (props, kind) => () => {
@@ -375,9 +377,11 @@ export const summaryOf = (props, kind) => () => {
   const series = /** @type {any[]} */ (read(props.series) ?? []);
   const names = series.length > 0 ? series.map(s => String(s.label ?? s.key ?? '')) : Array.isArray(data) ? data.map(d => (d != null && typeof d === 'object' ? String(d.label ?? d.name ?? '') : '')) : [];
   const shown = names.filter(n => n !== '');
-  const count = Array.isArray(data) && series.length > 0 ? `, ${data.length} ${data.length === 1 ? 'point' : 'points'}` : '';
-  return `${kind}${shown.length > 0 ? ` of ${shown.join(', ')}` : ''}${count}`;
+  const words = labelsIn();
+  return words.chartSummary(words[kind], shown, Array.isArray(data) && series.length > 0 ? data.length : null);
 };
+
+/** @typedef {'areaChart' | 'barChart' | 'lineChart' | 'mixedChart' | 'pieChart' | 'donutChart' | 'scatterChart' | 'sparkline' | 'bubbleChart' | 'funnelChart' | 'heatmap' | 'radarChart' | 'radialBarChart'} ChartKind */
 
 /** Fields a data row carries only for its look. */
 const LOOKS = new Set(['color', 'lineColor', 'fill']);
@@ -445,6 +449,6 @@ export function ChartData(props) {
  * image (`role="img"`) named by its summary, starting a Dataset (its data
  * in a ChartData inside); its drawn text, legend and tooltip are
  * decoration.
- * @param {Record<string, any>} props @param {string} kind
+ * @param {Record<string, any>} props @param {ChartKind} kind
  */
 export const rootProps = (props, kind) => ({ hidden: props.hidden, onPress: props.onPress, role: 'img', 'aria-label': summaryOf(props, kind), itemscope: true, itemtype: 'https://schema.org/Dataset' });

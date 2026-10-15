@@ -13,6 +13,7 @@ import { Combobox, ComboboxTrigger, ComboboxPanel, ComboboxNoMatch, OptionCheck,
 import { FieldBox, Outer, Opener, Clear, editStyle, $focused, comboOf } from './field.jsx';
 import { comboboxOf, storeOf, valueStyle } from './select.jsx';
 import { parseTree } from './tree.jsx';
+import { labelsIn } from '../../theme/labels.js';
 
 /** @typedef {import('./tree.jsx').TreeNode} TreeNode */
 
@@ -413,10 +414,10 @@ export function Cascader(props) {
   );
   const trail = (
     <Show when={() => first() > 0 || later()}>
-      <View role="navigation" aria-label={() => read(props.trailLabel) ?? 'Levels above'} style={trailLook}>
+      <View role="navigation" aria-label={() => read(props.trailLabel) ?? labelsIn().levelsAbove} style={trailLook}>
         <For each={() => Array.from({ length: first() }, (_, i) => i)}>{(/** @type {() => number} */ level) => crumb($untrack(R, level))}</For>
         <Show when={later}>
-          <Action label="Deeper levels" onPress={() => jump(Math.max(0, $untrack(R, count) - levels()))} style={crumbLook}>
+          <Action label={() => labelsIn().deeperLevels} onPress={() => jump(Math.max(0, $untrack(R, count) - levels()))} style={crumbLook}>
             <Label text="›" style={crumbText} />
           </Action>
         </Show>
@@ -444,7 +445,7 @@ export function Cascader(props) {
       </Action>
     );
   };
-  const empty = () => <ComboboxNoMatch>{() => String(read(props.empty) ?? 'No match')}</ComboboxNoMatch>;
+  const empty = () => <ComboboxNoMatch>{() => String(read(props.empty) ?? labelsIn().noMatch)}</ComboboxNoMatch>;
   const flatView = (
     <Show when={() => routes().length > 0} fallback={empty()}>
       <Scroll role="listbox" aria-label={fieldName} style={() => ({ direction: 'column', minWidth: columnWidth(), maxHeight: panelHeight() })}>

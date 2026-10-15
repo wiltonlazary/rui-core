@@ -23,6 +23,7 @@ import { styled } from '../../theme/style.js';
 import { transitionStyle, presetOf } from '../misc/collapse.jsx';
 import { $tween } from '../misc/tween.js';
 import { collide } from './collide.js';
+import { labelsIn } from '../../theme/labels.js';
 
 // ---------------------------------------------------------------------------
 // State
@@ -515,7 +516,7 @@ export function Close(props) {
   });
   const ink = () => (read(props.color) != null ? colorOf(ui.theme(), ui.scheme(), read(props.color)) : pageColors(ui.theme(), ui.scheme()).quiet);
   return (
-    <Action ref={props.ref} label={() => read(props.label) ?? 'Close'} onPress={props.onPress} onKey={props.onKey} style={style}>
+    <Action ref={props.ref} label={() => read(props.label) ?? labelsIn().close} onPress={props.onPress} onKey={props.onKey} style={style}>
       <Shape shapes={() => crossFigures(dims()[1], ink())} style={() => ({ width: dims()[1], height: dims()[1], shrink: 0 })} />
     </Action>
   );

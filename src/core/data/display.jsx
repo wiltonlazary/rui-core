@@ -13,6 +13,7 @@ import { DECOR, state } from '../../theme/meaning.js';
 import { $controlled } from '../overlays/shared.jsx';
 import { marksOf, placesOf } from '../inputs/shared.js';
 import { MOTION, durationOf } from '../../theme/motion.js';
+import { labelsIn } from '../../theme/labels.js';
 
 // ---------------------------------------------------------------- DataList
 
@@ -310,7 +311,7 @@ export function Excerpt(props) {
           {props.children}
         </View>
       </View>
-      {() => (overflows() ? <Action aria-expanded={state(expanded)} text={() => String(expanded() ? (read(props.lessLabel) ?? 'Less') : (read(props.moreLabel) ?? 'More'))} onPress={toggle} style={control} /> : null)}
+      {() => (overflows() ? <Action aria-expanded={state(expanded)} text={() => String(expanded() ? (read(props.lessLabel) ?? labelsIn().less) : (read(props.moreLabel) ?? labelsIn().more))} onPress={toggle} style={control} /> : null)}
     </View>
   );
 }

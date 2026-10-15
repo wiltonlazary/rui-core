@@ -5,6 +5,7 @@
 import { read } from 'ren-core';
 import { $value, clamp } from './shared.js';
 import { scale, track } from './slider.jsx';
+import { labelsIn } from '../../theme/labels.js';
 
 /** `x` kept between two bounds given in either order. @param {number} x @param {number} a @param {number} b */
 const between = (x, a, b) => clamp(x, Math.min(a, b), Math.max(a, b));
@@ -88,7 +89,7 @@ export function RangeSlider(props) {
     label: i => {
       const given = read(props.thumbLabel);
       if (typeof given === 'string') return given;
-      return (Array.isArray(given) ? given[i] : undefined) ?? (i === 0 ? 'Lower value' : 'Upper value');
+      return (Array.isArray(given) ? given[i] : undefined) ?? (i === 0 ? labelsIn().lowerValue : labelsIn().upperValue);
     },
   });
 }

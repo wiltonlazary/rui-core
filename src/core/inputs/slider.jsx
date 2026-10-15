@@ -16,6 +16,7 @@ import { DECOR, flag } from '../../theme/meaning.js';
 import { $fieldName, $nameOf } from './field.jsx';
 import { handOn } from '../ref.js';
 import { insetsOf } from '../misc/tween.js';
+import { labelsIn } from '../../theme/labels.js';
 
 /**
  * The horizontal place of a pointer on an item, 0 to 1: across its box, or
@@ -329,7 +330,7 @@ export function Slider(props) {
     },
     bar: () => [0, s.place(model.get())],
     pick: () => 0,
-    label: () => read(props.thumbLabel) ?? read(props['aria-label']) ?? 'Slider thumb',
+    label: () => read(props.thumbLabel) ?? read(props['aria-label']) ?? labelsIn().sliderThumb,
   });
 }
 
@@ -427,7 +428,7 @@ export function AngleSlider(props) {
         node = n;
         handOn(props.ref, n);
       }}
-      label={read(props['aria-label']) ?? 'Angle'}
+      label={() => read(props['aria-label']) ?? labelsIn().angle}
       {...(props['aria-label'] === undefined ? $fieldName(props) : null)}
       role="slider"
       aria-valuenow={model.get}
@@ -556,7 +557,7 @@ export function Rating(props) {
         node = n;
         handOn(props.ref, n);
       }}
-      label={read(props.label) ?? 'Rating'}
+      label={() => read(props.label) ?? labelsIn().rating}
       {...(props.label === undefined && props['aria-label'] === undefined ? $fieldName(props) : null)}
       role="slider"
       aria-valuenow={model.get}

@@ -73,7 +73,7 @@ export function Sparkline(props) {
   const figures = () => sparkFigures(props, ui.theme(), ui.scheme(), size.width(), height());
   const style = styled(props, theme => ({ width: '100%', height: theme.sizes.box.spark }));
   return (
-    <View {...rootProps(props, 'Sparkline')} ref={size.ref} onResize={size.onResize} style={style}>
+    <View {...rootProps(props, 'sparkline')} ref={size.ref} onResize={size.onResize} style={style}>
       {/* In the flow, so its padding and border hold it in (an absolute one would sit on the padding's edge). */}
       <Shape shapes={figures} style={() => ({ width: size.width(), height: height(), shrink: 0 })} />
       <ChartData of={() => datasetOf(props)} />

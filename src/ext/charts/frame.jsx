@@ -15,7 +15,7 @@ import { partOf } from '../../core/overlays/shared.jsx';
  * A round chart's frame: a box of `width` by `height` holding its Shape and
  * text, a pointer area over it, the tooltip, and a legend. Its box is the
  * chart's `ref` (`o.ref`, a chart that measures its box, hands it on).
- * @param {{ props: Record<string, any>, kind: string, model: () => { figures: Figure[], labels: PlacedText[], width: number, height: number }, hit: (x: number, y: number) => TooltipModel | null, legend?: () => import('./shared.jsx').LegendItem[], legendOn?: () => boolean, tooltip: boolean, center?: any, onResize?: (box: { width: number, height: number }) => void, ref?: (node: any) => void, rootWidth?: any }} o
+ * @param {{ props: Record<string, any>, kind: import('./shared.jsx').ChartKind, model: () => { figures: Figure[], labels: PlacedText[], width: number, height: number }, hit: (x: number, y: number) => TooltipModel | null, legend?: () => import('./shared.jsx').LegendItem[], legendOn?: () => boolean, tooltip: boolean, center?: any, onResize?: (box: { width: number, height: number }) => void, ref?: (node: any) => void, rootWidth?: any }} o
  */
 export function Frame(o) {
   const R = $active();

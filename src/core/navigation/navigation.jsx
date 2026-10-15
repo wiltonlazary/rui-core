@@ -17,6 +17,7 @@ import { textual } from '../feedback/feedback.jsx';
 import { $navValue } from './state.js';
 import { DECOR, state } from '../../theme/meaning.js';
 import { safeHref, safeOrNone } from '../../href.js';
+import { labelsIn } from '../../theme/labels.js';
 
 /**
  * Opens `href` with the platform's navigation: `target` '_blank' in a new
@@ -126,7 +127,7 @@ export function Breadcrumbs(props) {
     return textual(s) ? <Label {...DECOR} text={s} style={separator} /> : <View {...DECOR} style={separator}>{s}</View>;
   };
   return (
-    <View role="navigation" aria-label="Breadcrumbs" {...pass(props)} style={style}>
+    <View role="navigation" aria-label={() => labelsIn().breadcrumbs} {...pass(props)} style={style}>
       <View role="list" style={row}>
         <For each={items}>
           {(item, i) => [
@@ -204,7 +205,7 @@ export function NavToggle(props) {
   }));
   const figures = () => toggleFigures(box(), size(), Number(read(props.thickness) ?? sized(ui.theme().sizes.divider, step(), 'md')), inkOf(ui, props.color), open());
   return (
-    <Action ref={props.ref} label={props.label ?? 'Menu'} aria-expanded={state(props.open)} onPress={pressOf(props)} style={style}>
+    <Action ref={props.ref} label={() => read(props.label) ?? labelsIn().menu} aria-expanded={state(props.open)} onPress={pressOf(props)} style={style}>
       <Shape shapes={figures} style={() => ({ width: box(), height: box() })} />
     </Action>
   );
@@ -326,7 +327,7 @@ export function Outline(props) {
   const style = styled(props, () => ({ direction: 'column', align: 'stretch' }));
   const data = () => /** @type {{ label: any, level?: number, id?: string }[]} */ (read(props.data) ?? (spy == null ? undefined : $read(spy.headings)) ?? []);
   return (
-    <View role="navigation" aria-label="Table of contents" {...pass(props)} style={style}>
+    <View role="navigation" aria-label={() => labelsIn().tableOfContents} {...pass(props)} style={style}>
       {() =>
         data().map((heading, index) => {
           const itemStyle = () => {

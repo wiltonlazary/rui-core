@@ -1,7 +1,7 @@
 // A TypeScript application over every rui-core entry: the published
 // declarations resolve through package.json's exports and type its use.
 import { $signal, $read, $write, $dispose, $root } from 'rrx-core';
-import { Rui, Stack, Button, TextInput, ColorPicker, Select, DigitRoll, Busy, themeOf, parseColor, formatColor, BASE_THEME, BASE_COLORS } from 'rui-core';
+import { Rui, Stack, Button, TextInput, ColorPicker, Select, DigitRoll, Busy, themeOf, parseColor, formatColor, BASE_THEME, BASE_COLORS, BASE_LABELS } from 'rui-core';
 import { $open, $counter, $toggle, $patch, $localStorage } from 'rui-core/hooks';
 import type { OpenHandle, CounterHandle, ToggleHandle, PatchHandle } from 'rui-core/hooks';
 import { $form, email, required, length, range, emailTest, EACH } from 'rui-core/form';
@@ -71,6 +71,11 @@ themeOf({ opacity: { soft: 0.25 }, sizes: { control: { md: 38 } } });
 themeOf({ opacity: { soft: 'faint' } });
 const level2: number = BASE_THEME.headings.levels[1].size;
 const indigo6: string = BASE_COLORS.indigo[6];
+// The built-in words: strings, and functions of a value.
+const closeWord: string = BASE_LABELS.close;
+const stepWord: string = BASE_LABELS.step(2, 5);
+// @ts-expect-error a word that takes a value is called with it
+BASE_LABELS.remove();
 // @ts-expect-error a color's text is a string
 parseColor(0xff0000);
 
@@ -109,7 +114,7 @@ emailTest(42);
 // A view of components from every entry.
 const value = $signal(R, '');
 void (
-  <Rui theme={theme} scheme="dark">
+  <Rui theme={theme} scheme="dark" labels={{ close: 'Fechar', step: (i: number, n: number) => `Passo ${i} de ${n}` }}>
     <Modals>
       <Stack gap="md">
         <TextInput label="Nick" value={value} onChange={(e: any) => $write(value, e.target.value)} />

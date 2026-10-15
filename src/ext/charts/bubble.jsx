@@ -148,5 +148,5 @@ export function BubbleChart(props) {
   const height = () => size.inner(typeof read(props.h) === 'number' ? Number(read(props.h)) : ui.theme().sizes.box.chart);
   const model = $memo(R, () => bubbleModel(props, ui.theme(), ui.scheme(), size.width(), height()));
   const hit = (/** @type {number} */ x, /** @type {number} */ y) => bubbleTip($read(model), x, y, ui.theme().chart.near, ui.theme().spacing.sm);
-  return <Frame props={props} kind="Bubble chart" model={() => $read(model)} hit={hit} tooltip={read(props.tooltip) !== false} ref={size.ref} onResize={size.onResize} rootWidth="100%" />;
+  return <Frame props={props} kind="bubbleChart" model={() => $read(model)} hit={hit} tooltip={read(props.tooltip) !== false} ref={size.ref} onResize={size.onResize} rootWidth="100%" />;
 }

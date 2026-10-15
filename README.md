@@ -66,6 +66,18 @@ prototype, so a name such as `toString` is no entry: read them with
 `Object.hasOwn` or `in`, not `.hasOwnProperty`. `extra` is the
 application's own data and keeps its prototype.
 
+The words components show of their own (a close button's name, 'Clear',
+'Show password', 'Loading', a chart's summary, …) are `BASE_LABELS`,
+English, keyed by what each names; the ones that take a value are
+functions of it (`remove(value)`, `step(i, n)`, `chartSummary(kind,
+names, points)`). `Rui`'s `labels` puts other words over them for
+everything inside (a map, or a signal or accessor of one; a nested `Rui`'s
+over the outer's), and a change of the words reaches what is shown. A
+component's own prop for a text (`label`, `placeholder`, `moreLabel`, …)
+still wins. `$ui().labels()` reads them. The dates extension's words are
+`DateSettings`' `labels`, the editor's its `labels`, and Dropzone's
+rejections `REJECT_LABELS`.
+
 - Colors: a theme color name (its accent shade), `'name.shade'`
   (`'blue.3'`, `'night.7'`), or CSS hex. `accentShade()` and
   `pageColors()` read the theme for a scheme.

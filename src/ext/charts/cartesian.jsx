@@ -556,8 +556,8 @@ export function tooltipAt(m, i, format, category, gap, x, y) {
   return { label: row[category] == null ? '' : String(row[category]), rows, at: beside(x, y, m.width, gap) };
 }
 
-/** What each cartesian chart is, for its name. */
-const KINDS = tables({ area: 'Area chart', bar: 'Bar chart', line: 'Line chart', mixed: 'Mixed chart' });
+/** What each cartesian chart is, for its name (a key of the labels). @type {Record<string, import('./shared.jsx').ChartKind>} */
+const KINDS = tables({ area: 'areaChart', bar: 'barChart', line: 'lineChart', mixed: 'mixedChart' });
 
 /**
  * A cartesian chart component.

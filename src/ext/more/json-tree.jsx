@@ -9,6 +9,7 @@ import { colorOf, pageColors } from '../../theme/resolve.js';
 import { pass } from '../../core/layout/layout.jsx';
 import { keyOf } from '../../core/overlays/shared.jsx';
 import { DECOR, state } from '../../theme/meaning.js';
+import { labelsIn } from '../../theme/labels.js';
 
 /** The type of a JSON value, for its color. @param {any} v @returns {'string' | 'number' | 'boolean' | 'null' | 'array' | 'object' | 'other'} */
 export function jsonType(v) {
@@ -127,7 +128,7 @@ export function JsonTree(props) {
           <View style={() => ({ width: chevronSide(), shrink: 0 })} />
           {keyLabel(key)}
           <Action
-            label={`Copy ${path.length === 0 ? 'value' : path.join('.')}`}
+            label={() => labelsIn().copyPath(path.join('.'))}
             onPress={() => copy(value, path)}
             style={() => ({ background: 'transparent', border: 0, padding: 0, minHeight: 0, radius: 2, color: color(type), cursor: read(props.copyable) === false ? 'default' : 'copy', hover: { background: pageColors(ui.theme(), ui.scheme()).hover } })}
           >

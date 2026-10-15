@@ -94,5 +94,5 @@ export function FunnelChart(props) {
   const inset = $chartInsets(props);
   const model = $memo(R, () => funnelModel(props, ui.theme(), ui.scheme(), inset()));
   const hit = (/** @type {number} */ x, /** @type {number} */ y) => funnelTip($read(model), x, y, ui.theme().spacing.sm);
-  return <Frame props={props} kind="Funnel chart" model={() => $read(model)} hit={hit} tooltip={read(props.tooltip) !== false} />;
+  return <Frame props={props} kind="funnelChart" model={() => $read(model)} hit={hit} tooltip={read(props.tooltip) !== false} />;
 }

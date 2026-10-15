@@ -11,6 +11,7 @@ import { chevronFigures, crossFigures } from '../overlays/shared.jsx';
 import { flag, named, state } from '../../theme/meaning.js';
 import { insetOf, disabledLook, sizeOf } from '../inputs/shared.js';
 import { Field, outerOf, invalidOf, $nameOf } from '../inputs/field.jsx';
+import { labelsIn } from '../../theme/labels.js';
 
 export { sizeOf };
 
@@ -172,7 +173,7 @@ export function Clear(props) {
   }));
   return (
     // Its pointerdown is its own (a clear button keeps its pointerdown): the field's opens the panel, whose backdrop would take the press.
-    <Action label={() => read(props.label) ?? 'Clear'} onPointerDown={(/** @type {any} */ e) => e.stopPropagation()} onPress={props.onPress} style={style}>
+    <Action label={() => read(props.label) ?? labelsIn().clear} onPointerDown={(/** @type {any} */ e) => e.stopPropagation()} onPress={props.onPress} style={style}>
       <Shape shapes={() => crossFigures(px(), pageColors(ui.theme(), ui.scheme()).quiet)} style={() => ({ width: px(), height: px(), shrink: 0 })} />
     </Action>
   );

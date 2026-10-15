@@ -9,9 +9,10 @@ import { $ui } from '../../theme/theme.jsx';
 import { CloseButton } from '../buttons/index.js';
 import { chooseFiles } from '../buttons/file.jsx';
 import { Field, outerOf, invalidOf, $fieldName } from './field.jsx';
-import { fileText, clearedFiles, countFiles } from './file-value.js';
+import { fileText, clearedFiles } from './file-value.js';
 import { sizeOf, $value, fieldColors, insetOf, disabledLook } from './shared.js';
 import { flag } from '../../theme/meaning.js';
+import { labelsIn } from '../../theme/labels.js';
 
 /**
  * A field whose press opens the file dialog: `value`
@@ -79,7 +80,7 @@ export function FileInput(props) {
     const s = styled({}, () => ({ width: ui.theme().sizes.control[size()], height: '100%', shrink: 0, align: 'center', justify: 'center', color: pageColors(ui.theme(), ui.scheme()).quiet }));
     return <View style={s}>{content}</View>;
   };
-  const names = () => fileText(files(), typeof props.countText === 'function' ? props.countText : countFiles);
+  const names = () => fileText(files(), typeof props.countText === 'function' ? props.countText : labelsIn().files, labelsIn().file);
   const shown = () => (empty() ? String(read(props.placeholder) ?? '') : names());
   const custom = typeof props.renderValue === 'function';
   const label = <Label text={shown} style={{ grow: 1, minWidth: 0 }} ellipsis />;
@@ -99,7 +100,7 @@ export function FileInput(props) {
           {value}
         </Action>
         <Show when={() => read(props.clearable) === true && !empty() && !off()}>
-          <CloseButton size="sm" label="Clear" onPress={() => model.set(clearedFiles(multiple()))} mr="xs" />
+          <CloseButton size="sm" label={() => labelsIn().clear} onPress={() => model.set(clearedFiles(multiple()))} mr="xs" />
         </Show>
         {props.end === undefined ? null : section(props.end)}
       </View>

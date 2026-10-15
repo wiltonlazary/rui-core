@@ -15,6 +15,7 @@
     "Autocomplete": "function",
     "Avatar": "function",
     "BASE_COLORS": "object",
+    "BASE_LABELS": "object",
     "BASE_THEME": "object",
     "BackIcon": "function",
     "Backdrop": "function",

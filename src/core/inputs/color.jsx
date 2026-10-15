@@ -17,6 +17,7 @@ import { $nameOf } from './field.jsx';
 import { bordersOf } from '../misc/tween.js';
 import { handOn } from '../ref.js';
 import { state } from '../../theme/meaning.js';
+import { labelsIn } from '../../theme/labels.js';
 
 /** @typedef {{ h: number, s: number, v: number, a: number }} HSVA hue 0-360, saturation and value 0-100, alpha 0-1 */
 
@@ -180,7 +181,7 @@ export function drag(onPlace, disabled, inset) {
  * in a white ring `ceil(side × theme.ratios.mark / 2)` wide (2 px on the
  * smallest, 4 on xl) and lifted by the theme's shadow sm; focusable for
  * keys, a `slider` (`meaning`: its value and bounds).
- * @param {() => number} size @param {() => Record<string, any>} place @param {(e: any) => void} onKey @param {string} label @param {Record<string, any>} meaning
+ * @param {() => number} size @param {() => Record<string, any>} place @param {(e: any) => void} onKey @param {string | (() => string)} label @param {Record<string, any>} meaning
  * @param {() => string} fill the color under it
  */
 export function thumb(size, place, onKey, label, meaning, fill) {
@@ -238,7 +239,7 @@ function checker(columns) {
 
 /**
  * The shared slider of HueSlider and AlphaSlider.
- * @param {Record<string, any>} props @param {{ get: () => number, set: (v: number, end: boolean) => void, max: number, step: number, background: () => any, fill: () => string, label: string }} m
+ * @param {Record<string, any>} props @param {{ get: () => number, set: (v: number, end: boolean) => void, max: number, step: number, background: () => any, fill: () => string, label: () => string }} m
  */
 function colorSlider(props, m) {
   const R = $active();
@@ -291,7 +292,7 @@ export function HueSlider(props) {
     step: 1,
     background: () => <View style={{ position: 'absolute', inset: 0, background: HUES }} />,
     fill: () => solid({ h: model.get(), s: 100, v: 100, a: 1 }),
-    label: 'Hue',
+    label: () => labelsIn().hue,
   });
 }
 
@@ -314,7 +315,7 @@ export function AlphaSlider(props) {
     step: 0.01,
     background: () => [checker(24), <View style={() => ({ position: 'absolute', inset: 0, background: ramp(formatColor({ ...base(), a: 0 }, 'hex', true), solid(base())) })} />],
     fill: () => formatColor({ ...base(), a: model.get() }, 'hex', true),
-    label: 'Alpha',
+    label: () => labelsIn().alpha,
   });
 }
 
@@ -426,7 +427,7 @@ export function ColorPicker(props) {
         const per = read(props.swatchColumns) ?? 8;
         return <View style={styled({}, theme => ({ display: 'grid', columns: `repeat(${per}, 1fr)`, gap: swatchGap(theme) }))}>{list().map(swatch)}</View>;
       }}
-      {() => (lead() ? <Action aria-expanded={state(() => $read(more))} text="More colors" onPress={() => $write(more, !$read(more))} style={control} /> : null)}
+      {() => (lead() ? <Action aria-expanded={state(() => $read(more))} text={() => labelsIn().moreColors} onPress={() => $write(more, !$read(more))} style={control} /> : null)}
       {() => (lead() && $read(more) ? spectrum() : null)}
     </View>
   );

@@ -7,6 +7,7 @@ import { radiusOf } from '../../theme/resolve.js';
 import { $ui } from '../../theme/theme.jsx';
 import { clamp } from './shared.js';
 import { drag, thumb, ramp, solid, formatColor, parseColor } from './color.jsx';
+import { labelsIn } from '../../theme/labels.js';
 
 /** @typedef {import('./color.jsx').HSVA} HSVA */
 
@@ -37,7 +38,7 @@ function panelKey(key, shift, s, v) {
 }
 
 /** The panel's words for a color: its saturation and brightness, rounded. @param {HSVA} c */
-const panelText = c => `Saturation ${Math.round(c.s)}%, brightness ${Math.round(c.v)}%`;
+const panelText = c => labelsIn().saturationValue(Math.round(c.s), Math.round(c.v));
 
 /**
  * The saturation panel: `color()` the picker's HSVA, `onPick(hsva, end)`
@@ -83,7 +84,7 @@ export function saturationPanel({ color, onPick, thumb: side, height }) {
   return (
     <View ref={d.ref} style={look} onPointerDown={d.down} onPointerMove={d.move} onPointerUp={d.up} onPointerCancel={d.cancel}>
       <View style={shade} />
-      {thumb(side, place, onKey, 'Saturation', meaning, () => solid(color()))}
+      {thumb(side, place, onKey, () => labelsIn().saturation, meaning, () => solid(color()))}
     </View>
   );
 }

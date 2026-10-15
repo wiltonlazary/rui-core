@@ -189,7 +189,7 @@ export function ScatterChart(props) {
   const style = styled(props, theme => ({ position: 'relative', width: '100%', height: theme.sizes.box.chart, direction: 'column' }));
   const legend = <Legend items={items} justify={() => legendAt(read(props.legend) ?? null, LEGEND_AT).justify} />;
   return (
-    <View {...rootProps(props, 'Scatter chart')} ref={size.ref} onResize={size.onResize} style={style}>
+    <View {...rootProps(props, 'scatterChart')} ref={size.ref} onResize={size.onResize} style={style}>
       <Show when={() => legendShown() && !place().bottom}>{legend}</Show>
       <View
         style={() => ({ position: 'relative', width: '100%', height: area(), shrink: 0 })}

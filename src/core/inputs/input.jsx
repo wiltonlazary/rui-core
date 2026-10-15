@@ -17,6 +17,7 @@ import { formatNumber } from '../data/display.jsx';
 import { flag } from '../../theme/meaning.js';
 import { Field, outerOf, fieldOf, invalidOf, $fieldName, $nameOf } from './field.jsx';
 import { handOn } from '../ref.js';
+import { labelsIn } from '../../theme/labels.js';
 
 // ---------------------------------------------------------------------------
 // The field
@@ -295,7 +296,7 @@ export function PasswordInput(props) {
     const box = Math.round(s * ui.theme().ratios.icon);
     return (
       <Action
-        label={() => (shown.get() ? 'Hide password' : 'Show password')}
+        label={() => (shown.get() ? labelsIn().hidePassword : labelsIn().showPassword)}
         onPress={() => shown.set(!shown.get())}
         style={() => ({ background: 'transparent', padding: 0, border: 0, minHeight: 0, width: box, height: box, align: 'center', justify: 'center', radius: ui.theme().radius.sm, cursor: 'pointer', hover: { background: pageColors(ui.theme(), ui.scheme()).hover } })}
       >
@@ -426,7 +427,7 @@ export function NumberInput(props) {
     const h = Math.floor((s - 4) / 2);
     const chevron = (/** @type {boolean} */ up) => (
       <Action
-        label={up ? 'Increment' : 'Decrement'}
+        label={() => (up ? labelsIn().increment : labelsIn().decrement)}
         onPress={() => increment(up ? 1 : -1)}
         style={() => ({
           background: 'transparent',

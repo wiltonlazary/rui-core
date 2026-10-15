@@ -3,6 +3,7 @@
 
 export { BASE_COLORS, alpha, shade, luminance, isLight, channels } from './theme/colors.js';
 export { BASE_THEME, themeOf, Theme, Scheme, Rui, $ui } from './theme/theme.jsx';
+export { BASE_LABELS } from './theme/labels.js';
 export { colorOf, shadesOf, sized, radiusOf, pageColors, variantColors, shadowOf, styleProps, flexWord, spacing, accentShade, TINTS, fontBelow } from './theme/resolve.js';
 export { LAYERS } from './theme/layers.js';
 export { styled } from './theme/style.js';

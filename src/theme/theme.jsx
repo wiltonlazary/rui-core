@@ -1,13 +1,14 @@
 // The theme: the base theme (palette, accent color and shade, scales for
 // spacing, radius, font sizes, line heights, breakpoints, shadows and
 // headings) as one plain object, provided with the color scheme through two
-// rrx-core contexts, Theme and Scheme (Rui provides both). A component reads
-// both with `$ui()`; a new theme or scheme restyles every component in place
-// (their styles are bindings).
+// rrx-core contexts, Theme and Scheme (Rui provides both, and the words of
+// `labels`). A component reads them with `$ui()`; a new theme or scheme
+// restyles every component in place (their styles are bindings).
 
 import { $context, $lookup, read } from 'ren-core';
 import { BASE_COLORS } from './colors.js';
 import { own, ownValue, tables } from '../own.js';
+import { Words, wordsOver, labelsIn } from './labels.js';
 
 /** @typedef {'xs' | 'sm' | 'md' | 'lg' | 'xl'} Size */
 /** @typedef {Size | number} SizeValue a scale step or pixels */
@@ -304,13 +305,25 @@ export const Theme = $context(/** @type {any} */ (BASE_THEME));
 export const Scheme = $context(/** @type {any} */ ('light'));
 
 /**
- * Provides a `theme` and a color `scheme` to everything inside.
- * @param {{ theme?: any, scheme?: any, children?: any }} props
+ * Provides a `theme` and a color `scheme` to everything inside, and
+ * `labels`: words over BASE_LABELS (and over an outer Rui's) for the
+ * texts components show of their own, each a value or a signal or
+ * accessor; a component's own prop for a text still wins.
+ * @param {{ theme?: any, scheme?: any, labels?: any, children?: any }} props
  */
 export function Rui(props) {
+  if (props.labels === undefined) {
+    return (
+      <Theme value={props.theme ?? BASE_THEME}>
+        <Scheme value={props.scheme ?? 'light'}>{props.children}</Scheme>
+      </Theme>
+    );
+  }
   return (
     <Theme value={props.theme ?? BASE_THEME}>
-      <Scheme value={props.scheme ?? 'light'}>{props.children}</Scheme>
+      <Scheme value={props.scheme ?? 'light'}>
+        <Words value={wordsOver(props.labels)}>{props.children}</Words>
+      </Scheme>
     </Theme>
   );
 }
@@ -325,5 +338,7 @@ export function $ui() {
     theme: () => /** @type {RuiThemeValue} */ (read($lookup(Theme))),
     /** @returns {Scheme} */
     scheme: () => (read($lookup(Scheme)) === 'dark' ? 'dark' : 'light'),
+    /** The words components show of their own: Rui's `labels` over BASE_LABELS. */
+    labels: labelsIn,
   };
 }

@@ -17,6 +17,7 @@ import { Layer, $controlled, $presence, timingOf, motionOf, moved, Close, focus,
 import { DECOR } from '../../theme/meaning.js';
 import { ModalStack, StackContext, seat } from './modal-stack.jsx';
 import { tables } from '../../own.js';
+import { labelsIn } from '../../theme/labels.js';
 
 
 
@@ -223,7 +224,7 @@ export function ModalContent(props) {
   const early = root.title !== undefined;
   const title = () => {
     const t = read(early ? root.title : c.named);
-    return typeof t === 'string' ? t : 'Dialog';
+    return typeof t === 'string' ? t : labelsIn().dialog;
   };
   // The content means a modal `dialog`, named by its `title` (a Modal.Title
   // is known only once built: its heading names it then); the holder only
@@ -359,7 +360,7 @@ export function ModalTitle(props) {
  */
 export function ModalClose(props) {
   const { d } = $part();
-  return <Close ref={d.closer} size={props.size ?? 'md'} label={props.label ?? 'Close'} onPress={props.onPress ?? d.close} />;
+  return <Close ref={d.closer} size={props.size ?? 'md'} label={props.label} onPress={props.onPress ?? d.close} />;
 }
 
 /**
@@ -397,7 +398,7 @@ function Composed(props) {
             {() => {
               const c = closable();
               if (c === null) return null;
-              return c.node !== undefined ? c.node : <ModalClose size={c.size ?? 'md'} label={c.label ?? 'Close'} />;
+              return c.node !== undefined ? c.node : <ModalClose size={c.size ?? 'md'} label={c.label} />;
             }}
           </ModalHeader>
         </Show>
@@ -536,7 +537,7 @@ export function Dialog(props) {
       {() => {
         const c = closable();
         if (c === null) return null;
-        return <View style={{ shrink: 0 }}>{c.node !== undefined ? c.node : <Close size={c.size ?? 'sm'} label={c.label ?? 'Close'} onPress={close} />}</View>;
+        return <View style={{ shrink: 0 }}>{c.node !== undefined ? c.node : <Close size={c.size ?? 'sm'} label={c.label} onPress={close} />}</View>;
       }}
     </View>
   );

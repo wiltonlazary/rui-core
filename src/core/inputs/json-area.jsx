@@ -7,6 +7,7 @@ import { $signal, $read, $write, $active, read } from 'ren-core';
 import { Textarea } from './input.jsx';
 import { $value } from './shared.js';
 import { invalidOf } from './field.jsx';
+import { labelsIn } from '../../theme/labels.js';
 
 /** JsonArea's own props, kept from the Textarea inside it. */
 const OWN = new Set(['value', 'defaultValue', 'onChange', 'onBlur', 'parse', 'print', 'indent', 'pretty', 'parseError', 'onParse', 'error', 'invalid', 'rows']);
@@ -74,7 +75,7 @@ export function JsonArea(props) {
     if (invalidOf(given, false)) return given;
     if (!$read(bad)) return undefined;
     const own = read(props.parseError);
-    return own === false ? undefined : (own ?? 'Not valid JSON');
+    return own === false ? undefined : (own ?? labelsIn().notValidJson);
   };
   /** @type {Record<string, any>} */
   const rest = {};

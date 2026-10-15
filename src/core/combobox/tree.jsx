@@ -14,6 +14,7 @@ import { comboboxOf, storeOf, valueStyle } from './select.jsx';
 import { Tag } from './tags.jsx';
 import { sizeOf } from '../inputs/shared.js';
 import { Chevron } from '../data/parts.jsx';
+import { labelsIn } from '../../theme/labels.js';
 
 /**
  * @typedef {object} TreeNode
@@ -332,7 +333,7 @@ export function TreeSelect(props) {
             ) : (
               <Action
                 ref={store.setTrigger}
-                label={() => read(props.placeholder) ?? 'Options'}
+                label={() => read(props.placeholder) ?? labelsIn().options}
                 {...comboOf(props, store)}
                 onPress={() => !locked() && store.toggle()}
                 onKey={onKey}
@@ -365,7 +366,7 @@ export function TreeSelect(props) {
                     {n.children.length > 0 ? (
                       // A drawn chevron, not a button: a press opens or closes the node and the focus stays on
                       // the field (the arrows open and close from there).
-                      <View {...DECOR} aria-label={() => (open() ? `Collapse ${n.label}` : `Expand ${n.label}`)} onPointerDown={(/** @type {any} */ e) => {
+                      <View {...DECOR} aria-label={() => (open() ? labelsIn().collapse(n.label) : labelsIn().expand(n.label))} onPointerDown={(/** @type {any} */ e) => {
                         e?.preventDefault?.(); // as a DOM mousedown prevented: no focus moves
                         toggleOpen(n);
                       }} style={() => ({ width: ui.theme().sizes.iconBox.xs, height: ui.theme().sizes.iconBox.xs, shrink: 0, align: 'center', justify: 'center', cursor: 'pointer' })}>

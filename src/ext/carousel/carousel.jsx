@@ -28,6 +28,7 @@ import { parts } from '../../core/data/parts.jsx';
 import { $tween, boxOf, capture } from '../../core/misc/tween.js';
 import { stopsOf, nearest, shiftOf, wrap, sizeOf } from './stops.js';
 import { $reducedMotion } from '../../hooks/platform.js';
+import { labelsIn } from '../../theme/labels.js';
 
 /** @typedef {import('./stops.js').Stops} Stops */
 
@@ -473,7 +474,7 @@ export function Carousel(props) {
         radius="round"
         size={buttonSize}
         disabled={() => !(side > 0 ? canNext() : canPrev())}
-        label={() => String(side > 0 ? (read(props.nextLabel) ?? 'Forward') : (read(props.previousLabel) ?? 'Back'))}
+        label={() => String(side > 0 ? (read(props.nextLabel) ?? labelsIn().forward) : (read(props.previousLabel) ?? labelsIn().back))}
         onPress={() => {
           interacted();
           if (side > 0) next();
@@ -536,8 +537,8 @@ export function Carousel(props) {
       <View
         ref={props.ref}
         role="region"
-        aria-roledescription="carousel"
-        aria-label={() => read(props['aria-label']) ?? 'Carousel'}
+        aria-roledescription={() => labelsIn().carouselRole}
+        aria-label={() => read(props['aria-label']) ?? labelsIn().carousel}
         style={root}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
@@ -570,7 +571,7 @@ export function CarouselSlide(props) {
   const inner = styled(props, () => ({ direction: 'column', grow: 1, minWidth: 0, minHeight: 0 }));
   if (ctx === null) return <View style={inner}>{props.children}</View>;
   return (
-    <View role="group" aria-roledescription="slide" style={ctx.style(Number(props.index ?? 0))}>
+    <View role="group" aria-roledescription={() => labelsIn().slideRole} style={ctx.style(Number(props.index ?? 0))}>
       <View style={inner}>{props.children}</View>
     </View>
   );

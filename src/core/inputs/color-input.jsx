@@ -22,9 +22,8 @@ import { Field, outerOf, fieldOf } from './field.jsx';
 import { field } from './input.jsx';
 import { $value, sizeOf } from './shared.js';
 import { ColorPicker, parseColor, formatColor } from './color.jsx';
+import { labelsIn } from '../../theme/labels.js';
 
-/** The eye dropper button's name unless its options give a `label`. */
-const DROPPER_LABEL = 'Pick a color from the screen';
 
 /** Whether a text is empty once trimmed. @param {string} t */
 const blank = t => t.trim() === '';
@@ -251,7 +250,7 @@ export function ColorInput(props) {
     return (
       // Its pointerdown is its own: the field's opens the panel.
       <View onPointerDown={(/** @type {any} */ e) => e?.stopPropagation?.()}>
-        <IconButton variant="ghost" size={size} {...options} label={options.label ?? DROPPER_LABEL} disabled={locked} onPress={pick}>
+        <IconButton variant="ghost" size={size} {...options} label={options.label ?? (() => labelsIn().pickColor)} disabled={locked} onPress={pick}>
           {figure}
         </IconButton>
       </View>
