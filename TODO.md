@@ -19,7 +19,7 @@ Open work for rui-core.
   'Desativar', Spanish 'Restaurar') or another font size breaks it.
   Wanted: Button takes the alternative
   texts it may show (for example `reserve={['Delete', 'Restore']}`) and
-  keep the width of the widest, measured in its own font, following a
+  keeps the width of the widest, measured in its own font, following a
   change of the texts (a language switch). Repro: two Buttons side by
   side, the first's text switching between 'Ativar' and 'Desativar' with
   no `minWidth`: the second moves. Done when, with the texts reserved,
