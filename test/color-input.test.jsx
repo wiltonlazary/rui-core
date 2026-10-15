@@ -249,6 +249,45 @@ describe('ColorInput: the panel', () => {
     b.dispose();
   });
 
+  it("picker 'collapsed': the swatches lead and More colors shows the spectrum under them; the default leads with the spectrum", () => {
+    const many = Array.from({ length: 21 }, (_, i) => `#${(0x102030 + i * 0x0b0907).toString(16).padStart(6, '0')}`);
+    /** Each renderer's top of the item labeled `label`, or null when not shown. @param {any} t @param {string} label */
+    const tops = (t, label) => {
+      t.settle();
+      const d = t.d.nodes('Action').findIndex((/** @type {any} */ n) => n.getAttribute('aria-label') === label || n.textContent === label);
+      const item = t.s.items().find((/** @type {any} */ i) => (i.label === label || i.text === label) && i.getBoundingClientRect().width > 0);
+      return [d < 0 ? null : d, item === undefined ? null : item.getBoundingClientRect().top];
+    };
+    const t = setup(() => ({ swatches: many, picker: 'collapsed' }));
+    t.press();
+    const [dFirst, sFirst] = tops(t, many[0]);
+    const [dMore, sMore] = tops(t, 'More colors');
+    assert.deepEqual(tops(t, 'Hue'), [null, null], 'the spectrum hidden');
+    assert.ok(dFirst !== null && dMore !== null && dFirst < dMore, 'the swatches, then More colors (DOM)');
+    assert.ok(sFirst !== null && sMore !== null && sFirst < sMore, 'and on Skia');
+    const more = () => t.d.nodes('Action').find((/** @type {any} */ n) => n.textContent === 'More colors');
+    assert.equal(more().getAttribute('aria-expanded'), 'false');
+    t.d.tap(more());
+    t.s.press('More colors');
+    const [dHue, sHue] = tops(t, 'Hue');
+    assert.ok(dHue !== null && dHue > dMore, 'the spectrum under them (DOM)');
+    assert.ok(sHue !== null && sHue > sMore, 'and on Skia');
+    assert.equal(more().getAttribute('aria-expanded'), 'true');
+    t.d.tap(more());
+    t.s.press('More colors');
+    assert.deepEqual(tops(t, 'Hue'), [null, null], 'a second press hides it');
+    t.dispose();
+
+    const u = setup(() => ({ swatches: many }));
+    u.press();
+    const [dHue2, sHue2] = tops(u, 'Hue');
+    const [dFirst2, sFirst2] = tops(u, many[0]);
+    assert.ok(dHue2 !== null && dFirst2 !== null && dHue2 < dFirst2, 'the default: the spectrum, then the swatches (DOM)');
+    assert.ok(sHue2 !== null && sFirst2 !== null && sHue2 < sFirst2, 'and on Skia');
+    assert.deepEqual(tops(u, 'More colors'), [null, null], 'no More colors');
+    u.dispose();
+  });
+
   it('no panel without content; none while disabled or read-only', () => {
     const none = setup(() => ({ picker: false }));
     none.press();

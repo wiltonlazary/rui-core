@@ -29,11 +29,3 @@ Open work for rui-core.
   Notifications and a LoadBar: each still says its English. Done when a
   test renders each of them under the provider with other words and finds
   no English left.
-- [ ] ColorInput's quick choice: the panel always leads with the saturation
-  panel and hue slider, and the swatches come after them, so picking one
-  of a few given colors means scrolling past the spectrum. Wanted: a way
-  to lead with the swatches (an order prop, or `picker` 'collapsed': the
-  swatches first and the spectrum behind a "More colors" press), keeping
-  today's layout as the default. Repro: a ColorInput with 21 `swatches`
-  and `picker` on, opened at 390 px wide: the swatches sit under a 140 px
-  panel. Done with a test of the new layout and the existing one.

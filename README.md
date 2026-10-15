@@ -313,7 +313,7 @@ presets and the layers.
 | PinInput | length 6, accept 'digits', placeholder '·', gap xs |
 | NumberInput | clamp 'commit' (on blur and Enter), marks from the locale |
 | Combobox panels (height) | panelHeight 280 |
-| ColorPicker, ColorInput | format 'hex' (or 'rgb', 'hsl'), `alpha` false, no value until picked (opens on the accent), swatchColumns 8 |
+| ColorPicker, ColorInput | format 'hex' (or 'rgb', 'hsl'), `alpha` false, no value until picked (opens on the accent), swatchColumns 8; `picker` true: the spectrum, then the swatches ('collapsed': the swatches, then 'More colors', which shows the spectrum under them) |
 | ColorInput | value '' (no color); the panel at 'bottom-start', opened by a press or ArrowDown (not by focus); `revert`, `sticky`, `typing`, `preview` and `eyedropper` true; the empty preview a Swatch of 'transparent'; the eye dropper named 'Pick a color from the screen', disabled while the field is disabled or read-only |
 | JsonArea, PasswordInput | JsonArea `rows` 4, `indent` 2, `parseError` 'Not valid JSON', `pretty` false; PasswordInput's toggle 'Show password' / 'Hide password' |
 | Checkbox, Radio | 14, 18, 22, 26, 30 (xs to xl); Radio's dot `ratios.mark` (30 %); `checkColor` and `dotColor` black or white by the theme's contrast rule |

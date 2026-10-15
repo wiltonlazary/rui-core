@@ -55,7 +55,8 @@ function pipetteShape(s, color) {
  * A color field: `value` + `onChange(color)` or `defaultValue` (a color's
  * text `parseColor` reads, or '' for none), `onCommit(color)`, `format`
  * ('hex', 'rgb' or 'hsl'; 'hex'), `alpha` (false), `swatches`,
- * `swatchColumns` (8), `picker` (true), `preview` (true: a Swatch of the
+ * `swatchColumns` (8), `picker` (true; 'collapsed': the swatches first,
+ * the spectrum behind a More colors press), `preview` (true: a Swatch of the
  * value at the start, `theme.sizes.swatch` by size; an empty sample
  * without one), `eyedropper` (true: a button at the end where the platform
  * has one; false, a node for its icon, or the IconButton's options),

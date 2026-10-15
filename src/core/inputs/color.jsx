@@ -16,6 +16,7 @@ import { saturationPanel } from './color-panel.jsx';
 import { $nameOf } from './field.jsx';
 import { bordersOf } from '../misc/tween.js';
 import { handOn } from '../ref.js';
+import { state } from '../../theme/meaning.js';
 
 /** @typedef {{ h: number, s: number, v: number, a: number }} HSVA hue 0-360, saturation and value 0-100, alpha 0-1 */
 
@@ -322,7 +323,9 @@ export function AlphaSlider(props) {
  * `defaultValue` (null: no color chosen yet; the picker starts on the
  * accent), `onCommit`, `format` ('hex', 'rgb' or 'hsl'), `alpha` (false;
  * true: the alpha slider, and the value carries the alpha), `picker` (true: the
- * saturation panel and sliders), `swatches` and `swatchColumns` (8),
+ * saturation panel and sliders; 'collapsed': with swatches, the swatches
+ * lead and the panel and sliders follow a More colors press, which shows and
+ * hides them, `aria-expanded`), `swatches` and `swatchColumns` (8),
  * `onSwatchPress`, `size` (xs to xl: the theme's `sizes.picker` and
  * `sizes.colorThumb`), `stretch`.
  *
@@ -397,21 +400,34 @@ export function ColorPicker(props) {
   };
   // The picker is a group its aria-label or its Field names; its sliders keep their own names.
   const name = $nameOf(props, props['aria-label']);
+  const list = () => /** @type {string[]} */ (read(props.swatches) ?? []);
+  const spectrum = () => [saturationPanel({ color: () => $read(color), onPick: emit, thumb: t, height: () => dims().h }), sliders];
+  // Collapsed, the swatches lead and the spectrum shows on a press of More colors.
+  const lead = () => read(props.picker) === 'collapsed' && list().length > 0;
+  const more = $signal($active(), false);
+  const control = styled({}, (theme, scheme) => ({
+    self: 'start',
+    background: 'transparent',
+    border: 0,
+    padding: 0,
+    minHeight: 0,
+    radius: 0,
+    color: colorOf(theme, scheme, undefined),
+    fontSize: theme.fontSizes.sm,
+    fontWeight: theme.weights.regular,
+    cursor: 'pointer',
+    hover: { underline: true },
+  }));
   return (
     <View ref={props.ref} role={Object.keys(name).length > 0 ? 'group' : undefined} {...name} style={root}>
-      {() =>
-        read(props.picker) === false
-          ? null
-          : [
-              saturationPanel({ color: () => $read(color), onPick: emit, thumb: t, height: () => dims().h }),
-              sliders,
-            ]}
+      {() => (read(props.picker) === false || lead() ? null : spectrum())}
       {() => {
-        const list = /** @type {string[]} */ (read(props.swatches) ?? []);
-        if (list.length === 0) return null;
+        if (list().length === 0) return null;
         const per = read(props.swatchColumns) ?? 8;
-        return <View style={styled({}, theme => ({ display: 'grid', columns: `repeat(${per}, 1fr)`, gap: swatchGap(theme) }))}>{list.map(swatch)}</View>;
+        return <View style={styled({}, theme => ({ display: 'grid', columns: `repeat(${per}, 1fr)`, gap: swatchGap(theme) }))}>{list().map(swatch)}</View>;
       }}
+      {() => (lead() ? <Action aria-expanded={state(() => $read(more))} text="More colors" onPress={() => $write(more, !$read(more))} style={control} /> : null)}
+      {() => (lead() && $read(more) ? spectrum() : null)}
     </View>
   );
 }
