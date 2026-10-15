@@ -76,7 +76,9 @@ export const MONOSPACE = 'ui-monospace, Menlo, Consolas, Cascadia Mono, DejaVu S
 
 /**
  * Code (role `code`): inline, or a `block` (its lines kept, selectable),
- * in the monospace font on the page's sunken ground; `color` tints it.
+ * in the monospace font on the page's sunken ground; `color` tints it. It
+ * is never wider than its container: its words wrap, and a token wider
+ * than the container breaks where it overflows.
  * @param {Record<string, any>} props
  */
 export function Code(props) {
@@ -93,7 +95,11 @@ export function Code(props) {
       radius: theme.radius.xs,
       padding: block ? [theme.spacing.sm, theme.spacing.md] : [1, Math.round(theme.fontSizes.xs * theme.ratios.pad)],
       select: 'text',
-      ...(block ? { wrap: true } : { self: 'start' }),
+      // Its words wrap, and a token wider than its container breaks where it overflows.
+      wrap: true,
+      minWidth: 0,
+      maxWidth: '100%',
+      ...(block ? null : { self: 'start' }),
     };
   });
   return <Label role="code" {...pass(props)} {...textOf(props)} style={style} />;

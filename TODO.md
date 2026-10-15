@@ -29,12 +29,6 @@ Open work for rui-core.
   Notifications and a LoadBar: each still says its English. Done when a
   test renders each of them under the provider with other words and finds
   no English left.
-- [ ] Code cannot wrap or truncate one long token: an id of 50 characters
-  without spaces (`dev_f_fma_ent_0_0_0_0_0_01M3X…`) runs past its Card at
-  390 px wide, inline or `block`. Repro: a `Code` of that text inside a
-  `Card` in a 390 px wide page. Wanted: Code breaks such a token (or takes
-  a `truncate`/`wrap` choice) so it never overflows its container. Done
-  with a test at that width on the DOM renderer.
 - [ ] ColorInput's quick choice: the panel always leads with the saturation
   panel and hue slider, and the swatches come after them, so picking one
   of a few given colors means scrolling past the spectrum. Wanted: a way

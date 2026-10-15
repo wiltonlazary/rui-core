@@ -5,10 +5,14 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { $signal, $read, $write, $flush } from 'rrx-core';
 import { $active, For, View } from 'ren-core';
-import { Rui, Quote, Code, Mark, Highlight, List, Prose, Table, Heading, Text, Stack, Link, BASE_THEME, themeOf } from 'rui-core';
+import { Window } from 'happy-dom';
+import { mount } from 'ren-core/host';
+import { Flow } from 'ren-canv';
+import { $dom } from 'ren-dom';
+import { Rui, Quote, Code, Mark, Highlight, List, Prose, Table, Heading, Text, Stack, Link, Card, BASE_THEME, themeOf } from 'rui-core';
 import { alpha } from '../src/theme/colors.js';
 import { matchRuns } from '../src/core/typography/blocks.jsx';
-import { both } from './harness.jsx';
+import { both, onDom, closeWindow } from './harness.jsx';
 import { items, KIND } from './scene.js';
 
 /** The painted text commands of a Skia view. @param {any} skia */
@@ -732,6 +736,60 @@ describe('a reactive w moves its column', () => {
       assert.equal(table().style.gridTemplateColumns, 'minmax(500px, auto) auto', 'the DOM template follows');
       const a = items(skia, KIND.Label).find(i => i.text === 'a').parent.getBoundingClientRect();
       assert.ok(a.width >= 499.5, `Skia: the column at least 500 (${a.width})`);
+      dispose();
+    });
+  }
+});
+
+describe('Code never runs past its container', () => {
+  const TOKEN = 'dev_f_fma_ent_0_0_0_0_0_01M3XQ7ZK4P8RVB2N6W9YT5HJC';
+  /** A Card holding a Code of one long token in a page 390 px wide. @param {boolean} block */
+  const view = block => () => (
+    <Rui>
+      <View style={{ width: 390, padding: 16 }}>
+        <Card>
+          <Text>Id</Text>
+          <Code block={block}>{TOKEN}</Code>
+        </Card>
+      </View>
+    </Rui>
+  );
+  /** A text measure 0.6 of the font size wide per character, so the token (50 at 12 px) is 360 wide. */
+  const mono = {
+    width: (/** @type {string} */ text, /** @type {number} */ size) => text.length * size * 0.6,
+    metrics: (/** @type {number} */ size) => ({ ascent: size * 0.8, descent: size * 0.2 }),
+    close() {},
+  };
+  for (const block of [false, true]) {
+    it(`a${block ? ' block' : 'n inline'} Code breaks the token within its Card on the DOM (laid out by the Flow), in the CSS and on Skia`, () => {
+      const window = new Window({ url: 'http://localhost/' });
+      const host = window.document.createElement('main');
+      Object.defineProperty(host, 'clientWidth', { value: 390 });
+      window.document.body.appendChild(host);
+      const flow = new Flow(mono);
+      const stop = mount($dom(window.document, { layout: flow }), view(block), host);
+      const code = /** @type {any} */ (host.querySelector('[role="code"]'));
+      const px = (/** @type {any} */ el, /** @type {string} */ k) => parseFloat(el.style[k]);
+      const left = px(code, 'left');
+      // The Card's body is padded alike on both sides: the code ends where the padding starts.
+      assert.ok(left + px(code, 'width') <= px(code.parentElement, 'width') - left + 0.5, `within the body: ${left} + ${px(code, 'width')} in ${px(code.parentElement, 'width')}`);
+      assert.ok(px(code, 'height') > BASE_THEME.fontSizes.xs * BASE_THEME.lineHeights.xs * 1.5, 'on two lines');
+      stop();
+      flow.close();
+      closeWindow(window);
+
+      // The browser's own layout: the CSS caps it at its container and breaks the token where it overflows.
+      const dom = onDom(view(block), { width: 390, height: 300 });
+      const css = /** @type {any} */ (dom.host.querySelector('[role="code"]')).style;
+      assert.deepEqual([css.maxWidth, css.minWidth, css.whiteSpace, css.overflowWrap], ['100%', '0px', 'pre-wrap', 'break-word']);
+      dom.dispose();
+
+      const { skia, dispose } = both(view(block), { width: 390, height: 300 });
+      skia.text();
+      const label = items(skia, KIND.Label).find(i => i.text === TOKEN);
+      const r = label.getBoundingClientRect();
+      const body = label.parent.getBoundingClientRect();
+      assert.ok(r.right <= body.right - (r.left - body.left) + 0.5, `within the body on Skia: ${r.right} in ${body.right}`);
       dispose();
     });
   }
