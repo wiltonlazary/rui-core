@@ -17,7 +17,7 @@ Open work for rui-core.
   guessed `minWidth` in pixels (fiman uses 96) so the other actions do
   not move, and a longer word in another language (Portuguese
   'Desativar', Spanish 'Restaurar') or another font size breaks it.
-  Wanted: Button (and ActionIcon-like text buttons) take the alternative
+  Wanted: Button takes the alternative
   texts it may show (for example `reserve={['Delete', 'Restore']}`) and
   keep the width of the widest, measured in its own font, following a
   change of the texts (a language switch). Repro: two Buttons side by
