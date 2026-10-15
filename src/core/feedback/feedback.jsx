@@ -330,13 +330,15 @@ function EmptyStateHeading(props) {
   return textual(props.children) ? <Label text={props.children} style={style} /> : <View style={style}>{props.children}</View>;
 }
 
-/** The note of an EmptyState, in quiet text. @param {Record<string, any>} props */
+/** The note of an EmptyState, in quiet text that wraps within its room, at most `sizes.box.empty` wide. @param {Record<string, any>} props */
 function EmptyStateNote(props) {
   const own = /** @type {Record<string, any>} */ ($lookup(Empty));
   const style = styled(props, (theme, scheme) => ({
     fontSize: theme.fontSizes[emptySize(own)],
     color: pageColors(theme, scheme).quiet,
     textAlign: emptyText(own),
+    // It wraps within the room it is in, at most the theme's cap wide.
+    wrap: true,
     maxWidth: theme.sizes.box.empty,
   }));
   return textual(props.children) ? <Label text={props.children} style={style} /> : <View style={style}>{props.children}</View>;

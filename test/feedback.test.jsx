@@ -7,13 +7,17 @@ import assert from 'node:assert/strict';
 import { $signal, $read, $write, $flush, $root, $dispose } from 'rrx-core';
 import { Window } from 'happy-dom';
 import { render as renderDom } from 'ren-dom';
-import { $active } from 'ren-core';
+import { $active, View } from 'ren-core';
 import {
   Rui, Clock, manualClock, Button, Text, CheckIcon,
   Alert, Notification, EmptyState, Loader, Progress, Ring, Arc, Skeleton, BASE_THEME, variantColors, alpha,
 } from 'rui-core';
 import { arcBox, arcFigures } from '../src/core/feedback/progress.jsx';
-import { both, closeWindow, disposeAfter } from './harness.jsx';
+import { mount } from 'ren-core/host';
+import { Flow } from 'ren-canv';
+import { $dom } from 'ren-dom';
+import { Container } from 'rui-core';
+import { both, onDom, closeWindow, disposeAfter } from './harness.jsx';
 import { items, KIND } from './scene.js';
 
 /** The Skia commands of one kind. @param {any} skia @param {string} kind */
@@ -626,6 +630,54 @@ describe('Ring, Arc and Progress: rui\'s own geometry and motion', () => {
     assert.ok(before !== midway && midway !== after, 'moving, then there');
     clock.advance(200);
     assert.equal(arcs(), after, 'settled');
+    dispose();
+  });
+});
+
+describe('EmptyState in a narrow container', () => {
+  const NOTE = 'Crie uma com Nova tag: seus livros-caixa podem usá-la.';
+  const view = () => (
+    <Rui>
+      <View style={{ width: 390 }}>
+        <Container px="md">
+          <EmptyState heading="No tags yet" note={NOTE} />
+        </Container>
+      </View>
+    </Rui>
+  );
+  /** A text measure 0.6 of the font size wide per character: the note (54 at 15 px) is 486 wide. */
+  const mono = {
+    width: (/** @type {string} */ text, /** @type {number} */ size) => text.length * size * 0.6,
+    metrics: (/** @type {number} */ size) => ({ ascent: size * 0.8, descent: size * 0.2 }),
+    close() {},
+  };
+  it('wraps the note within the room at 390 px on the DOM (laid out by the Flow), in the CSS and on Skia', () => {
+    const window = new Window({ url: 'http://localhost/' });
+    const host = window.document.createElement('main');
+    Object.defineProperty(host, 'clientWidth', { value: 390 });
+    window.document.body.appendChild(host);
+    const flow = new Flow(mono);
+    const stop = mount($dom(window.document, { layout: flow }), view, host);
+    const note = /** @type {any} */ ([...host.querySelectorAll('[data-ren="Label"]')].find(n => n.textContent === NOTE));
+    const px = (/** @type {any} */ el, /** @type {string} */ k) => parseFloat(el.style[k]);
+    const room = px(note.parentElement, 'width');
+    assert.ok(px(note, 'left') + px(note, 'width') <= room + 0.5, `within its column: ${px(note, 'left')} + ${px(note, 'width')} in ${room}`);
+    assert.ok(px(note, 'height') > BASE_THEME.fontSizes.md * 1.9, `on two lines or more: ${px(note, 'height')}`);
+    stop();
+    flow.close();
+    closeWindow(window);
+
+    // The browser's layout: the note wraps, at most the theme's cap wide.
+    const dom = onDom(view, { width: 390, height: 300 });
+    const css = /** @type {any} */ ([...dom.host.querySelectorAll('[data-ren="Label"]')].find(n => n.textContent === NOTE)).style;
+    assert.deepEqual([css.whiteSpace, css.overflowWrap, css.maxWidth], ['pre-wrap', 'break-word', `${BASE_THEME.sizes.box.empty}px`]);
+    dom.dispose();
+
+    const { skia, dispose } = both(view, { width: 390, height: 300 });
+    skia.text();
+    const label = items(skia, KIND.Label).find(i => i.text === NOTE);
+    const r = label.getBoundingClientRect();
+    assert.ok(r.right <= 390 - BASE_THEME.spacing.md + 0.5, `within the room on Skia: ${r.right}`);
     dispose();
   });
 });
