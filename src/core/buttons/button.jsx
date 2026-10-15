@@ -2,12 +2,12 @@
 // area with focus, keyboard activation and hover and press states on
 // every renderer).
 
-import { Action, Label, read, $lookup } from 'ren-core';
+import { View, Action, Label, For, read, $lookup } from 'ren-core';
 import { styled } from '../../theme/style.js';
 import { variantColors, radiusOf, sized, pageColors, flexWord } from '../../theme/resolve.js';
 import { gradientColors } from './gradient.js';
 import { $joined, joinedStyle, unjoined } from './joined.jsx';
-import { flag, marks, TriggerMeaning } from '../../theme/meaning.js';
+import { DECOR, flag, marks, TriggerMeaning } from '../../theme/meaning.js';
 
 /**
  * A button's box at its `size` (xs to xl, sm by default), `dense` or not:
@@ -47,7 +47,10 @@ export function colorsOf(theme, scheme, props, fallback) {
  * `size` (xs to xl), `dense` (lower and tighter at that size), `radius`,
  * `stretch`, `disabled`, `loading`, `start` and `end`, `justify`
  * (where its label, start and end sit: 'center' by default, 'start',
- * 'end', 'between', 'around' or 'evenly'), `onPress`. In a
+ * 'end', 'between', 'around' or 'evenly'), `reserve` (the texts it may
+ * show, as a list or an accessor of one: its text keeps the width of the
+ * widest, in its own font, so what follows does not move as the text
+ * changes), `onPress`. In a
  * Button.Group it draws no border and no radius (the group's frame draws
  * its edge, the lines between its children and its corners).
  * @param {Record<string, any>} props
@@ -88,12 +91,45 @@ export function Button(props) {
     press?.(e);
   };
   const sections = props.start !== undefined || props.end !== undefined;
-  if (!sections && textual(props.children))
+  const reserving = props.reserve !== undefined && textual(props.children);
+  if (!sections && !reserving && textual(props.children))
     return <Action ref={props.ref} text={props.children} label={props.label} {...trigger} {...marks(props)} aria-disabled={flag(() => read(props.disabled) || read(props.loading))} onPress={onPress} style={style} />;
   return (
-    <Action ref={props.ref} label={props.label} {...trigger} {...marks(props)} aria-disabled={flag(() => read(props.disabled) || read(props.loading))} onPress={onPress} style={style}>
-      {unjoined([props.start, textual(props.children) ? <Label text={props.children} /> : props.children, props.end])}
+    <Action
+      ref={props.ref}
+      label={reserving ? () => read(props.label) ?? String(read(props.children)) : props.label}
+      {...trigger}
+      {...marks(props)}
+      aria-disabled={flag(() => read(props.disabled) || read(props.loading))}
+      onPress={onPress}
+      style={style}
+    >
+      {unjoined([props.start, reserving ? reserved(props.children, props.reserve) : textual(props.children) ? <Label text={props.children} /> : props.children, props.end])}
     </Action>
+  );
+}
+
+/** A reserved text's room: no height, clipped, so it gives only its width. */
+const ROOM = Object.freeze({ height: 0, minHeight: 0, overflow: 'hidden' });
+
+/**
+ * A text as wide as the widest of `reserve`: the text over each reserved
+ * one in a room of no height (unseen, out of the accessibility tree), in a
+ * column as wide as its widest child.
+ * @param {any} text @param {any} reserve
+ */
+function reserved(text, reserve) {
+  return (
+    <View style={{ direction: 'column', align: 'center' }}>
+      <Label text={text} />
+      <For each={() => /** @type {any[]} */ (read(reserve) ?? []).map(String)} by="position">
+        {(/** @type {() => string} */ t) => (
+          <View {...DECOR} style={ROOM}>
+            <Label text={t} />
+          </View>
+        )}
+      </For>
+    </View>
   );
 }
 

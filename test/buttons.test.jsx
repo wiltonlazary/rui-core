@@ -6,10 +6,14 @@ import assert from 'node:assert/strict';
 import { $signal, $read, $write, $flush } from 'rrx-core';
 import { $active } from 'ren-core';
 import {
-  Rui, Clock, manualClock, themeOf, Button, Text, IconButton, CloseButton, CopyButton, MOTION,
+  Rui, Clock, manualClock, themeOf, Button, Text, IconButton, CloseButton, CopyButton, MOTION, Row,
   CloseIcon, CheckIcon, ChevronIcon, DotsIcon,
 } from 'rui-core';
-import { both } from './harness.jsx';
+import { Window } from 'happy-dom';
+import { mount } from 'ren-core/host';
+import { Flow } from 'ren-canv';
+import { $dom } from 'ren-dom';
+import { both, closeWindow } from './harness.jsx';
 import { items, KIND } from './scene.js';
 
 /** Presses a ref'd item: a click on the DOM, a press and release at its center on Skia. @param {any} side @param {any} node */
@@ -340,6 +344,74 @@ describe('Back and forward icons', () => {
     skia.text();
     const kinds = skia.skia.commands().map((/** @type {any[]} */ c) => c[0]);
     assert.equal(kinds.filter((/** @type {string} */ k) => k === 'oval').length, 4, 'the tail dots on Skia');
+    dispose();
+  });
+});
+
+describe('Button reserve', () => {
+  /** A text measure 0.6 of the font size wide per character. */
+  const mono = {
+    width: (/** @type {string} */ text, /** @type {number} */ size) => text.length * size * 0.6,
+    metrics: (/** @type {number} */ size) => ({ ascent: size * 0.8, descent: size * 0.2 }),
+    close() {},
+  };
+  /** Two Buttons side by side, the first's text switching; `reserve` its texts or none. @param {string[] | undefined} reserve @param {any[]} shown */
+  const view = (reserve, shown) => () => {
+    const on = $signal($active(), true);
+    shown.push(on);
+    return (
+      <Rui>
+        <Row>
+          <Button reserve={reserve}>{() => ($read(on) ? 'Ativar' : 'Desativar')}</Button>
+          <Button>Next</Button>
+        </Row>
+      </Rui>
+    );
+  };
+  /** The second Button's left on the DOM laid out by the Flow, before and after the switch. @param {string[] | undefined} reserve */
+  const lefts = reserve => {
+    /** @type {any[]} */
+    const shown = [];
+    const window = new Window({ url: 'http://localhost/' });
+    const host = window.document.createElement('main');
+    Object.defineProperty(host, 'clientWidth', { value: 480 });
+    window.document.body.appendChild(host);
+    const flow = new Flow(mono);
+    const stop = mount($dom(window.document, { layout: flow }), view(reserve, shown), host);
+    const next = () => parseFloat(/** @type {any} */ ([...host.querySelectorAll('[data-ren="Action"]')].find(n => n.textContent === 'Next')).style.left);
+    const before = next();
+    $write(shown[0], false);
+    flow.flush?.();
+    const after = next();
+    const first = /** @type {any} */ (host.querySelector('[data-ren="Action"]'));
+    const name = first.getAttribute('aria-label');
+    stop();
+    flow.close();
+    closeWindow(window);
+    return { before, after, name };
+  };
+
+  it('keeps the width of the widest reserved text, so the next Button does not move (the DOM laid out by the Flow, and Skia)', () => {
+    const plain = lefts(undefined);
+    assert.ok(plain.after > plain.before, `without reserve the next Button moves: ${plain.before} to ${plain.after}`);
+    const kept = lefts(['Ativar', 'Desativar']);
+    assert.equal(kept.after, kept.before, 'with the texts reserved it stays');
+    assert.equal(kept.name, 'Desativar', 'named by the text it shows');
+
+    /** @type {any[]} */
+    const shown = [];
+    const { dom, skia, dispose } = both(view(['Ativar', 'Desativar'], shown), { width: 480, height: 120 });
+    const nextLeft = () => {
+      skia.text();
+      return items(skia, KIND.Label).concat(items(skia, KIND.Action)).find(i => i.text === 'Next').getBoundingClientRect().left;
+    };
+    const before = nextLeft();
+    for (const s of shown) $write(s, false);
+    $flush(dom.root);
+    $flush(skia.root);
+    assert.equal(nextLeft(), before, 'on Skia too');
+    assert.equal(skia.text(), 'Desativar Next', 'only the shown text is painted');
+    assert.equal(dom.text().includes('Desativar Next'), true);
     dispose();
   });
 });
