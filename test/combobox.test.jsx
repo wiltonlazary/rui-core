@@ -6,10 +6,10 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { $signal, $read, $write, $flush } from 'rrx-core';
-import { $active, View } from 'ren-core';
+import { $active, View, For } from 'ren-core';
 import {
   Rui, Clock, manualClock, Button, Text,
-  $combobox, Combobox, Select, PlainSelect, Autocomplete, MultiSelect, TagInput, Tag, TagBox, Cascader, TreeSelect, Picker, BASE_THEME,
+  Stack, $combobox, Combobox, Select, PlainSelect, Autocomplete, MultiSelect, TagInput, Tag, TagBox, Cascader, TreeSelect, Picker, BASE_THEME,
 } from 'rui-core';
 import { fontBelow } from '../src/theme/resolve.js';
 import { $form } from 'rui-core/form';
@@ -1335,5 +1335,30 @@ describe('TreeSelect, Picker', () => {
     t.key('Escape');
     assert.equal(t.text(), 'Style');
     t.dispose();
+  });
+});
+
+describe('combobox fields in a For row', () => {
+  it('a Select in a For row renders and opens (its ref writes its anchor), keyed or by position, as a thunk child does', () => {
+    for (const by of /** @type {const} */ ([undefined, 'position'])) {
+      const t = setup((clock, st) =>
+        app(clock, () => (
+          <Stack>
+            <For each={() => [1]} by={by}>
+              {() => {
+                const v = st.add($signal($active(), /** @type {string | null} */ (null)));
+                return <Select label="Payer" placeholder="Pick" data={[{ value: 'a', label: 'A' }]} value={v} onChange={(/** @type {any} */ x) => $write(v, x)} />;
+              }}
+            </For>
+          </Stack>
+        )),
+      );
+      assert.equal(t.text(), 'Payer Pick');
+      t.press('Pick');
+      assert.equal(t.text(), 'Payer Pick A', `${by ?? 'keyed'}: the panel opens under its field`);
+      t.pick('A');
+      assert.deepEqual(t.values(), ['a', 'a']);
+      t.dispose();
+    }
   });
 });
