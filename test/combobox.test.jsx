@@ -675,6 +675,52 @@ describe('MultiSelect, TagInput, Autocomplete, Tag', () => {
     t.dispose();
   });
 
+  it('MultiSelect and Select follow an option relabeled under the same value, in the panel and the field', () => {
+    const datas = states();
+    const t = setup((clock, st) =>
+      app(clock, () => {
+        const data = datas.add($signal($active(), [{ value: 'A', label: 'One' }]));
+        const v = st.add($signal($active(), /** @type {string[]} */ ([])));
+        return <MultiSelect data={data} value={v} onChange={(/** @type {any} */ x) => $write(v, x)} />;
+      }),
+    );
+    t.focusEdit();
+    t.key('ArrowDown');
+    assert.equal(t.text(), 'One');
+    t.pick('One');
+    assert.deepEqual(t.values(), [['A'], ['A']]);
+    assert.equal(t.text(), 'One One', 'the tag and the option, the panel open');
+    for (const d of datas.list) $write(d, [{ value: 'A', label: 'Two' }]);
+    t.settle();
+    assert.equal(t.text(), 'Two Two', 'the open panel and the field show the new label');
+    t.key('Escape');
+    assert.equal(t.text(), 'Two');
+    t.key('ArrowDown');
+    assert.equal(t.text(), 'Two Two', 'reopened too');
+    t.dispose();
+
+    const sdatas = states();
+    const u = setup((clock, st) =>
+      app(clock, () => {
+        const data = sdatas.add($signal($active(), [{ value: 'A', label: 'One' }, 'B']));
+        const v = st.add($signal($active(), /** @type {string | null} */ ('A')));
+        return <Select data={data} value={v} onChange={(/** @type {any} */ x) => $write(v, x)} />;
+      }),
+    );
+    u.press('One');
+    assert.equal(u.text(), 'One One B');
+    u.pick('B');
+    assert.deepEqual(u.values(), ['B', 'B']);
+    for (const d of sdatas.list) $write(d, [{ value: 'A', label: 'Two' }, 'B']);
+    u.settle();
+    u.press('B');
+    assert.equal(u.text(), 'B Two B', 'the panel shows the new label');
+    u.pick('Two');
+    assert.deepEqual(u.values(), ['A', 'A'], 'a press on the relabeled option hands its value');
+    assert.equal(u.text(), 'Two', 'the field shows the new label');
+    u.dispose();
+  });
+
   it('TagInput: Enter adds, separators split, duplicates and max refused, Backspace removes', () => {
     /** @type {string[]} */
     const repeats = [];

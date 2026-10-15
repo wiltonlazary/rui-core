@@ -3,7 +3,7 @@
 // options, a filter field, groups, a top and a bottom part, and a no-match line.
 // Select and the rest are built from these parts.
 
-import { View, Label, Action, Edit, Scroll, Shape, Show, For, read, $active, $signal, $read, $write, $context, $lookup, $owner, $cleanup, $untrack, $watch } from 'ren-core';
+import { View, Label, Action, Edit, Scroll, Shape, Show, For, read, $active, $signal, $memo, $read, $write, $context, $lookup, $owner, $cleanup, $untrack, $watch } from 'ren-core';
 import { styled } from '../../theme/style.js';
 import { $ui } from '../../theme/theme.jsx';
 import { fontBelow, pageColors, radiusOf, shadowOf, sized, variantColors } from '../../theme/resolve.js';
@@ -218,8 +218,8 @@ const groupLabelOf = size =>
   }));
 
 /**
- * An option: `value`, `option` (its data item, handed to `onPick`; by
- * default `{ value, label, disabled }`), `disabled`, `chosen` (it is the
+ * An option: `value`, `option` (its data item, handed to `onPick`, or an
+ * accessor of it; by default `{ value, label, disabled }`), `disabled`, `chosen` (it is the
  * value chosen: the check icon's state), `index` (its place in what is
  * shown, for the keyboard; without one, the order it is shown in),
  * `onPress`; its children
@@ -236,7 +236,7 @@ export function ComboboxOption(props) {
     if ($untrack(R, disabled)) return;
     props.onPress?.();
     const value = String($untrack(R, () => read(props.value)));
-    const option = props.option ?? { value, label: $untrack(R, () => read(props.label)) ?? value, disabled: false };
+    const option = $untrack(R, () => read(props.option)) ?? { value, label: $untrack(R, () => read(props.label)) ?? value, disabled: false };
     c.submit(value, option);
   };
   /** @type {import('./store.js').OptionRecord} */
@@ -388,11 +388,21 @@ export function OptionsList(props) {
   const mark = checked => (part?.node === undefined ? <OptionCheck shown={checked} /> : <Show when={checked}>{part.node}</Show>);
   const groupLabel = groupLabelOf(panelSize());
   const option = (/** @type {() => { option: import('./data.js').Option, index: number }} */ entry) => {
-    const o = $untrack($active(), entry).option;
-    const checked = () => props.checked(o.value);
-    const content = props.renderOption !== undefined ? props.renderOption(o, { picked: checked() }) : <Label text={o.label} style={{ grow: 1 }} />;
+    const R = $active();
+    // The row is keyed by value; its data item (label, disabled) follows the data.
+    const item = $memo(R, () => entry().option);
+    const o = () => /** @type {import('./data.js').Option} */ ($read(item));
+    const value = $untrack(R, o).value;
+    const checked = () => props.checked(value);
+    const content =
+      props.renderOption !== undefined
+        ? () => {
+            const now = o();
+            return $untrack(R, () => props.renderOption(now, { picked: checked() }));
+          }
+        : <Label text={() => o().label} style={{ grow: 1 }} />;
     return (
-      <ComboboxOption value={o.value} option={o} index={() => entry().index} disabled={o.disabled} chosen={checked}>
+      <ComboboxOption value={value} option={o} index={() => entry().index} disabled={() => o().disabled} chosen={checked}>
         {check() && !right() ? mark(checked) : null}
         {content}
         {check() && right() ? mark(checked) : null}

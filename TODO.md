@@ -29,13 +29,6 @@ Open work for rui-core.
   Notifications and a LoadBar: each still says its English. Done when a
   test renders each of them under the provider with other words and finds
   no English left.
-- [ ] Select and MultiSelect keep an option's first label. OptionsList keys
-  the options by value and reads each one untracked, so an option whose
-  label changes under the same value (a tag relabeled, its code kept)
-  still shows the old label once the panel was built. Repro: a MultiSelect
-  with `data` `[{ value: 'A', label: 'One' }]`, opened and closed, then
-  `data` `[{ value: 'A', label: 'Two' }]`, opened again: it shows One. Done
-  when the panel and the field show Two, with a test.
 - [ ] FocusTrap does not take the focus back when the focused control inside
   it is removed: the focus falls to the body, and a Modal's Escape no
   longer reaches it. Repro: in a Modal, a button that replaces itself with
