@@ -13,7 +13,11 @@ import {
 } from 'rui-core';
 import { tooltipColors, fontBelow } from '../src/theme/resolve.js';
 import { optionPadOf, marksOf, marksCached, MARKS_KEPT, stepOn } from '../src/core/inputs/shared.js';
-import { both, fakeDocument, onDom } from './harness.jsx';
+import { Window } from 'happy-dom';
+import { mount } from 'ren-core/host';
+import { Flow } from 'ren-canv';
+import { $dom } from 'ren-dom';
+import { both, fakeDocument, onDom, closeWindow } from './harness.jsx';
 import { items, tap, values, type, typeHere, caretAt, carets, replace, key, blur, press, states, same, primitives, drag, boxOf } from './inputs-harness.jsx';
 
 // ---------------------------------------------------------------------------
@@ -1614,4 +1618,62 @@ describe('rui-core FileInput on the DOM and on Skia', () => {
     assert.deepEqual(heard, [['cv.pdf'], ['cv.pdf']]);
     dispose();
   });
+});
+
+describe('a choice in a narrow container', () => {
+  const LABEL = 'New users may create accounts';
+  const NOTE = 'Uma conta nova aguarda um administrador confirmá-la em Cadastros.';
+  /** A choice with a label and a long description in a Stack 360 wide. @param {(p: Record<string, any>) => any} make */
+  const view = make => () => (
+    <Rui>
+      <Stack style={{ width: 360 }}>{make({ label: LABEL, description: NOTE })}</Stack>
+    </Rui>
+  );
+  /** A text measure 0.6 of the font size wide per character. */
+  const mono = {
+    width: (/** @type {string} */ text, /** @type {number} */ size) => text.length * size * 0.6,
+    metrics: (/** @type {number} */ size) => ({ ascent: size * 0.8, descent: size * 0.2 }),
+    close() {},
+  };
+  const kinds = /** @type {const} */ ([
+    ['Switch', (/** @type {any} */ p) => <Switch {...p} />],
+    ['Checkbox', (/** @type {any} */ p) => <Checkbox {...p} />],
+    ['Radio', (/** @type {any} */ p) => <Radio value="a" {...p} />],
+  ]);
+  for (const [name, make] of kinds) {
+    it(`${name}: its label and description wrap within 360 px on the DOM (laid out by the Flow), in the CSS and on Skia`, () => {
+      const window = new Window({ url: 'http://localhost/' });
+      const host = window.document.createElement('main');
+      Object.defineProperty(host, 'clientWidth', { value: 480 });
+      window.document.body.appendChild(host);
+      const flow = new Flow(mono);
+      const stop = mount($dom(window.document, { layout: flow }), view(make), host);
+      // Each element's right edge in the host, from its placed boxes up the tree.
+      const right = (/** @type {any} */ el) => {
+        let x = parseFloat(el.style.width);
+        for (let n = el; n !== host && n !== null; n = n.parentElement) x += parseFloat(n.style.left) || 0;
+        return x;
+      };
+      const note = /** @type {any} */ ([...host.querySelectorAll('[data-ren="Label"]')].find(n => n.textContent === NOTE));
+      assert.ok(right(note) <= 360.5, `the description within 360: ${right(note)}`);
+      assert.ok(parseFloat(note.style.height) > BASE_THEME.fontSizes.xs * 1.9, `on two lines or more: ${note.style.height}`);
+      stop();
+      flow.close();
+      closeWindow(window);
+
+      // The browser's layout: the texts wrap, and their column shrinks below them.
+      const dom = onDom(view(make), { width: 480, height: 300 });
+      const labels = [...dom.host.querySelectorAll('[data-ren="Label"]')].filter((/** @type {any} */ n) => n.textContent === NOTE || n.textContent === LABEL);
+      assert.deepEqual(labels.map((/** @type {any} */ n) => n.style.whiteSpace), ['pre-wrap', 'pre-wrap']);
+      const column = /** @type {any} */ (labels.at(-1)).parentElement;
+      assert.deepEqual([column.style.minWidth, column.style.flexShrink], ['0px', '1']);
+      dom.dispose();
+
+      const { skia, dispose } = both(view(make), { width: 480, height: 300 });
+      skia.text();
+      const drawn = items(skia, 3).find((/** @type {any} */ i) => i.text === NOTE).getBoundingClientRect();
+      assert.ok(drawn.right <= 360.5, `within 360 on Skia: ${drawn.right}`);
+      dispose();
+    });
+  }
 });

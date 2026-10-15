@@ -44,11 +44,12 @@ const BARE = { background: 'transparent', border: 0, padding: 0, minHeight: 0, r
 
 /**
  * A control's label (decoration: the control carries it as its name),
- * description and error beside its box.
+ * description and error beside its box, wrapping within the room left.
  * @param {Record<string, any>} props @param {any} size @param {number} box
  */
 function body(props, size, box) {
   const text = styled({}, (theme, scheme) => ({
+    wrap: true,
     fontSize: sized(theme.fontSizes, size, 'sm'),
     lineHeight: theme.lineHeights.md,
     minHeight: box,
@@ -57,6 +58,7 @@ function body(props, size, box) {
   const small = (/** @type {boolean} */ error) =>
     styled({}, (theme, scheme) => ({
       ...noteLook(theme, sized(theme.fontSizes, size, 'sm')),
+      wrap: true,
       margin: [theme.control.labelGap, 0, 0, 0],
       color: error ? errorColor(theme, scheme) : pageColors(theme, scheme).quiet,
     }));
@@ -65,7 +67,8 @@ function body(props, size, box) {
     return v != null && v !== false && v !== '' && v !== true;
   };
   return (
-    <View style={styled({}, theme => ({ direction: 'column', padding: [0, 0, 0, read(props.labelAt) === 'start' ? 0 : theme.spacing.sm], justify: 'center' }))}>
+    // The column beside the box shrinks to the room left, its texts wrapping in it.
+    <View style={styled({}, theme => ({ direction: 'column', shrink: 1, minWidth: 0, padding: [0, 0, 0, read(props.labelAt) === 'start' ? 0 : theme.spacing.sm], justify: 'center' }))}>
       <Show when={shown('label')}>
         <View style={() => ({ minHeight: box, justify: 'center' })}>
           <Label {...DECOR} text={() => String(read(props.label))} style={text} />
