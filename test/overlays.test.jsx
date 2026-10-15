@@ -160,6 +160,36 @@ describe('Modal', () => {
     dispose();
   });
 
+  it('keeps the focus when the focused control inside it is removed, so Escape still closes it', () => {
+    const clock = manualClock();
+    const st = states();
+    const view = app(clock, () => {
+      const open = st.add($signal($active(), true));
+      const swapped = $signal($active(), false);
+      return (
+        <Modal open={open} onOpenChange={(/** @type {boolean} */ v) => $write(open, v)} title="Hello" size="xs">
+          {() => ($read(swapped) ? <Text>Swapped</Text> : <Button onPress={() => $write(swapped, true)}>Swap</Button>)}
+        </Modal>
+      );
+    });
+    const { d, s, flush, dispose } = pair(view);
+    clock.advance(250);
+    flush();
+    d.find('Swap').focus();
+    d.press('Swap');
+    s.find('Swap').focus();
+    s.press('Swap');
+    flush();
+    assert.equal(d.text(), 'Hello Swapped');
+    assert.equal(s.text(), 'Hello Swapped');
+    assert.equal(d.focused().getAttribute('aria-label'), 'Close', 'the focus back on its first focusable on the DOM');
+    assert.equal(s.focused()?.label, 'Close', 'and on Skia');
+    d.key('Escape');
+    s.key('Escape');
+    assert.deepEqual(st.list.map(x => $read(x)), [false, false]);
+    dispose();
+  });
+
   it("moves by its motion's easing on the way in and its exit on the way out", () => {
     const { d, s, clock, flush, dispose } = setup({ motion: { effect: 'fade', duration: 200, exit: 50, easing: 'linear' } });
     d.press('Open');

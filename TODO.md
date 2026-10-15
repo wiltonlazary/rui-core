@@ -29,12 +29,6 @@ Open work for rui-core.
   Notifications and a LoadBar: each still says its English. Done when a
   test renders each of them under the provider with other words and finds
   no English left.
-- [ ] FocusTrap does not take the focus back when the focused control inside
-  it is removed: the focus falls to the body, and a Modal's Escape no
-  longer reaches it. Repro: in a Modal, a button that replaces itself with
-  other content when pressed; press it, then Escape: the Modal stays open.
-  Done when the focus moves to the trap's first focusable element (or the
-  trap itself) and Escape closes the Modal, with a test.
 - [ ] Code cannot wrap or truncate one long token: an id of 50 characters
   without spaces (`dev_f_fma_ent_0_0_0_0_0_01M3X…`) runs past its Card at
   390 px wide, inline or `block`. Repro: a `Code` of that text inside a
