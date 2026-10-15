@@ -12,3 +12,15 @@ Open work for rui-core.
   note does not wrap. Done when the note wraps within its container (its
   width at most the cap and at most the room), with a test at that width
   on the DOM renderer.
+- [ ] A button whose text changes with a state cannot keep one width: an
+  app toggling Delete / Restore or Disable / Enable on list items sets a
+  guessed `minWidth` in pixels (fiman uses 96) so the other actions do
+  not move, and a longer word in another language (Portuguese
+  'Desativar', Spanish 'Restaurar') or another font size breaks it.
+  Wanted: Button (and ActionIcon-like text buttons) take the alternative
+  texts it may show (for example `reserve={['Delete', 'Restore']}`) and
+  keep the width of the widest, measured in its own font, following a
+  change of the texts (a language switch). Repro: two Buttons side by
+  side, the first's text switching between 'Ativar' and 'Desativar' with
+  no `minWidth`: the second moves. Done when, with the texts reserved,
+  the second does not move, with a test on the DOM renderer.
