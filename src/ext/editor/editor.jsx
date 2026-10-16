@@ -100,7 +100,8 @@ export function Editor(props) {
   const ctx = { editor, labels: { ...LABELS, ...read(props.labels) }, link: { open: () => $read(open), set: (/** @type {boolean} */ on) => $write(open, on) } };
   const style = styled(props, (theme, scheme) => {
     const page = pageColors(theme, scheme);
-    return { direction: 'column', border: 1, borderColor: page.border, radius: radiusOf(theme, read(props.radius)), background: page.body, color: page.text, overflow: 'hidden' };
+    // The frame draws the focus ring of the block being edited, along its corners.
+    return { direction: 'column', border: 1, borderColor: page.border, radius: radiusOf(theme, read(props.radius)), ring: 'inner', background: page.body, color: page.text, overflow: 'hidden' };
   });
   return (
     <EditorContext value={ctx}>
@@ -728,6 +729,7 @@ function EditorContent(props) {
         minWidth: 0,
         border: 0,
         radius: 0,
+        ring: false,
         padding: 0,
         background: 'transparent',
         textAlign: justifyOf(b.align),

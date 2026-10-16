@@ -145,6 +145,8 @@ export function ComboboxPanel(props) {
       borderColor: pageColors(theme, scheme).rule,
       radius: radiusOf(theme, read(root.radius)),
       shadow: shadowOf(theme, read(root.shadow) ?? 'md'),
+      // The panel draws its filter's focus ring, along its corners.
+      ring: 'inner',
       padding: theme.control.panelPad,
       direction: 'column',
       fontSize: sized(theme.fontSizes, sizeOf(read(root.size))),
@@ -295,6 +297,7 @@ export function ComboboxFilter(props) {
       padding: [0, optionPadOf(theme, size)[1]],
       border: 0,
       radius: 0,
+      ring: false,
       background: 'transparent',
       color: pageColors(theme, scheme).text,
       fontSize: sized(theme.fontSizes, size),

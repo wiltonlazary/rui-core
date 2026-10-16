@@ -550,7 +550,7 @@ export function Rating(props) {
     $write(hover, v);
     props.onHover?.(v);
   };
-  const root = styled(props, () => ({ direction: 'row', align: 'center', background: 'transparent', border: 0, padding: 0, minHeight: 0, radius: 0, gap: 0, cursor: frozen() ? 'default' : 'pointer', justify: 'start', self: 'start' }));
+  const root = styled(props, theme => ({ direction: 'row', align: 'center', background: 'transparent', border: 0, padding: 0, minHeight: 0, radius: theme.radius.sm, gap: 0, cursor: frozen() ? 'default' : 'pointer', justify: 'start', self: 'start' }));
   return (
     <Action
       ref={(/** @type {any} */ n) => {

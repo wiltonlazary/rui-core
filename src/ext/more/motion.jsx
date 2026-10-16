@@ -11,7 +11,7 @@ import { $controlled, activeOf, focus } from '../../core/overlays/shared.jsx';
 import { easeOf } from '../../core/misc/tween.js';
 import { presetOf, transitionStyle } from '../../core/misc/collapse.jsx';
 import { DECOR, state as ariaState } from '../../theme/meaning.js';
-import { pageColors } from '../../theme/resolve.js';
+import { pageColors, radiusOf } from '../../theme/resolve.js';
 import { handOn } from '../../core/ref.js';
 
 /** The flip a Flip.Trigger toggles, and whether it shows its back. */
@@ -248,7 +248,7 @@ export function FlipTrigger(props) {
       label={props['aria-label']}
       onPress={() => flip?.toggle()}
       // The page's text color, as Pressable: an Action's own is the paper's, for a filled button.
-      style={styled(props, (theme, scheme) => ({ background: 'transparent', color: pageColors(theme, scheme).text, border: 0, padding: 0, radius: 0, minHeight: 0, direction: 'column', align: 'stretch', justify: 'start', textAlign: 'start', cursor: 'pointer' }))}
+      style={styled(props, (theme, scheme) => ({ background: 'transparent', color: pageColors(theme, scheme).text, border: 0, padding: 0, radius: radiusOf(theme, undefined), minHeight: 0, direction: 'column', align: 'stretch', justify: 'start', textAlign: 'start', cursor: 'pointer' }))}
     >
       {children}
     </Action>

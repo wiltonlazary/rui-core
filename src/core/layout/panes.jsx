@@ -192,6 +192,8 @@ export function Panes(props) {
       border: 0,
       touchAction: 'none',
       radius: 0,
+      // Its grip draws its focus ring.
+      ring: false,
       align: 'center',
       justify: 'center',
       background: 'transparent',
@@ -210,6 +212,7 @@ export function Panes(props) {
         position: 'absolute',
         ...(vertical() ? { width: long, height: thin, left: '50%', top: inset, margin: [0, 0, 0, -long / 2] } : { width: thin, height: long, top: '50%', left: inset, margin: [-long / 2, 0, 0, 0] }),
         radius: thin / 2,
+        ring: 'outer',
         background: pageColors(theme, scheme).edge,
       };
     });

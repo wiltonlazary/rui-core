@@ -339,7 +339,7 @@ export function TreeSelect(props) {
                 onKey={onKey}
                 onFocus={focused.onFocus}
                 onBlur={focused.onBlur}
-                style={() => ({ grow: 1, shrink: 1, minWidth: ui.theme().sizes.control[sizeOf(read(props.size))], minHeight: 0, height: ui.theme().sizes.dense[sizeOf(read(props.size))], padding: 0, border: 0, background: 'transparent', justify: 'start', align: 'center', direction: 'row', textAlign: 'start' })}
+                style={() => ({ grow: 1, shrink: 1, minWidth: ui.theme().sizes.control[sizeOf(read(props.size))], minHeight: 0, height: ui.theme().sizes.dense[sizeOf(read(props.size))], padding: 0, border: 0, ring: false, background: 'transparent', justify: 'start', align: 'center', direction: 'row', textAlign: 'start' })}
               >
                 <Label
                   text={() => (many() ? (values().length === 0 ? (read(props.placeholder) ?? '') : '') : values().length === 0 ? (read(props.placeholder) ?? '') : labelOf(values()[0]))}

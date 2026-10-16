@@ -79,6 +79,8 @@ function field(props, o) {
       border: 1,
       borderColor: invalidOf(read(props.error), read(props.invalid)) ? theme.colors.red[theme.accentShade[scheme]] : soft ? 'transparent' : page.border,
       radius: radiusOf(theme, read(props.radius)),
+      // The field draws its press target's focus ring, along its corners.
+      ring: 'inner',
       background: read(props.disabled) === true ? page.disabled : soft ? page.sunken : page.field,
       ...(read(props.disabled) === true ? { opacity: theme.opacity.disabled } : null),
     };
@@ -94,6 +96,7 @@ function field(props, o) {
       padding: [0, theme.spacing.xs, 0, Math.round(height(theme) * theme.ratios.inset)],
       border: 0,
       radius: 0,
+      ring: false,
       background: 'transparent',
       // Its text a row: at the start, in the middle of the field's height.
       direction: 'row',

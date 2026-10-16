@@ -50,6 +50,8 @@ export function FileInput(props) {
       border: read(props.variant) === 'bare' ? 0 : 1,
       borderColor: c.border,
       radius: radiusOf(theme, read(props.radius)),
+      // The field draws its press target's focus ring, along its corners.
+      ring: 'inner',
       background: c.background,
       color: c.color,
       ...(read(props.disabled) === true ? disabledLook(theme) : null),
@@ -67,6 +69,7 @@ export function FileInput(props) {
       padding: [0, props.end === undefined ? pad : 0, 0, props.start === undefined ? pad : 0],
       border: 0,
       radius: 0,
+      ring: false,
       background: 'transparent',
       direction: 'row',
       justify: 'start',

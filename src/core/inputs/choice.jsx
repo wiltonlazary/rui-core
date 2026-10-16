@@ -155,6 +155,8 @@ export function Checkbox(props) {
       height: s,
       shrink: 0,
       radius: radiusOf(theme, read(props.radius)),
+      // The box draws the focus ring of the row it is pressed through.
+      ring: 'outer',
       border: 1,
       align: 'center',
       justify: 'center',
@@ -184,7 +186,7 @@ export function Checkbox(props) {
       {...(props['aria-label'] ?? props.label) === undefined ? $fieldName(props) : null}
       selected={checked}
       onPress={toggle}
-      style={styled(props, () => ({ ...BARE, cursor: disabled() ? 'not-allowed' : 'pointer' }))}
+      style={styled(props, () => ({ ...BARE, ring: false, cursor: disabled() ? 'not-allowed' : 'pointer' }))}
     >
       {side ? body(props, size(), boxOf(ui.theme(), size())) : null}
       <View style={boxStyle}>
@@ -265,6 +267,7 @@ export function Radio(props) {
       height: s,
       shrink: 0,
       radius: s / 2,
+      ring: 'outer',
       border: 1,
       align: 'center',
       justify: 'center',
@@ -283,7 +286,7 @@ export function Radio(props) {
   };
   const side = read(props.labelAt) === 'start';
   return (
-    <Action ref={props.ref} role="radio" aria-checked={() => String(checked())} aria-disabled={flag(disabled)} aria-invalid={flag(() => invalidOf(read(props.error), read(props.invalid)))} label={props['aria-label'] ?? props.label} selected={checked} onPress={press} style={styled(props, () => ({ ...BARE, cursor: disabled() ? 'not-allowed' : 'pointer' }))}>
+    <Action ref={props.ref} role="radio" aria-checked={() => String(checked())} aria-disabled={flag(disabled)} aria-invalid={flag(() => invalidOf(read(props.error), read(props.invalid)))} label={props['aria-label'] ?? props.label} selected={checked} onPress={press} style={styled(props, () => ({ ...BARE, ring: false, cursor: disabled() ? 'not-allowed' : 'pointer' }))}>
       {side ? body(props, size(), boxOf(ui.theme(), size())) : null}
       <View style={ring}>
         <View style={dot} />
@@ -379,6 +382,7 @@ export function Switch(props) {
       height: m.h,
       shrink: 0,
       radius,
+      ring: 'outer',
       border: 1,
       borderColor: error ? errorColor(theme, scheme) : checked() ? color : page.rule,
       background: disabled() ? page.disabled : checked() ? color : page.track,
@@ -449,7 +453,7 @@ export function Switch(props) {
       {...(props['aria-label'] ?? props.label) === undefined ? $fieldName(props) : null}
       selected={checked}
       onPress={toggle}
-      style={styled(props, () => ({ ...BARE, cursor: disabled() ? 'not-allowed' : 'pointer' }))}
+      style={styled(props, () => ({ ...BARE, ring: false, cursor: disabled() ? 'not-allowed' : 'pointer' }))}
     >
       {side ? body(props, size(), boxOf(ui.theme(), size())) : null}
       <View style={track}>

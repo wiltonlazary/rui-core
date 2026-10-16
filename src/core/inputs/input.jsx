@@ -90,6 +90,8 @@ export function field(props, model) {
       align: model.rows === undefined ? 'center' : 'start',
       ...(h === undefined ? null : { height: h, minHeight: h }),
       radius: radiusOf(theme, read(props.radius)),
+      // The field draws the focus ring of its Edit, along its corners.
+      ring: 'inner',
       border: border(),
       borderColor: c.border,
       background: c.background,
@@ -122,6 +124,7 @@ export function field(props, model) {
         : { minHeight: rowsHigh(grow.min) - b, ...(Number.isFinite(grow.max) ? { maxHeight: rowsHigh(grow.max) - b } : null) }),
       border: 0,
       radius: 0,
+      ring: false,
       background: 'transparent',
       color: c.color,
       placeholderColor: c.placeholder,
@@ -434,6 +437,8 @@ export function NumberInput(props) {
           border: 0,
           padding: 0,
           radius: 0,
+          // A step is part of the field: the field rings it.
+          ring: false,
           minHeight: 0,
           height: h,
           width: w,

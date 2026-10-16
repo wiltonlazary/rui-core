@@ -297,7 +297,7 @@ export function Excerpt(props) {
     border: 0,
     padding: 0,
     minHeight: 0,
-    radius: 0,
+    radius: theme.radius.sm,
     color: colorOf(theme, scheme, undefined),
     fontSize: theme.fontSizes.sm,
     fontWeight: theme.weights.regular,

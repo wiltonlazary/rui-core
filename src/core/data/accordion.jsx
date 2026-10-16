@@ -112,8 +112,9 @@ function AccordionItem(props) {
     const variant = read(a.props.variant) ?? 'plain';
     const page = pageColors(theme, scheme);
     const radius = radiusOf(theme, read(a.props.radius));
-    if (variant === 'soft') return { radius, background: page.sunken };
-    if (variant === 'split') return { radius, border: 1, borderColor: a.open(value) ? page.border : page.rule, background: page.body };
+    // A card of its own draws its trigger's focus ring, along its corners.
+    if (variant === 'soft') return { radius, ring: 'inner', background: page.sunken };
+    if (variant === 'split') return { radius, ring: 'inner', border: 1, borderColor: a.open(value) ? page.border : page.rule, background: page.body };
     return {};
   });
   const line = () => {
@@ -144,6 +145,8 @@ function AccordionTrigger(props) {
   const style = styled(props, (theme, scheme) => {
     const page = pageColors(theme, scheme);
     const off = read(props.disabled) === true;
+    const variant = read(a.props.variant) ?? 'plain';
+    const card = variant === 'soft' || variant === 'split';
     return {
       direction: 'row',
       align: 'center',
@@ -153,7 +156,8 @@ function AccordionTrigger(props) {
       minHeight: 0,
       background: 'transparent',
       border: 0,
-      radius: 0,
+      // In a card of its own the card rings it; in a list of rows, its own ring along the option rows' corners.
+      ...(card ? { radius: 0, ring: false } : { radius: theme.radius.sm }),
       color: page.text,
       fontSize: theme.fontSizes.md,
       fontWeight: theme.weights.strong,

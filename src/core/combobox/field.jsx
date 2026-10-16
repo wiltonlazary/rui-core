@@ -42,6 +42,8 @@ export function FieldBox(props) {
       align: 'center',
       ...(read(props.multiline) ? { minHeight: h, wrap: true } : { height: h, minHeight: h }),
       radius: radiusOf(theme, read(props.radius)),
+      // The field draws the focus ring of the Edit or the press target inside it, along its corners.
+      ring: 'inner',
       border: variant === 'bare' ? 0 : 1,
       borderColor: variant === 'soft' && !error ? 'transparent' : borderOf(theme, scheme, { error, focused: props.focused?.() === true }),
       background: variant === 'soft' ? page.sunken : variant === 'bare' ? 'transparent' : page.field,
@@ -90,7 +92,7 @@ export function FieldBox(props) {
 
 /**
  * The style of an Edit inside a FieldBox: no box of its own, the field's
- * text. Among tags (`multiline`) it fills the wrapped row's room (the
+ * text; the field draws its focus ring. Among tags (`multiline`) it fills the wrapped row's room (the
  * control's height less its border and the row's `control.labelGap`
  * padding) and keeps at least two control heights to type in.
  * @param {Record<string, any>} props
@@ -107,6 +109,7 @@ export function editStyle(props) {
       height: read(props.multiline) ? theme.sizes.control[s] - 2 - theme.control.labelGap : '100%',
       border: 0,
       radius: 0,
+      ring: false,
       padding: 0,
       background: 'transparent',
       color: pageColors(theme, scheme).text,

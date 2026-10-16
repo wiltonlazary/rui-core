@@ -132,7 +132,7 @@ export function Select(props) {
       onPress={() => !locked() && store.toggle()}
       onFocus={focused.onFocus}
       onBlur={focused.onBlur}
-      style={{ grow: 1, shrink: 1, width: 0, minWidth: 0, height: '100%', minHeight: 0, padding: 0, border: 0, background: 'transparent', justify: 'start', align: 'center', direction: 'row', textAlign: 'start' }}
+      style={{ grow: 1, shrink: 1, width: 0, minWidth: 0, height: '100%', minHeight: 0, padding: 0, border: 0, ring: false, background: 'transparent', justify: 'start', align: 'center', direction: 'row', textAlign: 'start' }}
     >
       <Label text={() => labelOf(value.get()) || (read(props.placeholder) ?? '')} style={valueStyle(props, () => value.get() == null)} />
     </Action>

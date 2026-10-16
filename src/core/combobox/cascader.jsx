@@ -492,7 +492,7 @@ export function Cascader(props) {
       onKey={onKey}
       onFocus={focused.onFocus}
       onBlur={focused.onBlur}
-      style={{ grow: 1, shrink: 1, width: 0, minWidth: 0, height: '100%', minHeight: 0, padding: 0, border: 0, background: 'transparent', justify: 'start', align: 'center', direction: 'row', textAlign: 'start' }}
+      style={{ grow: 1, shrink: 1, width: 0, minWidth: 0, height: '100%', minHeight: 0, padding: 0, border: 0, ring: false, background: 'transparent', justify: 'start', align: 'center', direction: 'row', textAlign: 'start' }}
     >
       <Label text={() => fieldText() || String(read(props.placeholder) ?? '')} style={valueStyle(props, () => chosen() === null)} />
     </Action>

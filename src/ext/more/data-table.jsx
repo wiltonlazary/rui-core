@@ -312,7 +312,7 @@ export function DataTable(props) {
                 <Action
                   label={String(text ? title : column.key)}
                   onPress={() => pressSort(column)}
-                  style={/** @returns {Record<string, any>} */ () => ({ grow: 1, direction: 'row', align: 'center', justify: column.align === 'end' ? 'end' : column.align === 'center' ? 'center' : 'start', gap: ui.theme().control.iconGap, background: 'transparent', border: 0, radius: 0, padding: 0, minHeight: 0, fontWeight: ui.theme().weights.strong, cursor: 'pointer' })}
+                  style={/** @returns {Record<string, any>} */ () => ({ grow: 1, direction: 'row', align: 'center', justify: column.align === 'end' ? 'end' : column.align === 'center' ? 'center' : 'start', gap: ui.theme().control.iconGap, background: 'transparent', border: 0, radius: ui.theme().radius.sm, padding: 0, minHeight: 0, fontWeight: ui.theme().weights.strong, cursor: 'pointer' })}
                 >
                   {content}
                   <Shape {...DECOR} shapes={arrow(column)} style={() => ({ width: ui.theme().sizes.glyph.sm, height: ui.theme().sizes.glyph.sm, shrink: 0 })} />

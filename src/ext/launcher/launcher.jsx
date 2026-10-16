@@ -143,6 +143,8 @@ export function Launcher(props) {
     padding: [0, theme.spacing.md],
     border: 0,
     radius: 0,
+    // Its panel draws its focus ring, along its corners.
+    ring: false,
     background: 'transparent',
     color: pageColors(theme, scheme).text,
     fontSize: theme.fontSizes.lg,
@@ -189,6 +191,7 @@ export function Launcher(props) {
         size={() => read(props.size) ?? ui.theme().sizes.box.launcherWidth}
         offset={() => ({ y: read(props.offset) ?? ui.theme().sizes.box.launcher.offset })}
         radius={props.radius}
+        style={{ ring: 'inner' }}
         shadow={props.shadow}
         layer={props.layer}
         motion={props.motion}
