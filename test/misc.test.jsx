@@ -562,8 +562,14 @@ describe('rui-core misc on the DOM and on Skia', () => {
       flush(dom, skia);
       const strip = dom.nodes('Scroll')[0];
       assert.equal(strip.style.overflowX, 'auto', 'the DOM scrolls it across');
+      // as high as its row (20 px here, no bar's room), never the theme's region
+      assert.equal(strip.style.height, '20px', 'the DOM strip is as high as its row');
+      assert.equal(strip.firstElementChild.style.minWidth, '100%', 'its row at least as wide as the strip');
       const across = items(skia, KIND.Scroll)[0];
       assert.equal(across.axis, 1, 'a Scroll along x on Skia');
+      const high = across.getBoundingClientRect().height;
+      const line = across.first.getBoundingClientRect().height;
+      assert.ok(high >= line && high < line + 40, `Skia: the strip (${high}) as high as its row (${line}) and its bar`);
       const controls = () => dom.nodes('View').filter(n => /Scroll (back|forward)/.test(n.getAttribute('aria-label') ?? '')).map(n => n.getAttribute('aria-label'));
       assert.deepEqual(controls(), ['Scroll forward'], 'at the start: forward only');
       const forward = dom.nodes('View').find(n => n.getAttribute('aria-label') === 'Scroll forward');

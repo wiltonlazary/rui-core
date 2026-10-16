@@ -10,6 +10,7 @@ import { $ui } from '../../theme/theme.jsx';
 import { pass } from '../layout/layout.jsx';
 import { $tween, boxOf, capture } from './tween.js';
 import { handOn } from '../ref.js';
+import { $barRoom } from '../../ext/more/shared.js';
 import { DECOR } from '../../theme/meaning.js';
 import { $reducedMotion } from '../../hooks/platform.js';
 import { labelsIn } from '../../theme/labels.js';
@@ -141,7 +142,9 @@ function Arrow(props) {
  * dragging with `draggable`. `previousIcon` and `nextIcon`
  * replace the chevrons. The controls follow the scroll position and
  * the strip's and its content's sizes (their `onResize`: once laid out
- * and on each resize).
+ * and on each resize). The strip is as high as its row and its bar's room
+ * (a Scroll is otherwise the theme's region high), once the row is laid
+ * out, and the row at least as wide as the strip.
  * @param {Record<string, any>} props
  */
 export function ScrollRow(props) {
@@ -153,6 +156,9 @@ export function ScrollRow(props) {
   const max = $signal(R, 0);
   /** @type {any} */
   let viewport = null;
+  // The strip's height: its row's, measured, and its bar's room; null until the row is laid out.
+  const bar = $barRoom();
+  const row = $signal(R, /** @type {number | null} */ (null));
   /** True while a control's press animates the position. */
   let driving = false;
   const sync = () => {
@@ -245,14 +251,29 @@ export function ScrollRow(props) {
     <View {...pass(props)} style={styled(props, () => ({ position: 'relative', direction: 'row' }))}>
       <Scroll
         axis="x"
-        ref={(/** @type {any} */ n) => (viewport = n)}
+        ref={(/** @type {any} */ n) => {
+          viewport = n;
+          bar.ref(n);
+        }}
         {...drag}
         onWheel={onWheel}
         onScroll={sync}
-        onResize={sync}
-        style={{ grow: 1, minWidth: 0, shrink: 1 }}
+        onResize={(/** @type {{ height: number }} */ box) => {
+          bar.onResize(box);
+          sync();
+        }}
+        style={() => {
+          const high = $read(row);
+          return { grow: 1, minWidth: 0, shrink: 1, ...(high === null ? null : { height: high + bar.room() }) };
+        }}
       >
-        <View onResize={sync} style={{ direction: 'row', self: 'start', shrink: 0 }}>
+        <View
+          onResize={(/** @type {{ height: number }} */ box) => {
+            if (box.height !== $untrack(R, () => $read(row))) $write(row, box.height);
+            sync();
+          }}
+          style={{ direction: 'row', self: 'start', shrink: 0, minWidth: '100%' }}
+        >
           {props.children}
         </View>
       </Scroll>
