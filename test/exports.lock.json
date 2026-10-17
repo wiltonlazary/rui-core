@@ -24,6 +24,7 @@
     "Breadcrumbs": "function",
     "Busy": "function",
     "Button": "function",
+    "CameraIcon": "function",
     "Card": "function",
     "Cascader": "function",
     "Center": "function",

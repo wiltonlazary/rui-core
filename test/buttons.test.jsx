@@ -319,6 +319,25 @@ describe('Copy and share icons', () => {
   });
 });
 
+describe('Camera icon', () => {
+  it('draws its body and its lens as outlines, the same on both', async () => {
+    const { CameraIcon } = await import('rui-core');
+    const { dom, skia, dispose } = both(() => (
+      <Rui>
+        <CameraIcon size={24} color="indigo" />
+      </Rui>
+    ));
+    const [shape] = dom.nodes('Shape');
+    assert.deepEqual([...shape.children].map((/** @type {any} */ c) => c.tagName.toLowerCase()), ['path', 'ellipse']);
+    // outlines, not fills: the stroke grows with the size
+    assert.deepEqual([...shape.children].map((/** @type {any} */ c) => [c.getAttribute('fill'), c.getAttribute('stroke-width')]), [['none', '3'], ['none', '3']]);
+    skia.text();
+    const kinds = skia.skia.commands().map((/** @type {any[]} */ c) => c[0]);
+    assert.equal(kinds.filter((/** @type {string} */ k) => k === 'oval').length, 1, 'the lens on Skia');
+    dispose();
+  });
+});
+
 describe('Back and forward icons', () => {
   it('draw a pointer each way, along the row or down and up, the same on both', async () => {
     const { BackIcon, ForwardIcon } = await import('rui-core');

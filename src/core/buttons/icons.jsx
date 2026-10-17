@@ -183,3 +183,18 @@ export function ShareIcon(props) {
     ];
   });
 }
+
+/** A camera: its body with a raised top, and the lens (photos, pictures). @param {Record<string, any>} props */
+export function CameraIcon(props) {
+  return icon(props, (size, color) => {
+    const stroke = strokeOf(props, size);
+    // The body's outline, in parts of the box: the top rises in the middle, where the viewfinder sits.
+    const body = [0.1, 0.32, 0.32, 0.32, 0.4, 0.2, 0.6, 0.2, 0.68, 0.32, 0.9, 0.32, 0.9, 0.82, 0.1, 0.82];
+    // The lens, a circle in the body's middle.
+    const [x, y, d] = [0.5, 0.57, 0.3];
+    return [
+      { kind: 'path', closed: true, points: body.map(v => v * size), color, stroke },
+      { kind: 'oval', x: (x - d / 2) * size, y: (y - d / 2) * size, right: (x + d / 2) * size, bottom: (y + d / 2) * size, color, stroke },
+    ];
+  });
+}
