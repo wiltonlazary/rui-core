@@ -198,3 +198,18 @@ export function CameraIcon(props) {
     ];
   });
 }
+
+/** A label tag: its body pointing to the lower right corner, a hole near the upper left (tags, labels). @param {Record<string, any>} props */
+export function TagIcon(props) {
+  return icon(props, (size, color) => {
+    const stroke = strokeOf(props, size);
+    // The tag's outline, in parts of the box: square at the upper left, its point at the lower right.
+    const body = [0.12, 0.12, 0.52, 0.12, 0.9, 0.5, 0.5, 0.9, 0.12, 0.52];
+    // The hole, filled, where a string would go.
+    const [x, y, d] = [0.32, 0.32, 0.14];
+    return [
+      { kind: 'path', closed: true, points: body.map(v => v * size), color, stroke },
+      { kind: 'oval', x: (x - d / 2) * size, y: (y - d / 2) * size, right: (x + d / 2) * size, bottom: (y + d / 2) * size, color },
+    ];
+  });
+}

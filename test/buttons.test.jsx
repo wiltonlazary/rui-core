@@ -319,6 +319,23 @@ describe('Copy and share icons', () => {
   });
 });
 
+describe('Tag icon', () => {
+  it('draws its body as an outline and its hole filled, the same on both', async () => {
+    const { TagIcon } = await import('rui-core');
+    const { dom, skia, dispose } = both(() => (
+      <Rui>
+        <TagIcon size={24} />
+      </Rui>
+    ));
+    const [shape] = dom.nodes('Shape');
+    assert.deepEqual([...shape.children].map((/** @type {any} */ c) => [c.tagName.toLowerCase(), c.getAttribute('fill') === 'none']), [['path', true], ['ellipse', false]]);
+    skia.text();
+    const kinds = skia.skia.commands().map((/** @type {any[]} */ c) => c[0]);
+    assert.equal(kinds.filter((/** @type {string} */ k) => k === 'oval').length, 1, 'the hole on Skia');
+    dispose();
+  });
+});
+
 describe('Camera icon', () => {
   it('draws its body and its lens as outlines, the same on both', async () => {
     const { CameraIcon } = await import('rui-core');

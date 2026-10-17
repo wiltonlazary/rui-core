@@ -7,5 +7,5 @@ export const Button = Object.assign(Base, { Group: ButtonGroup, Addon: ButtonAdd
 export { Pressable } from './button.jsx';
 export { IconButton, CloseButton } from './icon-button.jsx';
 export { CopyButton } from './copy.jsx';
-export { CloseIcon, CheckIcon, ChevronIcon, BackIcon, ForwardIcon, DotsIcon, CopyIcon, ShareIcon, CameraIcon } from './icons.jsx';
+export { CloseIcon, CheckIcon, ChevronIcon, BackIcon, ForwardIcon, DotsIcon, CopyIcon, ShareIcon, CameraIcon, TagIcon } from './icons.jsx';
 export { FileButton } from './file.jsx';

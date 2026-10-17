@@ -131,6 +131,7 @@
     "Tabs": "function",
     "Tag": "function",
     "TagBox": "function",
+    "TagIcon": "function",
     "TagInput": "function",
     "Text": "function",
     "TextInput": "function",
