@@ -74,6 +74,21 @@ export function VisuallyHidden(props) {
 }
 
 /**
+ * The portable style of a Scroll's bars from a `bars` prop: none for false, else their width's word and their colors
+ * from the theme (options `thin`, `color`, `track`).
+ * @param {any} b @param {any} theme @param {'light' | 'dark'} scheme
+ */
+function barsOf(b, theme, scheme) {
+  if (b === false) return { scrollbarWidth: /** @type {const} */ ('none') };
+  const o = b != null && typeof b === 'object' ? b : {};
+  const page = pageColors(theme, scheme);
+  return {
+    scrollbarWidth: o.thin === true ? /** @type {const} */ ('thin') : /** @type {const} */ ('auto'),
+    scrollbarColor: [o.color == null ? page.border : colorOf(theme, scheme, o.color), o.track == null ? page.track : colorOf(theme, scheme, o.track)],
+  };
+}
+
+/**
  * A scrolling region: `h` or `maxHeight` bound it, `axis` ('y', by
  * default, 'x' or 'both') is the way it scrolls, `onScroll` hears `{ x, y }`
  * (the offsets across and down), `ref` gets the Scroll (with `scrollTop`
@@ -89,17 +104,7 @@ export function ScrollBox(props) {
   /** @type {any} */
   let node = null;
   const onScroll = () => props.onScroll?.({ x: node?.scrollLeft ?? 0, y: node?.scrollTop ?? 0 });
-  /** The portable style of its bars: their width's word and their colors from the theme. @param {any} theme @param {'light' | 'dark'} scheme */
-  const bars = (theme, scheme) => {
-    const b = read(props.bars);
-    if (b === false) return { scrollbarWidth: /** @type {const} */ ('none') };
-    const o = b != null && typeof b === 'object' ? b : {};
-    const page = pageColors(theme, scheme);
-    return {
-      scrollbarWidth: o.thin === true ? /** @type {const} */ ('thin') : /** @type {const} */ ('auto'),
-      scrollbarColor: [o.color == null ? page.border : colorOf(theme, scheme, o.color), o.track == null ? page.track : colorOf(theme, scheme, o.track)],
-    };
-  };
+  const bars = (/** @type {any} */ theme, /** @type {'light' | 'dark'} */ scheme) => barsOf(read(props.bars), theme, scheme);
   return (
     <Scroll
       {...pass(props)}
@@ -140,7 +145,9 @@ function Arrow(props) {
  * quarter of what was shown stays in view as the place kept;
  * `buttonSize` md, a step of the theme's `sizes.icon` or px), the wheel (its vertical turn scrolls across too), and
  * dragging with `draggable`. `previousIcon` and `nextIcon`
- * replace the chevrons. The controls follow the scroll position and
+ * replace the chevrons. `bars` is ScrollBox's: the renderer's bar by default,
+ * false for none (the chevrons, wheel, touch and drag still scroll it), or its
+ * options. The controls follow the scroll position and
  * the strip's and its content's sizes (their `onResize`: once laid out
  * and on each resize). The strip is as high as its row and its bar's room
  * (a Scroll is otherwise the theme's region high), once the row is laid
@@ -262,10 +269,12 @@ export function ScrollRow(props) {
           bar.onResize(box);
           sync();
         }}
-        style={() => {
+        style={styled({}, (theme, scheme) => {
           const high = $read(row);
-          return { grow: 1, minWidth: 0, shrink: 1, ...(high === null ? null : { height: high + bar.room() }) };
-        }}
+          const b = read(props.bars);
+          // the renderer's own bar unless one is asked for, or none
+          return { grow: 1, minWidth: 0, shrink: 1, ...(b == null || b === true ? null : barsOf(b, theme, scheme)), ...(high === null ? null : { height: high + bar.room() }) };
+        })}
       >
         <View
           onResize={(/** @type {{ height: number }} */ box) => {

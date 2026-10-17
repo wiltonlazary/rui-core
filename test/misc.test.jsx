@@ -527,6 +527,24 @@ describe('rui-core misc on the DOM and on Skia', () => {
     dispose();
   });
 
+  it('ScrollRow with bars false draws no bar and keeps no room for one; by default the renderer\'s bar stays', () => {
+    const { dom, dispose } = both(() => (
+      <Rui>
+        <ScrollRow w={300} bars={false}>
+          <Text>none</Text>
+        </ScrollRow>
+        <ScrollRow w={300}>
+          <Text>default</Text>
+        </ScrollRow>
+      </Rui>
+    ));
+    const [none, plain] = dom.nodes('Scroll');
+    assert.equal(none.style.getPropertyValue('--ren-bars'), 'none', 'no bar drawn');
+    assert.equal(none.style.getPropertyValue('--ren-bar-size'), '0px', 'and no room for it');
+    assert.equal(plain.style.getPropertyValue('--ren-bars'), '', 'the renderer\'s bar by default');
+    dispose();
+  });
+
   it('ScrollRow: a Scroll along x; controls while there is more, a press scrolls by step (by default the visible width times ratios.pad)', () => {
     for (const [step, by] of /** @type {[number | undefined, number][]} */ ([[100, 100], [undefined, 300 * BASE_THEME.ratios.pad]])) {
       const clock = manualClock();
