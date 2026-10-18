@@ -52,7 +52,8 @@ export const storeOf = (props, on) => ({
 export function valueStyle(props, empty) {
   return styled({}, (theme, scheme) => {
     const page = pageColors(theme, scheme);
-    return { grow: 1, color: empty() ? page.placeholder : page.text, fontSize: sized(theme.fontSizes, sizeOf(read(props.size))) };
+    // minWidth 0: a narrow field cuts a long value with its ellipsis rather than running under the chevron
+    return { grow: 1, minWidth: 0, color: empty() ? page.placeholder : page.text, fontSize: sized(theme.fontSizes, sizeOf(read(props.size))) };
   });
 }
 
@@ -153,7 +154,7 @@ export function Select(props) {
       onBlur={focused.onBlur}
       style={{ grow: 1, shrink: 1, width: 0, minWidth: 0, height: '100%', minHeight: 0, padding: 0, border: 0, ring: false, background: 'transparent', justify: 'start', align: 'center', direction: 'row', textAlign: 'start' }}
     >
-      <Label text={() => labelOf(value.get()) || (read(props.placeholder) ?? '')} style={valueStyle(props, () => value.get() == null)} />
+      <Label text={() => labelOf(value.get()) || (read(props.placeholder) ?? '')} ellipsis style={valueStyle(props, () => value.get() == null)} />
     </Action>
   );
   // in a lightbox the field is pressed, never typed in: its filter takes the typing

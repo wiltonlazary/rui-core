@@ -1407,6 +1407,10 @@ describe('Lightbox', () => {
     t.pick('Banana');
     assert.deepEqual(t.values(), ['Banana', 'Banana']);
     assert.doesNotMatch(t.text(), /Apple/, 'closed');
+    // the pressed field's value is cut with an ellipsis where it is narrow, never under the chevron
+    const value = t.d.nodes('Label').find(n => n.textContent.trim() === 'Banana');
+    assert.equal(value.style.textOverflow, 'ellipsis');
+    assert.equal(value.style.minWidth, '0px');
     t.dispose();
   });
 
