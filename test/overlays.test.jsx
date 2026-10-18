@@ -507,6 +507,54 @@ describe('Modal and Drawer parts', () => {
 });
 
 describe('Overlay defaults', () => {
+  it('a Modal or a Drawer taller than its layer scrolls in it: the whole content within reach, none past the screen', () => {
+    const clock = manualClock();
+    const lines = Array.from({ length: 30 }, (_, i) => `Line ${i + 1}`);
+    const view = () => (
+      <Clock value={clock}>
+        <Rui>
+          <Modal open title="Long" motion={{ duration: 0 }}>
+            {lines.map(l => (
+              <Text>{l}</Text>
+            ))}
+          </Modal>
+        </Rui>
+      </Clock>
+    );
+    // a phone's screen, shorter than thirty lines
+    const a = pair(view, { width: 390, height: 400 });
+    clock.advance(50);
+    a.flush();
+    const scroller = a.s.items().find((/** @type {any} */ i) => i.kind === 2 && Math.round(a.s.box(i).height) === 400);
+    assert.ok(scroller !== undefined, 'a scroller as high as the layer (Skia)');
+    assert.throws(() => a.s.find('Line 30'), /no "Line 30"/, 'the last line below the screen, clipped');
+    // scrolled to its end, the last line is within the screen
+    scroller.scrollTop = 10_000;
+    a.flush();
+    const last = a.s.box(a.s.find('Line 30'));
+    assert.ok(last.y + last.height <= 400, `the last line within reach: ${last.y}`);
+    assert.ok(a.d.nodes('Scroll').length > 0, 'and a scroller on the DOM');
+    a.dispose();
+    const clock2 = manualClock();
+    const drawer = () => (
+      <Clock value={clock2}>
+        <Rui>
+          <Drawer open title="Filters" motion={{ duration: 0 }}>
+            {lines.map(l => (
+              <Text>{l}</Text>
+            ))}
+          </Drawer>
+        </Rui>
+      </Clock>
+    );
+    const b = pair(drawer, { width: 390, height: 400 });
+    clock2.advance(50);
+    b.flush();
+    const body = b.s.items().find((/** @type {any} */ i) => i.kind === 2);
+    assert.ok(body !== undefined && Math.round(b.s.box(body).y + b.s.box(body).height) <= 400, 'the drawer\'s body ends at the screen\'s end (Skia)');
+    b.dispose();
+  });
+
   it('a Modal sits 64 from the top at 560 wide; a Drawer at the end at 360; a wrapping Tooltip at its width', () => {
     const clock = manualClock();
     const view = () => (

@@ -17,6 +17,7 @@ import { Layer, $controlled, $presence, timingOf, motionOf, moved, Close, focus,
 import { DECOR } from '../../theme/meaning.js';
 import { ModalStack, StackContext, seat } from './modal-stack.jsx';
 import { tables } from '../../own.js';
+import { ScrollBox } from '../misc/misc.jsx';
 import { labelsIn } from '../../theme/labels.js';
 
 
@@ -250,7 +251,8 @@ export function ModalContent(props) {
       const across = s === 'left' || s === 'right';
       return {
         position: 'absolute',
-        ...(across ? { top: 0, minHeight: '100%', width: size, maxWidth: '100%' } : { left: 0, right: 0, height: size, maxHeight: '100%' }),
+        // as long as the layer along its edge: a body longer than that scrolls inside it (Modal.Body)
+        ...(across ? { top: 0, bottom: 0, width: size, maxWidth: '100%' } : { left: 0, right: 0, height: size, maxHeight: '100%' }),
         [s]: 0,
         padding: read(root.offset) ?? 0,
         direction: across ? 'column' : 'row',
@@ -288,12 +290,22 @@ export function ModalContent(props) {
     const apart = offset != null && typeof offset === 'object';
     const y = (apart ? offset.y : offset) ?? ui.theme().sizes.box.modalTop;
     const x = (apart ? offset.x : offset) ?? ui.theme().spacing.md;
-    // A minimum height, not a bottom inset: the box keeps its content's
-    // height where that is more than the layer's.
+    // In the portal, at least the layer's height, the gaps as padding (from the sides below it too): the box keeps its
+    // content's height where that is more than the layer's (the viewport), and the layer's scroller scrolls it, as a
+    // page would. Inline (`portal` false) it is placed in the box it is in, as high as its content, the box's to scroll.
+    if (!portaled()) {
+      return full()
+        ? { position: 'absolute', top: 0, left: 0, right: 0, minHeight: '100%', direction: 'column' }
+        : { position: 'absolute', top: centered ? 0 : y, left: x, right: x, minHeight: centered ? '100%' : 0, direction: 'column', align: 'center', justify: centered ? 'center' : 'start' };
+    }
     return full()
-      ? { position: 'absolute', top: 0, left: 0, right: 0, minHeight: '100%', direction: 'column' }
-      : { position: 'absolute', top: centered ? 0 : y, left: x, right: x, minHeight: centered ? '100%' : 0, direction: 'column', align: 'center', justify: centered ? 'center' : 'start' };
+      ? { minHeight: '100%', direction: 'column' }
+      : { minHeight: '100%', padding: [centered ? x : y, x, x, x], direction: 'column', align: 'center', justify: centered ? 'center' : 'start' };
   };
+  const portaled = () => read(root.portal) !== false;
+  // The layer's scroller: the layer's whole box (its child filling it, not a region's fixed height), a content taller
+  // than it (a long form on a phone) scrolling in it; no room kept for bars, so the content keeps the layer's width.
+  const scroller = { grow: 1, shrink: 1, minHeight: 0, alignSelf: 'stretch' };
   const content = styled(props, (theme, scheme) => {
     const page = pageColors(theme, scheme);
     const f = full();
@@ -301,6 +313,8 @@ export function ModalContent(props) {
       width: f ? '100%' : sizeOf(theme.sizes.modal, read(root.size)),
       maxWidth: '100%',
       ...(f ? { height: '100%' } : null),
+      // never shorter than its content: the box around grows, and the layer's scroller scrolls it
+      shrink: 0,
       background: page.raised,
       color: page.text,
       radius: f ? 0 : radiusOf(theme, read(root.radius)),
@@ -310,13 +324,20 @@ export function ModalContent(props) {
       ...moved(d.presence.t(), d.motion().effect ?? 'grow'),
     };
   });
-  return (
+  const placed = (
     <View style={inner} onPointerDown={d.onBackdrop}>
       <View ref={d.enter} trap={d.trap} {...dialog} style={content}>
         {props.children}
         {holder()}
       </View>
     </View>
+  );
+  return portaled() ? (
+    <ScrollBox bars={false} style={scroller}>
+      {placed}
+    </ScrollBox>
+  ) : (
+    placed
   );
 }
 
@@ -373,9 +394,15 @@ export function ModalBody(props) {
   const c = $part();
   const style = styled(props, theme => {
     const p = spacing(theme, read(c.props.padding), 'lg');
-    return { padding: [c.header ? theme.spacing.xs : p, p, p, p], direction: 'column', ...(c.kind === 'drawer' ? { grow: 1 } : null) };
+    return { padding: [c.header ? theme.spacing.xs : p, p, p, p], direction: 'column' };
   });
-  return <View style={style}>{props.children}</View>;
+  if (c.kind !== 'drawer') return <View style={style}>{props.children}</View>;
+  // A drawer's body fills the panel under its header and scrolls what is longer (a modal's scrolls with its layer).
+  return (
+    <ScrollBox bars={{ thin: true }} style={{ grow: 1, height: 0, minHeight: 0 }}>
+      <View style={style}>{props.children}</View>
+    </ScrollBox>
+  );
 }
 
 /**

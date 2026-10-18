@@ -19,9 +19,9 @@ function hidden(node) {
   return false;
 }
 
-/** The view on both renderers, seeing the portal layer, with keys and typing. @param {() => any} view */
-function pair(view) {
-  const { dom, skia, dispose } = both(view);
+/** The view on both renderers (at `size`), seeing the portal layer, with keys and typing. @param {() => any} view @param {{ width: number, height: number }} [size] */
+function pair(view, size) {
+  const { dom, skia, dispose } = both(view, size);
   const body = dom.document.body;
   /** @param {string} role */
   const nodes = role => /** @type {any[]} */ ([...body.querySelectorAll(`[data-ren="${role}"]`)]).filter(n => !hidden(n));
@@ -144,7 +144,8 @@ function setup(extra = {}, field = false) {
       </Rui>
     </Clock>
   );
-  const p = pair(view);
+  // tall enough for the whole list: a modal taller than its layer scrolls, what is below out of reach of a press
+  const p = pair(view, { width: 480, height: 720 });
   const settle = () => {
     clock.advance(250);
     $flush(p.dom.root);

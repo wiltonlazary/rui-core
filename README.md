@@ -289,7 +289,7 @@ presets and the layers.
 
 | Component | Defaults |
 | --- | --- |
-| Modal | size 560, `at` 'top' at offset 64, padding lg, shadow lg, motion base grow |
+| Modal | size 560, `at` 'top' at offset 64, padding lg, shadow lg, motion base grow; taller than the screen, it scrolls in its layer (a Drawer's body in its panel) |
 | Drawer | `at` 'end', size 360, offset 0, motion calm |
 | Dialog | at `{ bottom: lg, right: lg }`, padding lg, shadow lg, motion base rise; its close in flow at the first row's end |
 | Popover, Menu, HoverCard | padding 8 × 12, spacing xs × sm (Menu: panel 6, items 6 × 12, labels 600), offset 6, shadow md, motion quick; HoverCard delays 80 / 240 |
