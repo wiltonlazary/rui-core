@@ -8,7 +8,7 @@ import { $ui } from '../../theme/theme.jsx';
 import { pageColors, sized } from '../../theme/resolve.js';
 import { $controlled } from '../overlays/shared.jsx';
 import { $combobox } from './store.js';
-import { Combobox, ComboboxTrigger, ComboboxPanel, ComboboxFilter, OptionsList, $comboboxContext } from './combobox.jsx';
+import { Combobox, ComboboxTrigger, ComboboxPanel, ComboboxFilter, OptionsList, $comboboxContext, $boxed } from './combobox.jsx';
 import { FieldBox, Outer, Opener, Clear, editStyle, sizeOf, $focused, comboOf } from './field.jsx';
 import { parseData, shown, grouped } from './data.js';
 import { labelsIn } from '../../theme/labels.js';
@@ -30,6 +30,12 @@ export function firstIndex(options) {
 
 /** The combobox props a component passes on (`popover`: the panel's placement and look, and its size). @param {Record<string, any>} props */
 export const comboboxOf = props => ({ size: props.size, ...(read(props.popover) ?? {}) });
+
+/** A field's name, the title of its lightbox: its label, else its aria-label, else its placeholder. @param {Record<string, any>} props */
+export const titleOf = props => () => read(props.label) ?? read(props['aria-label']) ?? read(props.placeholder) ?? '';
+
+/** Whether a lightbox lists more options than the theme's `control.typeahead`: it then shows its filter. @param {any} ui @param {any[]} options */
+export const long = (ui, options) => options.length > (ui.theme().control.typeahead ?? 10);
 
 /** The store options of a component's open props (`open`, `defaultOpen`, `onOpenChange`). @param {Record<string, any>} props @param {{ open?: () => void, close?: () => void }} on */
 export const storeOf = (props, on) => ({
@@ -61,25 +67,36 @@ export function valueStyle(props, empty) {
  * `checkAt` ('end'), `renderOption(option, { picked })`, `disabled`, `readOnly`, `label`,
  * `description`, `error`, `required`, `size`, `radius`, `variant`,
  * `start`, `end`, `popover` (the panel's placement), `open`,
- * `defaultOpen`, `onOpenChange`.
+ * `defaultOpen`, `onOpenChange`, `lightbox` (true, false, or a breakpoint key
+ * below which; the theme's `control.lightbox` by default): the options then
+ * open in a centered lightbox titled by the label, the field pressed rather
+ * than typed in, and a filter at its top while it lists more than
+ * `control.typeahead` options (or the field is `searchable`).
  * @param {Record<string, any>} props
  */
 export function Select(props) {
   const R = $active();
+  const ui = $ui();
+  const boxed = $boxed(props);
   const data = $memo(R, () => parseData(read(props.data)));
   const find = (/** @type {string | null} */ v) => /** @type {Option[]} */ ($read(data)).find(o => o.value === v) ?? null;
   const value = $controlled(props, 'value', 'defaultValue', /** @type {string | null} */ (null), v => props.onChange?.(v));
   const labelOf = (/** @type {string | null} */ v) => find(v)?.label ?? '';
   const searchable = () => read(props.searchable) === true;
+  // typed in the field; in a lightbox, in its filter (a long list, or a searchable field)
+  const inField = () => searchable() && !boxed.on();
+  const filtered = () => boxed.on() && (searchable() || long(ui, $read(data)));
   const typed = $signal(R, false);
   const search = $controlled(props, 'search', 'defaultSearch', '', v => props.onSearchChange?.(v));
-  const options = () => shown($read(data), searchable() && $read(typed) ? search.get() : '', searchable() ? props.match : undefined, read(props.limit));
+  const narrowing = () => inField() || filtered();
+  const options = () => shown($read(data), narrowing() && $read(typed) ? search.get() : '', narrowing() ? props.match : undefined, read(props.limit));
   const store = $combobox(
     storeOf(props, {
       open: () => store.activate(indexOf($untrack(R, options), $untrack(R, value.get))),
       close: () => {
         $write(typed, false);
-        if (searchable()) search.set(labelOf($untrack(R, value.get)));
+        if ($untrack(R, inField)) search.set(labelOf($untrack(R, value.get)));
+        else if ($untrack(R, filtered)) search.set('');
       },
     }),
   );
@@ -90,7 +107,8 @@ export function Select(props) {
     const current = $untrack(R, value.get);
     const next = current === v && read(props.deselectable) !== false ? null : v;
     if (next !== current) value.set(next);
-    if (searchable()) search.set(labelOf(next));
+    if (inField()) search.set(labelOf(next));
+    else if (filtered()) search.set('');
     $write(typed, false);
     store.close();
     store.focus();
@@ -107,7 +125,7 @@ export function Select(props) {
     return read(props.clearable) === true && value.get() != null && !locked() ? <Clear onPress={clear} /> : <Opener />;
   };
   const shownText = () => ($read(typed) ? search.get() : labelOf(value.get()));
-  const trigger = searchable() ? (
+  const typing = () => (
     <Edit
       ref={store.setTrigger}
       value={shownText}
@@ -124,7 +142,8 @@ export function Select(props) {
       onBlur={focused.onBlur}
       style={editStyle(props)}
     />
-  ) : (
+  );
+  const pressing = () => (
     <Action
       ref={store.setTrigger}
       label={() => read(props['aria-label']) ?? labelOf(value.get()) ?? read(props.placeholder) ?? ''}
@@ -137,10 +156,12 @@ export function Select(props) {
       <Label text={() => labelOf(value.get()) || (read(props.placeholder) ?? '')} style={valueStyle(props, () => value.get() == null)} />
     </Action>
   );
+  // in a lightbox the field is pressed, never typed in: its filter takes the typing
+  const trigger = () => (inField() ? typing() : pressing());
   return (
     <Outer {...props}>
-      <Combobox store={store} onPick={choose} {...comboboxOf(props)} keys={() => !locked() && read(props.keys) !== false}>
-        <ComboboxTrigger kind={searchable() ? 'input' : 'button'}>
+      <Combobox store={store} onPick={choose} {...comboboxOf(props)} boxed={boxed.on} title={titleOf(props)} keys={() => !locked() && read(props.keys) !== false}>
+        <ComboboxTrigger kind={() => (inField() ? 'input' : 'button')}>
           <FieldBox
             size={props.size}
             radius={props.radius}
@@ -151,19 +172,34 @@ export function Select(props) {
             start={props.start}
             end={right}
             focused={focused.get}
-            onPointerDown={searchable() ? () => !locked() && store.open() : undefined}
+            onPointerDown={() => inField() && !locked() && store.open()}
           >
             {trigger}
           </FieldBox>
         </ComboboxTrigger>
-        <ComboboxPanel shown={() => options().length > 0 || props.empty !== undefined}>
+        <ComboboxPanel
+          shown={() => options().length > 0 || props.empty !== undefined}
+          filter={() =>
+            filtered() ? (
+              <ComboboxFilter
+                value={search.get}
+                placeholder={() => read(props.searchPlaceholder) ?? labelsIn().search}
+                onChange={(/** @type {{ value: string }} */ e) => {
+                  search.set(e.value);
+                  $write(typed, true);
+                  store.activate(firstIndex($untrack(R, options)));
+                }}
+              />
+            ) : null
+          }
+        >
           <OptionsList
             options={options}
             checked={v => value.get() === v}
             check={props.check}
             checkAt={props.checkAt}
             renderOption={props.renderOption}
-            panelHeight={props.panelHeight}
+            panelHeight={() => (boxed.on() ? boxed.height() : read(props.panelHeight))}
             empty={props.empty}
           />
         </ComboboxPanel>

@@ -1,13 +1,18 @@
 // Combobox: the store, a trigger that takes the keys, and a panel (the
 // overlays' Popover panel: in the portal layer or inline) with a list of
 // options, a filter field, groups, a top and a bottom part, and a no-match line.
-// Select and the rest are built from these parts.
+// Select and the rest are built from these parts. Below the theme's
+// `control.lightbox` breakpoint (a phone) a field may open its options in a
+// centered lightbox instead (`$boxed`): a Modal holding a filter when the
+// list is long, the options, and the field's footer.
 
-import { View, Label, Action, Edit, Scroll, Shape, Show, For, read, $active, $signal, $memo, $read, $write, $context, $lookup, $owner, $cleanup, $untrack, $watch } from 'ren-core';
+import { View, Label, Action, Edit, Scroll, Shape, Show, For, read, $active, $signal, $memo, $read, $write, $context, $lookup, $owner, $cleanup, $untrack, $watch, $viewport } from 'ren-core';
 import { styled } from '../../theme/style.js';
 import { $ui } from '../../theme/theme.jsx';
 import { fontBelow, pageColors, radiusOf, shadowOf, sized, variantColors } from '../../theme/resolve.js';
 import { Panel } from '../overlays/popover.jsx';
+import { Modal } from '../overlays/modal.jsx';
+import { $fits } from '../../hooks/platform.js';
 import { keyOf, prevent, checkFigures, ActionRow, partOf, handled } from '../overlays/shared.jsx';
 import { $combobox } from './store.js';
 import { Opener, Clear, sizeOf } from './field.jsx';
@@ -125,15 +130,84 @@ export function ComboboxTrigger(props) {
   );
 }
 
+/** A breakpoint's width less a hair: the media query's max-width below it. @param {string} at (`60em`) */
+const below = at => at.replace(/^([\d.]+)(\D*)$/, (_, n, unit) => `${Number(n) - 0.01}${unit}`);
+
+/**
+ * Whether a field opens its options in a centered lightbox (`on`), and the
+ * options' height there (`height`: the viewport's, less the box's own
+ * parts, `sizes.box.boxed`; at least `sizes.box.panel`): its `lightbox` prop (true, false, or a breakpoint key below which
+ * it does), else the theme's `control.lightbox` (null: never). A breakpoint
+ * is followed as the viewport changes.
+ * @param {Record<string, any>} props
+ * @returns {{ on: () => boolean, height: () => number }}
+ */
+export function $boxed(props) {
+  const R = $active();
+  const ui = $ui();
+  const view = $viewport();
+  const setting = () => {
+    const own = read(props.lightbox);
+    return own !== undefined ? own : (ui.theme().control.lightbox ?? null);
+  };
+  const first = $untrack(R, setting);
+  const at = typeof first === 'string' ? /** @type {Record<string, string>} */ ($untrack(R, () => ui.theme().breakpoints))[first] : undefined;
+  const narrow = at === undefined ? null : $fits(`(max-width: ${below(at)})`).value;
+  return {
+    on: () => {
+      const s = setting();
+      return s === true || (typeof s === 'string' && narrow !== null && $read(narrow));
+    },
+    height: () => {
+      const box = ui.theme().sizes.box;
+      return Math.max(box.panel, /** @type {number} */ ($read(view.height)) - box.boxed);
+    },
+  };
+}
+
 /**
  * The panel (Combobox.Panel): shown while the store is open, placed
  * against the trigger (the trigger's width by default), `control.panelPad`
  * inside its edge;
  * `shown` (true; false keeps it out of sight while open, as when nothing is
- * to be shown).
+ * to be shown). While the combobox is `boxed` it is a centered lightbox
+ * instead, titled by the combobox's `title`: `filter` above the options and
+ * `footer` below them (each a node or an accessor of one).
  * @param {Record<string, any>} props
  */
 export function ComboboxPanel(props) {
+  const c = $comboboxContext();
+  return () => (read(c.root.boxed) === true ? <Lightbox {...props} /> : <Anchored {...props} />);
+}
+
+/**
+ * The options in a centered lightbox (a Modal): it opens and closes with the store (Escape, the backdrop and its close
+ * button close it), its filter taking the focus once it is in.
+ * @param {Record<string, any>} props
+ */
+function Lightbox(props) {
+  const c = $comboboxContext();
+  return (
+    <Modal
+      open={c.store.isOpen}
+      onOpenChange={(/** @type {boolean} */ o) => (o ? c.store.open() : c.store.close())}
+      title={() => read(c.root.title) ?? ''}
+      at="center"
+      size="sm"
+      padding="md"
+      onEntered={() => c.store.focusFilter()}
+    >
+      <View style={styled({}, theme => ({ direction: 'column', gap: theme.control.panelPad }))}>
+        {props.filter ?? null}
+        {props.children}
+        {props.footer ?? null}
+      </View>
+    </Modal>
+  );
+}
+
+/** The panel placed against the trigger. @param {Record<string, any>} props */
+function Anchored(props) {
   const c = $comboboxContext();
   const root = c.root;
   const look = styled(props, (theme, scheme) => {

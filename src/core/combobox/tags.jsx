@@ -7,11 +7,12 @@ import { $ui } from '../../theme/theme.jsx';
 import { pageColors, radiusOf } from '../../theme/resolve.js';
 import { $controlled, crossFigures, keyOf, prevent } from '../overlays/shared.jsx';
 import { $combobox } from './store.js';
-import { Combobox, ComboboxTrigger, ComboboxPanel, OptionsList } from './combobox.jsx';
+import { Combobox, ComboboxTrigger, ComboboxPanel, ComboboxFilter, OptionsList, $boxed } from './combobox.jsx';
+import { Button } from '../buttons/button.jsx';
 import { FieldBox, Outer, Opener, Clear, editStyle, $focused, comboOf } from './field.jsx';
 import { marks, named } from '../../theme/meaning.js';
 import { parseData, shown } from './data.js';
-import { firstIndex, comboboxOf, storeOf } from './select.jsx';
+import { firstIndex, comboboxOf, storeOf, titleOf, long } from './select.jsx';
 import { labelsIn } from '../../theme/labels.js';
 
 /** A tag's remove button: a circle 2 px inside the tag's height on every side. @param {number} h */
@@ -175,11 +176,16 @@ function tags(values, labelOf, remove, props) {
  * `clearable`, `empty`, `panelHeight` (280), `check` (true), `checkAt`,
  * `renderOption(option, { picked })`, `placeholder` (while empty), `disabled`, `readOnly`, and
  * the field's and Field's props. Backspace in the empty search removes
- * the last value; the panel stays open as values are picked.
+ * the last value; the panel stays open as values are picked. `lightbox`
+ * (as Select's): the options open in a centered lightbox, picked and
+ * unpicked until its Done, its filter at the top while it lists more than
+ * `control.typeahead` options.
  * @param {Record<string, any>} props
  */
 export function MultiSelect(props) {
   const R = $active();
+  const ui = $ui();
+  const boxed = $boxed(props);
   const data = $memo(R, () => parseData(read(props.data)));
   const labelOf = (/** @type {string} */ v) => /** @type {import('./data.js').Option[]} */ ($read(data)).find(o => o.value === v)?.label ?? v;
   const value = $controlled(props, 'value', 'defaultValue', /** @type {string[]} */ ([]), v => props.onChange?.(v));
@@ -209,13 +215,16 @@ export function MultiSelect(props) {
       value.set([...list, v]);
     }
     search.set('');
-    store.focus();
+    if (boxed.on()) store.focusFilter();
+    else store.focus();
   };
   const focused = $focused();
   const right = () => (props.end !== undefined ? props.end : read(props.clearable) === true && value.get().length > 0 && !locked() ? <Clear onPress={() => value.set([])} /> : <Opener />);
+  // in a lightbox: a filter while the list is long and searching is on
+  const filtered = () => boxed.on() && read(props.searchable) !== false && long(ui, $read(data));
   return (
     <Outer {...props}>
-      <Combobox store={store} onPick={choose} {...comboboxOf(props)} keys={() => !locked() && read(props.keys) !== false}>
+      <Combobox store={store} onPick={choose} {...comboboxOf(props)} boxed={boxed.on} title={titleOf(props)} keys={() => !locked() && read(props.keys) !== false}>
         <ComboboxTrigger>
           <FieldBox size={props.size} radius={props.radius} error={props.error} invalid={props.invalid} disabled={props.disabled} variant={props.variant} start={props.start} end={right} focused={focused.get} multiline onPointerDown={() => !locked() && store.open()}>
             {tags(value.get, labelOf, remove, props)}
@@ -243,7 +252,26 @@ export function MultiSelect(props) {
             />
           </FieldBox>
         </ComboboxTrigger>
-        <ComboboxPanel shown={() => options().length > 0 || props.empty !== undefined}>
+        <ComboboxPanel
+          shown={() => options().length > 0 || props.empty !== undefined}
+          filter={() =>
+            filtered() ? (
+              <ComboboxFilter
+                value={search.get}
+                placeholder={() => read(props.searchPlaceholder) ?? labelsIn().search}
+                onChange={(/** @type {{ value: string }} */ e) => {
+                  search.set(e.value);
+                  store.activate(firstIndex($untrack(R, options)));
+                }}
+              />
+            ) : null
+          }
+          footer={
+            <Button style={{ alignSelf: 'end' }} onPress={() => store.close()}>
+              {() => labelsIn().done}
+            </Button>
+          }
+        >
           <OptionsList
             options={options}
             multiple
@@ -251,7 +279,7 @@ export function MultiSelect(props) {
             check={props.check}
             checkAt={props.checkAt}
             renderOption={props.renderOption}
-            panelHeight={props.panelHeight}
+            panelHeight={() => (boxed.on() ? boxed.height() : read(props.panelHeight))}
             empty={props.empty}
           />
         </ComboboxPanel>

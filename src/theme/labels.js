@@ -55,7 +55,7 @@ export const BASE_LABELS = Object.freeze({
   findAction: 'Find an action',
   /** CopyButton's and Snippet's copy. */
   copy: 'Copy',
-  /** CopyButton's and Snippet's copy once done, and the date pickers' done. */
+  /** CopyButton's and Snippet's copy once done, the date pickers' done, and a MultiSelect lightbox's. */
   done: 'Done',
   /** Excerpt's press that shows it whole. */
   more: 'More',

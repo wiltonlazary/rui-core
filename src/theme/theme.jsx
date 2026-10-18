@@ -30,6 +30,7 @@ import { Words, wordsOver, labelsIn } from './labels.js';
  * @property {number} knob AngleSlider's side
  * @property {number} swatch a Swatch's side
  * @property {number} panel a combobox or tree panel's height
+ * @property {number} boxed a lightbox's room for its own parts (its title, filter, footer and margins): its options take the viewport's height less this, at least `panel`
  * @property {number} menu a Menu panel's least width
  * @property {number} tip a wrapping Tooltip's width
  * @property {number} follow Tooltip.Follow's offset from the pointer
@@ -125,7 +126,7 @@ import { Words, wordsOver, labelsIn } from './labels.js';
  * @property {{ faint: number, soft: number, disabled: number, muted: number, dense: number }} opacity rui's opacity steps: a faint tint or dimmed series, a soft wash (a highlight, a quiet fill), a disabled control, a muted (resting, secondary) part, a dense fill that still lets the grid through
  * @property {{ regular: number, strong: number, bold: number }} weights font weights: body text, labels and emphasis, headings and marks
  * @property {{ glyph: number, mark: number, inset: number, icon: number, pad: number }} ratios parts sized by their box: a letter in its box (glyph), a dot on a badge or field (mark), a field's text inset from its start (inset), an icon in a square control (icon), each a share of the box's height; and a compact part's side padding as a share of its font size (pad)
- * @property {{ labelGap: number, panelPad: number, optionPad: readonly [number, number], iconGap: number, textStep: number, pad: Record<Size, number>, densePad: Record<Size, number>, density: Record<'tight' | 'even' | 'airy', readonly [number, number]> }} control control geometry: the gap between a field and its label and notes, a panel's inner padding, an option's padding (y, x), the gap between an icon and its text, how many font steps a control's notes sit below its text, a button's side padding by size (pad) and a compact one's (densePad), and a table cell's padding (y, x) by density
+ * @property {{ labelGap: number, panelPad: number, optionPad: readonly [number, number], iconGap: number, textStep: number, pad: Record<Size, number>, densePad: Record<Size, number>, density: Record<'tight' | 'even' | 'airy', readonly [number, number]>, lightbox: Size | null, typeahead: number }} control control geometry: the gap between a field and its label and notes, a panel's inner padding, an option's padding (y, x), the gap between an icon and its text, how many font steps a control's notes sit below its text, a button's side padding by size (pad) and a compact one's (densePad), a table cell's padding (y, x) by density, the breakpoint below which a picker's options open in a centered lightbox (null: never), and how many options a lightbox lists before it shows a search field (typeahead)
  * @property {{ pointArea: number, axisWidth: number, band: number, bandGap: number, labelOffset: number, outer: number, inner: number, dim: number, pointLabel: Size, reference: string, frame: { top: number, right: number }, tick: number, charWidth: number, near: number, line: number, legend: number }} chart chart geometry: a point's area (px²), a value axis's width, a bar's share of its band and the least gap between bars, a label's offset from its mark, a radial chart's outer and inner radius (shares of half its box), the opacity of the series not highlighted, the point labels' size and the reference lines' color; the plot's margins at the top and end (frame), a tick's length, a label character's estimated width, how near a point must be for its tooltip, a label line's height, and the legend's height
  * @property {RuiSizes} sizes component sizes by size step (see RuiSizes)
  * @property {Record<string, any>} extra free values for the application
@@ -188,6 +189,8 @@ export const BASE_THEME = Object.freeze(withExtra(tables(/** @type {RuiThemeValu
     pad: { xs: 10, sm: 12, md: 16, lg: 20, xl: 24 },
     densePad: { xs: 5, sm: 6, md: 8, lg: 10, xl: 12 },
     density: { tight: /** @type {[number, number]} */ ([4, 8]), even: /** @type {[number, number]} */ ([8, 12]), airy: /** @type {[number, number]} */ ([12, 16]) },
+    lightbox: /** @type {Size | null} */ (null),
+    typeahead: 10,
   },
   chart: { pointArea: 48, axisWidth: 56, band: 0.72, bandGap: 6, labelOffset: 6, outer: 0.84, inner: 0.16, dim: 0.16, pointLabel: /** @type {Size} */ ('xs'), reference: 'orange', frame: { top: 10, right: 20 }, tick: 6, charWidth: 7, near: 24, line: 16, legend: 32 },
   sizes: {
@@ -235,6 +238,7 @@ export const BASE_THEME = Object.freeze(withExtra(tables(/** @type {RuiThemeValu
       knob: 64,
       swatch: 24,
       panel: 280,
+      boxed: 240,
       menu: 160,
       tip: 250,
       follow: 12,

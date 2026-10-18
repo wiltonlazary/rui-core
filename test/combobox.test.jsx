@@ -197,12 +197,12 @@ const app = (clock, content) => () => (
 
 /**
  * The view on both, a clock to settle it, and helpers.
- * @param {(clock: any, st: ReturnType<typeof states>) => () => any} make
+ * @param {(clock: any, st: ReturnType<typeof states>) => () => any} make @param {{ width?: number, height?: number }} [size]
  */
-function setup(make) {
+function setup(make, size) {
   const clock = manualClock();
   const st = states();
-  const p = pair(make(clock, st));
+  const p = pair(make(clock, st), size);
   const settle = () => {
     clock.advance(200);
     p.flush();
@@ -1360,5 +1360,101 @@ describe('combobox fields in a For row', () => {
       assert.deepEqual(t.values(), ['a', 'a']);
       t.dispose();
     }
+  });
+});
+
+describe('Lightbox', () => {
+  const FRUITS = ['Apple', 'Banana', 'Cherry'];
+  const MANY = ['Apple', 'Apricot', 'Banana', 'Blueberry', 'Cherry', 'Date', 'Fig', 'Grape', 'Kiwi', 'Lemon', 'Mango', 'Melon'];
+  /**
+   * A Select (or a MultiSelect, `multi`) in a theme whose lightbox is `lightbox`, in a window `size`.
+   * @param {Record<string, any>} extra @param {{ multi?: boolean, theme?: any, size?: { width: number, height: number } }} [how]
+   */
+  const field = (extra, how = {}) =>
+    setup(
+      (clock, st) => () => (
+        <Clock value={clock}>
+          <Rui theme={how.theme ?? BASE_THEME}>
+            <View style={{ padding: 20, gap: 8 }}>
+              {() => {
+                const v = st.add($signal($active(), how.multi ? [] : null));
+                const Field = how.multi ? MultiSelect : Select;
+                return <Field label="Fruit" placeholder="Your pick" data={FRUITS} {...extra} value={v} onChange={(/** @type {any} */ x) => $write(v, x)} />;
+              }}
+            </View>
+          </Rui>
+        </Clock>
+      ),
+      how.size ?? { width: 360, height: 640 },
+    );
+  /** The Skia box of the panel holding option `text`: its nearest ancestor much wider than the label. @param {any} t @param {string} text */
+  const boxOf = (t, text) => {
+    let n = t.s.find(text);
+    const label = t.s.box(n);
+    while (n.parent != null && t.s.box(n.parent).width < label.width + 120) n = n.parent;
+    return t.s.box(n.parent ?? n);
+  };
+
+  it('a Select opens its options centered, titled by its label; a pick closes it; the field is pressed, not typed in', () => {
+    const t = field({ lightbox: true, searchable: true });
+    assert.equal(t.d.nodes('Edit').length, 0, 'no field to type in');
+    t.press('Your pick');
+    assert.match(t.text(), /Fruit Your pick Fruit .*Apple Banana Cherry/);
+    // a searchable one filters in the box
+    assert.equal(t.d.nodes('Edit').length, 1, 'the box holds the filter');
+    const box = boxOf(t, 'Banana');
+    assert.ok(Math.abs(box.x + box.width / 2 - 180) < 2, `centered across the window: ${box.x} + ${box.width}`);
+    t.pick('Banana');
+    assert.deepEqual(t.values(), ['Banana', 'Banana']);
+    assert.doesNotMatch(t.text(), /Apple/, 'closed');
+    t.dispose();
+  });
+
+  it('a long list shows its filter, which narrows with keys; a short one none; Escape closes', () => {
+    const t = field({ lightbox: true, data: MANY });
+    t.press('Your pick');
+    assert.equal(t.d.nodes('Edit').length, 1, 'more than 10 options: the filter');
+    t.focusEdit(0);
+    t.type('me');
+    assert.match(t.text(), /Melon/);
+    assert.doesNotMatch(t.text(), /Apple|Mango/);
+    t.key('Enter');
+    assert.deepEqual(t.values(), ['Melon', 'Melon']);
+    t.press('Melon');
+    t.key('Escape');
+    assert.doesNotMatch(t.text(), /Apricot/, 'Escape closes it');
+    t.dispose();
+    const short = field({ lightbox: true });
+    short.press('Your pick');
+    assert.equal(short.d.nodes('Edit').length, 0, '3 options: no filter');
+    short.dispose();
+  });
+
+  it('a MultiSelect stays open while picking, until Done', () => {
+    const t = field({ lightbox: true }, { multi: true });
+    // pressed in its entry, on both
+    t.d.tap(t.d.nodes('Edit')[0]);
+    const entry = t.s.box(t.s.items().filter((/** @type {any} */ n) => n.kind === 4)[0]);
+    t.s.at(entry.x + 4, entry.y + 4);
+    t.settle();
+    t.pick('Apple');
+    t.pick('Cherry');
+    assert.deepEqual(t.values(), [['Apple', 'Cherry'], ['Apple', 'Cherry']]);
+    assert.match(t.text(), /Banana .*Done/, 'still open');
+    t.press('Done');
+    assert.doesNotMatch(t.text(), /Banana/);
+    t.dispose();
+  });
+
+  it("the theme's breakpoint: below it the lightbox, above it the dropdown under the field", () => {
+    const theme = { ...BASE_THEME, control: { ...BASE_THEME.control, lightbox: 'md' } };
+    const narrow = field({}, { theme, size: { width: 360, height: 640 } });
+    narrow.press('Your pick');
+    assert.match(narrow.text(), /Fruit Your pick Fruit .*Apple/, 'titled: the lightbox');
+    narrow.dispose();
+    const wide = field({}, { theme, size: { width: 1100, height: 640 } });
+    wide.press('Your pick');
+    assert.equal(wide.text(), 'Fruit Your pick Apple Banana Cherry', 'the dropdown, untitled');
+    wide.dispose();
   });
 });

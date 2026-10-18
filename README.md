@@ -325,6 +325,7 @@ presets and the layers.
 | PinInput | length 6, accept 'digits', placeholder '·', gap xs |
 | NumberInput | clamp 'commit' (on blur and Enter), marks from the locale |
 | Combobox panels (height) | panelHeight 280 |
+| Select, MultiSelect lightbox | the theme's `control.lightbox` (null: never; a breakpoint key below which the options open in a centered lightbox titled by the field's label), a filter there past `control.typeahead` (10) options or for a searchable Select, a MultiSelect's Done; the options' height the viewport's less `sizes.box.boxed` (240), at least `panel` |
 | ColorPicker, ColorInput | format 'hex' (or 'rgb', 'hsl'), `alpha` false, no value until picked (opens on the accent), swatchColumns 8; `picker` true: the spectrum, then the swatches ('collapsed': the swatches, then 'More colors', which shows the spectrum under them) |
 | ColorInput | value '' (no color); the panel at 'bottom-start', opened by a press or ArrowDown (not by focus); `revert`, `sticky`, `typing`, `preview` and `eyedropper` true; the empty preview a Swatch of 'transparent'; the eye dropper named 'Pick a color from the screen', disabled while the field is disabled or read-only |
 | JsonArea, PasswordInput | JsonArea `rows` 4, `indent` 2, `parseError` 'Not valid JSON', `pretty` false; PasswordInput's toggle 'Show password' / 'Hide password' |
