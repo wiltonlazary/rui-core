@@ -7,7 +7,7 @@ import { $signal, $read, $write, $flush, $task } from 'rrx-core';
 import { $active, View } from 'ren-core';
 import {
   Rui, Clock, manualClock, Stack, Row, Field, BASE_COLORS, BASE_THEME, themeOf,
-  Input, TextInput, Textarea, PasswordInput, NumberInput, PinInput, MaskInput, formatNumber, applyMask,
+  Input, TextInput, Textarea, PasswordInput, NumberInput, CurrencyInput, currencyAffixes, currencyDecimals, PinInput, MaskInput, formatNumber, applyMask,
   Checkbox, Radio, Switch, Chip, SegmentedControl,
   Slider, AngleSlider, Rating, HueSlider, AlphaSlider, ColorPicker, parseColor, formatColor, FieldGroup, FileInput, Select,
 } from 'rui-core';
@@ -1676,4 +1676,43 @@ describe('a choice in a narrow container', () => {
       dispose();
     });
   }
+});
+
+describe('CurrencyInput', () => {
+  it('writes the currency as the language does, before or after the number, in the display asked for, with its decimals', () => {
+    const nb = (/** @type {string} */ t) => t.replace(/[\u00a0\u202f]/g, ' ');
+    const at = (/** @type {any[]} */ args) => {
+      const a = currencyAffixes(.../** @type {[string, string, any, number]} */ (args));
+      return [nb(a.prefix), nb(a.suffix)];
+    };
+    assert.deepEqual(at(['BRL', 'pt-BR', 'symbol', 12.5]), ['R$ ', '']);
+    assert.deepEqual(at(['BRL', 'pt-BR', 'code', 1]), ['BRL ', '']);
+    assert.deepEqual(at(['EUR', 'de', 'symbol', 2]), ['', ' €'], 'after the number where the language writes it so');
+    assert.deepEqual(at(['USD', 'en', 'symbol', 2]), ['$', '']);
+    assert.deepEqual(at(['BRL', 'pt-BR', 'name', 1]), ['', ' Real brasileiro'], 'a name follows the amount');
+    assert.deepEqual(at(['BRL', 'pt-BR', 'name', 2]), ['', ' Reais brasileiros']);
+    assert.deepEqual(at(['BRL', 'pt-BR', 'none', 2]), ['', '']);
+    assert.equal(currencyDecimals('BRL'), 2);
+    assert.equal(currencyDecimals('JPY'), 0);
+  });
+
+  it('shows its amount with the currency on both renderers; none shows the number alone', () => {
+    const view = () => (
+      <Rui>
+        <Stack>
+          <CurrencyInput label="Paid" currency="BRL" locale="pt-BR" defaultValue={12.5} fixedDecimals controls={false} />
+          <CurrencyInput label="Rate" currency="EUR" locale="de" defaultValue={3} fixedDecimals controls={false} />
+          <CurrencyInput label="Plain" currency="BRL" locale="pt-BR" display="none" defaultValue={7} fixedDecimals controls={false} />
+          <CurrencyInput label="Yen" currency="JPY" locale="en" display="code" defaultValue={1200} controls={false} />
+        </Stack>
+      </Rui>
+    );
+    const { dom, skia, dispose } = both(view);
+    const shown = (/** @type {number} */ i) => values(dom, skia, i).map((/** @type {string} */ v) => v.replace(/[\u00a0\u202f]/g, ' '));
+    assert.deepEqual(shown(0), ['R$ 12,50', 'R$ 12,50']);
+    assert.deepEqual(shown(1), ['3,00 €', '3,00 €'], 'after the number in German');
+    assert.deepEqual(shown(2), ['7,00', '7,00'], 'none: the number alone');
+    assert.deepEqual(shown(3), ['JPY 1200', 'JPY 1200'], 'the code; no decimals for the yen');
+    dispose();
+  });
 });

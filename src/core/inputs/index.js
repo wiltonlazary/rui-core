@@ -4,7 +4,7 @@
 // for Checkbox, Radio, Switch and Chip). `onChange` receives the new value
 // (the text for text fields, the boolean for a check), never a DOM event.
 export { Field } from './field.jsx';
-export { Input, TextInput, Textarea, PasswordInput, NumberInput, PinInput } from './input.jsx';
+export { Input, TextInput, Textarea, PasswordInput, NumberInput, CurrencyInput, currencyAffixes, currencyDecimals, PinInput } from './input.jsx';
 export { JsonArea } from './json-area.jsx';
 export { MaskInput, applyMask } from './mask.jsx';
 export { Checkbox, Radio, Switch, Chip, SegmentedControl } from './choice.jsx';

@@ -502,6 +502,44 @@ export function NumberInput(props) {
   );
 }
 
+/** A part of a formatted amount that is the number itself (not its currency or the spaces around it). */
+const NUMERIC = new Set(['integer', 'group', 'decimal', 'fraction', 'minusSign', 'plusSign', 'nan', 'infinity']);
+
+/**
+ * How `locale` writes `currency` around an amount, shown as `display` (Intl's `currencyDisplay`: 'symbol' R$,
+ * 'narrowSymbol' $, 'code' BRL, 'name' reais brasileiros; 'none' nothing): the text before the number (`prefix`, its
+ * space included: "R$ ") and after it (`suffix`: " €"), for `amount` (a name follows it: 1 real, 2 reais).
+ * @param {string} currency @param {string | undefined} locale @param {'symbol' | 'narrowSymbol' | 'code' | 'name' | 'none'} display @param {number} [amount]
+ * @returns {{ prefix: string, suffix: string }}
+ */
+export function currencyAffixes(currency, locale, display, amount = 2) {
+  if (display === 'none') return { prefix: '', suffix: '' };
+  const parts = new Intl.NumberFormat(locale, { style: 'currency', currency, currencyDisplay: display }).formatToParts(Math.abs(amount));
+  const first = parts.findIndex(p => NUMERIC.has(p.type));
+  const last = parts.findLastIndex(p => NUMERIC.has(p.type));
+  const text = (/** @type {Intl.NumberFormatPart[]} */ some) => some.map(p => p.value).join('');
+  return { prefix: text(parts.slice(0, first)), suffix: text(parts.slice(last + 1)) };
+}
+
+/** How many decimals `currency` takes (2 for BRL, 0 for JPY). @param {string} currency */
+export const currencyDecimals = currency => new Intl.NumberFormat('en', { style: 'currency', currency }).resolvedOptions().maximumFractionDigits ?? 2;
+
+/**
+ * A field for an amount of money: NumberInput with `currency` (an ISO code) shown as `display` ('symbol' by default,
+ * 'narrowSymbol', 'code', 'name' or 'none') on the side and with the spacing `locale` writes money with (R$ 12,50;
+ * 12,50 €), the currency's decimals unless `decimals` is given, and NumberInput's other props.
+ * @param {Record<string, any>} props
+ */
+export function CurrencyInput(props) {
+  // a currency's name follows the amount (1 real, 2 reais): the typed one, else a plural
+  const amount = () => {
+    const v = read(props.value);
+    return typeof v === 'number' && Number.isFinite(v) ? v : 2;
+  };
+  const affixes = () => currencyAffixes(read(props.currency), read(props.locale), read(props.display) ?? 'symbol', amount());
+  return <NumberInput decimals={() => currencyDecimals(read(props.currency))} {...props} prefix={() => affixes().prefix} suffix={() => affixes().suffix} />;
+}
+
 // ---------------------------------------------------------------------------
 // PinInput
 

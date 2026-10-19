@@ -324,6 +324,7 @@ presets and the layers.
 | Rating | amber, size md, `count` 5, `divisions` 1 (whole symbols) |
 | PinInput | length 6, accept 'digits', placeholder '·', gap xs |
 | NumberInput | clamp 'commit' (on blur and Enter), marks from the locale |
+| CurrencyInput | `display` 'symbol' ('narrowSymbol', 'code', 'name', 'none'), placed and spaced as the locale writes money (R$ 12,50; 12,50 €), a name following the amount; the currency's decimals (`currencyDecimals`) unless `decimals` is given; NumberInput's other defaults |
 | Combobox panels (height) | panelHeight 280 |
 | Select, MultiSelect lightbox | the theme's `control.lightbox` (null: never; a breakpoint key below which the options open in a centered lightbox titled by the field's label), a filter there past `control.typeahead` (10) options or for a searchable Select, a MultiSelect's Done; the options' height the viewport's less `sizes.box.boxed` (240), at least `panel` |
 | ColorPicker, ColorInput | format 'hex' (or 'rgb', 'hsl'), `alpha` false, no value until picked (opens on the accent), swatchColumns 8; `picker` true: the spectrum, then the swatches ('collapsed': the swatches, then 'More colors', which shows the spectrum under them) |
