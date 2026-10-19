@@ -124,6 +124,7 @@
     "ScrollRow": "function",
     "SegmentedControl": "function",
     "Select": "function",
+    "SettingsIcon": "function",
     "ShareIcon": "function",
     "Shell": "function",
     "ShieldIcon": "function",

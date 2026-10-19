@@ -453,9 +453,9 @@ describe('Button reserve', () => {
 });
 
 describe('Action icons', () => {
-  it('trash, edit, eye, image, ban, undo, merge, mail, exit and shield draw the same figures on both, outlined in the color given', async () => {
+  it('trash, edit, eye, image, ban, undo, merge, mail, exit, shield and settings draw the same figures on both, outlined in the color given', async () => {
     const rui = await import('rui-core');
-    const names = ['TrashIcon', 'EditIcon', 'EyeIcon', 'ImageIcon', 'BanIcon', 'UndoIcon', 'MergeIcon', 'MailIcon', 'ExitIcon', 'ShieldIcon'];
+    const names = ['TrashIcon', 'EditIcon', 'EyeIcon', 'ImageIcon', 'BanIcon', 'UndoIcon', 'MergeIcon', 'MailIcon', 'ExitIcon', 'ShieldIcon', 'SettingsIcon'];
     for (const name of names) {
       const Icon = /** @type {any} */ (rui)[name];
       const { dom, skia, dispose } = both(() => (

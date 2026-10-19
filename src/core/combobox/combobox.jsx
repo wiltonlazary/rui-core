@@ -284,6 +284,27 @@ const ruleOf = side =>
     background: pageColors(theme, scheme).rule,
   }));
 
+/**
+ * What an action option (`action` in its data: a list's "Manage…") holds: its icon and label in a small soft button of
+ * the accent, filling the row, so it reads as something to press rather than a value to pick.
+ */
+const actionBoxOf = () =>
+  styled({}, (theme, scheme) => {
+    const soft = variantColors(theme, scheme, 'soft', theme.accent);
+    return {
+      direction: 'row',
+      align: 'center',
+      justify: 'center',
+      gap: theme.control.iconGap,
+      grow: 1,
+      padding: [theme.control.panelPad, theme.control.panelPad],
+      radius: theme.radius.sm,
+      background: soft.background,
+      color: soft.color,
+      fontWeight: theme.weights.strong,
+    };
+  });
+
 /** A group's label: quiet, a type step below the panel's text, in the strong weight, at the options' padding. @param {any} size the panel's */
 const groupLabelOf = size =>
   styled({}, (theme, scheme) => ({
@@ -464,6 +485,8 @@ export function OptionsList(props) {
   /** The check of an option: the built-in one, or the caller's own shown while it is checked. @param {() => boolean} checked */
   const mark = checked => (part?.node === undefined ? <OptionCheck shown={checked} /> : <Show when={checked}>{part.node}</Show>);
   const groupLabel = groupLabelOf(panelSize());
+  const actionRule = ruleOf('over');
+  const actionBox = actionBoxOf();
   const option = (/** @type {() => { option: import('./data.js').Option, index: number }} */ entry) => {
     const R = $active();
     // The row is keyed by value; its data item (label, disabled) follows the data.
@@ -471,6 +494,23 @@ export function OptionsList(props) {
     const o = () => /** @type {import('./data.js').Option} */ ($read(item));
     const value = $untrack(R, o).value;
     const checked = () => props.checked(value);
+    // an action (a list's "Manage…"): set apart by a rule, drawn as a button; never checked
+    const action = $untrack(R, o).action === true;
+    if (action) {
+      const Icon = $untrack(R, o).icon;
+      const ink = () => variantColors(ui.theme(), ui.scheme(), 'soft', ui.theme().accent).color;
+      return (
+        <>
+          <View {...DECOR} style={actionRule} />
+          <ComboboxOption value={value} option={o} index={() => entry().index} disabled={() => o().disabled}>
+            <View style={actionBox}>
+              {Icon === undefined ? null : <Icon size={() => ui.theme().sizes.glyph.sm} color={ink} />}
+              <Label text={() => o().label} />
+            </View>
+          </ComboboxOption>
+        </>
+      );
+    }
     const content =
       props.renderOption !== undefined
         ? () => {

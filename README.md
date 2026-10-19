@@ -219,6 +219,9 @@ vocabulary, so a name means the same on every renderer.
   `share`, `diverge`, `cascade`; `MixedChart` series; TimePicker; Loader).
   Line and grid choices share `'rows' | 'columns' | 'both' | false`
   (Table `lines`, chart `grid`); signs and trends are `up` and `down`.
+- An option is `{ value, label, disabled }`, or `{ …, action: true, icon }`
+  for one that does something rather than stand for a value (a list's
+  "Manage…"): drawn apart, under a rule, as a soft button with its icon.
 - Grouped data is `{ label, options }` (Launcher: `{ label, actions }`);
   a change reports the value only, and `onPick(value, option)` gives the
   chosen item. Chart items are `{ label, value, color }`. A search matches

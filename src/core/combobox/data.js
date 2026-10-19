@@ -1,5 +1,5 @@
 // The data of the combobox inputs: strings,
-// `{ value, label, disabled }`, or groups `{ label, options }`; parsed once
+// `{ value, label, disabled, action, icon }`, or groups `{ label, options }`; parsed once
 // into flat options (each knows its group), filtered by the search and
 // limited.
 
@@ -9,6 +9,8 @@
  * @property {string} label
  * @property {boolean} disabled
  * @property {string | null} group the label of the group it is in
+ * @property {true} [action] it does something rather than stand for a value (a list's "Manage…"): drawn apart, as a button
+ * @property {(props: Record<string, any>) => any} [icon] an icon component drawn before its label (an action's)
  */
 
 /**
@@ -24,7 +26,15 @@ export function parseData(data) {
     if (item == null) return;
     if (typeof item === 'string' || typeof item === 'number') out.push({ value: String(item), label: String(item), disabled: false, group });
     else if (Array.isArray(item.options)) for (const inner of item.options) add(inner, String(item.label ?? ''));
-    else out.push({ value: String(item.value), label: String(item.label ?? item.value), disabled: item.disabled === true, group });
+    else
+      out.push({
+        value: String(item.value),
+        label: String(item.label ?? item.value),
+        disabled: item.disabled === true,
+        group,
+        ...(item.action === true ? { action: /** @type {true} */ (true) } : null),
+        ...(typeof item.icon === 'function' ? { icon: item.icon } : null),
+      });
   };
   for (const item of data ?? []) add(item, null);
   return out;

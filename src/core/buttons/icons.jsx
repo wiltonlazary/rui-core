@@ -361,3 +361,23 @@ export function ShieldIcon(props) {
     { kind: 'path', closed: true, points: scaled([0.5, 0.1, 0.84, 0.23, 0.8, 0.55, 0.5, 0.9, 0.2, 0.55, 0.16, 0.23], size), color, stroke: strokeOf(props, size) },
   ]);
 }
+
+/** A gear: eight teeth around a hub (manage, settings). @param {Record<string, any>} props */
+export function SettingsIcon(props) {
+  return icon(props, (size, color) => {
+    const stroke = strokeOf(props, size);
+    // each tooth: up from the rim, across its top, down again (angle offsets from its middle, in radians)
+    const teeth = 8;
+    const [rim, tip, base, top] = [0.33, 0.44, 0.3, 0.17];
+    const ring = [];
+    for (let i = 0; i < teeth; i++) {
+      const a = (2 * Math.PI * i) / teeth;
+      for (const [r, d] of [[rim, -base], [tip, -top], [tip, top], [rim, base]]) ring.push(0.5 + r * Math.cos(a + d), 0.5 + r * Math.sin(a + d));
+    }
+    const hub = 0.26;
+    return [
+      { kind: 'path', closed: true, points: scaled(ring, size), color, stroke },
+      { kind: 'oval', x: (0.5 - hub / 2) * size, y: (0.5 - hub / 2) * size, right: (0.5 + hub / 2) * size, bottom: (0.5 + hub / 2) * size, color, stroke },
+    ];
+  });
+}

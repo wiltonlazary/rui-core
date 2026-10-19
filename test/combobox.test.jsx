@@ -9,7 +9,7 @@ import { $signal, $read, $write, $flush } from 'rrx-core';
 import { $active, View, For } from 'ren-core';
 import {
   Rui, Clock, manualClock, Button, Text,
-  Stack, $combobox, Combobox, Select, PlainSelect, Autocomplete, MultiSelect, TagInput, Tag, TagBox, Cascader, TreeSelect, Picker, BASE_THEME,
+  Stack, $combobox, Combobox, Select, PlainSelect, Autocomplete, MultiSelect, TagInput, Tag, TagBox, Cascader, TreeSelect, Picker, BASE_THEME, SettingsIcon,
 } from 'rui-core';
 import { fontBelow } from '../src/theme/resolve.js';
 import { $form } from 'rui-core/form';
@@ -440,6 +440,23 @@ describe('Select', () => {
         );
       }),
     );
+
+  it('an action option ends the list apart: a rule above it, drawn as a button with its icon; pressed, it is chosen', () => {
+    const t = select({ data: ['Apple', 'Banana', { value: 'manage', label: 'Manage…', action: true, icon: SettingsIcon }] });
+    t.press('Your pick');
+    assert.equal(t.text(), 'Fruit Your pick Below Apple Banana Manage…');
+    // DOM: the option holds the icon (a Shape) before its label, in a box of its own, a rule just before the option
+    const option = t.d.nodes('Action').find((/** @type {any} */ n) => n.getAttribute('role') === 'option' && n.textContent.trim() === 'Manage…');
+    assert.ok(option !== undefined, 'an option');
+    assert.equal(option.querySelectorAll('[data-ren="Shape"]').length, 1, 'its icon');
+    const rule = option.previousElementSibling;
+    assert.ok(rule !== null && rule.textContent === '' && rule.getAttribute('aria-hidden') === 'true', 'a rule before it, hidden from assistive technology');
+    // Skia: the label sits below Banana's, past the rule
+    assert.ok(t.s.box(t.s.find('Manage…')).y > t.s.box(t.s.find('Banana')).bottom, 'below the other options');
+    t.press('Manage…');
+    assert.deepEqual(t.values(), ['manage', 'manage']);
+    t.dispose();
+  });
 
   it('opens under its field as wide, over what follows; chooses by press and by keys', () => {
     const t = select({});
