@@ -1,6 +1,6 @@
 {
   "name": "rui-core",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "rui's components: a complete set of layout, inputs, combobox, buttons, navigation, feedback, overlays, data display and typography, with hooks, forms and extensions (dates, charts, notifications, launcher, carousel, dropzone, modals, snippet, load bar, editor), built on ren-core's portable primitives so each renders the same on ren-dom, ren-skia and ren-three.",
   "type": "module",
   "license": "MIT",
