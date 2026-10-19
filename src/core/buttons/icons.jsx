@@ -213,3 +213,151 @@ export function TagIcon(props) {
     ];
   });
 }
+
+/** Points of a unit outline (x, y pairs in parts of the box) scaled to `size`. @param {readonly number[]} unit @param {number} size */
+const scaled = (unit, size) => unit.map(v => v * size);
+
+/** A line between two points in parts of the box. @param {number} x @param {number} y @param {number} x2 @param {number} y2 @param {number} size @param {string} color @param {number} stroke */
+const segment = (x, y, x2, y2, size, color, stroke) => ({ kind: 'line', x: x * size, y: y * size, right: x2 * size, bottom: y2 * size, color, stroke });
+
+/**
+ * Points along an arc about (cx, cy) of radius r, from `from` to `to` degrees (0 at the right, counter-clockwise, as on
+ * paper), in parts of the box. @param {number} cx @param {number} cy @param {number} r @param {number} from @param {number} to
+ */
+const arc = (cx, cy, r, from, to) => {
+  const out = [];
+  const steps = Math.max(2, Math.ceil(Math.abs(to - from) / 15));
+  for (let i = 0; i <= steps; i++) {
+    const a = ((from + ((to - from) * i) / steps) * Math.PI) / 180;
+    out.push(cx + r * Math.cos(a), cy - r * Math.sin(a));
+  }
+  return out;
+};
+
+/**
+ * Points along a lid from `x` to `x2` at height `y`, bowing `rise` from it at the middle (negative: up), in parts of
+ * the box: a half sine, `steps` segments.
+ * @param {number} x @param {number} x2 @param {number} y @param {number} rise @param {number} steps
+ */
+const lid = (x, x2, y, rise, steps) => {
+  const out = [];
+  for (let i = 0; i <= steps; i++) out.push(x + ((x2 - x) * i) / steps, y + rise * Math.sin((Math.PI * i) / steps));
+  return out;
+};
+
+/** A bin with its lid and handle, two lines down its body (delete, remove). @param {Record<string, any>} props */
+export function TrashIcon(props) {
+  return icon(props, (size, color) => {
+    const stroke = strokeOf(props, size);
+    return [
+      segment(0.16, 0.28, 0.84, 0.28, size, color, stroke),
+      { kind: 'path', points: scaled([0.4, 0.28, 0.4, 0.16, 0.6, 0.16, 0.6, 0.28], size), color, stroke },
+      { kind: 'path', closed: true, points: scaled([0.25, 0.28, 0.3, 0.86, 0.7, 0.86, 0.75, 0.28], size), color, stroke },
+      segment(0.43, 0.42, 0.43, 0.72, size, color, stroke),
+      segment(0.57, 0.42, 0.57, 0.72, size, color, stroke),
+    ];
+  });
+}
+
+/** A pencil pointing to the lower left, a band near its top (edit, rename). @param {Record<string, any>} props */
+export function EditIcon(props) {
+  return icon(props, (size, color) => {
+    const stroke = strokeOf(props, size);
+    return [
+      { kind: 'path', closed: true, points: scaled([0.16, 0.84, 0.21, 0.62, 0.64, 0.19, 0.81, 0.36, 0.38, 0.79], size), color, stroke },
+      segment(0.54, 0.29, 0.71, 0.46, size, color, stroke),
+    ];
+  });
+}
+
+/** An eye: its almond outline and its iris (view, show). @param {Record<string, any>} props */
+export function EyeIcon(props) {
+  return icon(props, (size, color) => {
+    const stroke = strokeOf(props, size);
+    // the upper lid left to right, then the lower one back (its ends shared)
+    const outline = [...lid(0.08, 0.92, 0.5, -0.27, 12), ...lid(0.92, 0.08, 0.5, 0.27, 12).slice(2, -2)];
+    const d = 0.3;
+    return [
+      { kind: 'path', closed: true, points: scaled(outline, size), color, stroke },
+      { kind: 'oval', x: (0.5 - d / 2) * size, y: (0.5 - d / 2) * size, right: (0.5 + d / 2) * size, bottom: (0.5 + d / 2) * size, color, stroke },
+    ];
+  });
+}
+
+/** A picture: its frame, a hill and the sun (images). @param {Record<string, any>} props */
+export function ImageIcon(props) {
+  return icon(props, (size, color) => {
+    const stroke = strokeOf(props, size);
+    const [x, y, d] = [0.66, 0.38, 0.14];
+    return [
+      { kind: 'path', closed: true, points: scaled([0.12, 0.18, 0.88, 0.18, 0.88, 0.82, 0.12, 0.82], size), color, stroke },
+      { kind: 'path', points: scaled([0.12, 0.74, 0.38, 0.48, 0.58, 0.66, 0.7, 0.56, 0.88, 0.72], size), color, stroke },
+      { kind: 'oval', x: (x - d / 2) * size, y: (y - d / 2) * size, right: (x + d / 2) * size, bottom: (y + d / 2) * size, color },
+    ];
+  });
+}
+
+/** A circle crossed by a slash (void, disable, refuse). @param {Record<string, any>} props */
+export function BanIcon(props) {
+  return icon(props, (size, color) => {
+    const stroke = strokeOf(props, size);
+    return [
+      { kind: 'oval', x: 0.14 * size, y: 0.14 * size, right: 0.86 * size, bottom: 0.86 * size, color, stroke },
+      segment(0.27, 0.27, 0.73, 0.73, size, color, stroke),
+    ];
+  });
+}
+
+/** An arc turning back to the left, its head pointing down (restore, undo). @param {Record<string, any>} props */
+export function UndoIcon(props) {
+  return icon(props, (size, color) => {
+    const stroke = strokeOf(props, size);
+    return [
+      { kind: 'path', points: scaled(arc(0.52, 0.6, 0.3, -30, 180), size), color, stroke },
+      { kind: 'path', points: scaled([0.08, 0.46, 0.22, 0.6, 0.36, 0.46], size), color, stroke },
+    ];
+  });
+}
+
+/** Two branches joining into one stem, its head pointing up (merge). @param {Record<string, any>} props */
+export function MergeIcon(props) {
+  return icon(props, (size, color) => {
+    const stroke = strokeOf(props, size);
+    return [
+      { kind: 'path', points: scaled([0.26, 0.88, 0.26, 0.64, 0.5, 0.42], size), color, stroke },
+      { kind: 'path', points: scaled([0.74, 0.88, 0.74, 0.64, 0.5, 0.42], size), color, stroke },
+      segment(0.5, 0.42, 0.5, 0.13, size, color, stroke),
+      { kind: 'path', points: scaled([0.35, 0.28, 0.5, 0.13, 0.65, 0.28], size), color, stroke },
+    ];
+  });
+}
+
+/** An envelope with its flap (invite, send a link). @param {Record<string, any>} props */
+export function MailIcon(props) {
+  return icon(props, (size, color) => {
+    const stroke = strokeOf(props, size);
+    return [
+      { kind: 'path', closed: true, points: scaled([0.12, 0.24, 0.88, 0.24, 0.88, 0.76, 0.12, 0.76], size), color, stroke },
+      { kind: 'path', points: scaled([0.12, 0.24, 0.5, 0.54, 0.88, 0.24], size), color, stroke },
+    ];
+  });
+}
+
+/** A door frame and an arrow leaving it (leave, remove from). @param {Record<string, any>} props */
+export function ExitIcon(props) {
+  return icon(props, (size, color) => {
+    const stroke = strokeOf(props, size);
+    return [
+      { kind: 'path', points: scaled([0.46, 0.16, 0.16, 0.16, 0.16, 0.84, 0.46, 0.84], size), color, stroke },
+      segment(0.38, 0.5, 0.86, 0.5, size, color, stroke),
+      { kind: 'path', points: scaled([0.7, 0.34, 0.86, 0.5, 0.7, 0.66], size), color, stroke },
+    ];
+  });
+}
+
+/** A shield (a role, a permission). @param {Record<string, any>} props */
+export function ShieldIcon(props) {
+  return icon(props, (size, color) => [
+    { kind: 'path', closed: true, points: scaled([0.5, 0.1, 0.84, 0.23, 0.8, 0.55, 0.5, 0.9, 0.2, 0.55, 0.16, 0.23], size), color, stroke: strokeOf(props, size) },
+  ]);
+}

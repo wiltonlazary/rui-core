@@ -9,7 +9,7 @@ import { $ui } from '../../theme/theme.jsx';
 import { Loader } from '../feedback/loader.jsx';
 import { CloseIcon, inkOf } from './icons.jsx';
 import { JoinedGroup, $joined, joinedStyle, unjoined } from './joined.jsx';
-import { pressOf, colorsOf, buttonBox } from './button.jsx';
+import { pressOf, colorsOf, buttonBox, bare } from './button.jsx';
 import { flag, marks, TriggerMeaning } from '../../theme/meaning.js';
 import { labelsIn } from '../../theme/labels.js';
 
@@ -62,7 +62,7 @@ export function IconButton(props) {
       border: 1,
       ...joinedStyle(joined),
       ...(disabled
-        ? { background: page.disabled, color: page.disabledText, borderColor: 'transparent', cursor: 'not-allowed' }
+        ? { background: bare(props) ? 'transparent' : page.disabled, color: page.disabledText, borderColor: 'transparent', cursor: 'not-allowed' }
         : { background: c.background, color: c.color, borderColor: c.border, cursor: read(props.loading) ? 'default' : 'pointer', hover: { background: c.hover, color: c.hoverColor ?? c.color } }),
     };
   });

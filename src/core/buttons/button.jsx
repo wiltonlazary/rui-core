@@ -41,6 +41,9 @@ export function colorsOf(theme, scheme, props, fallback) {
   return variant === 'gradient' ? gradientColors(theme, scheme, read(props.gradient)) : variantColors(theme, scheme, variant, read(props.color));
 }
 
+/** Whether a button's variant draws no fill of its own (ghost, plain): disabled, it stays without one. @param {Record<string, any>} props */
+export const bare = props => ['ghost', 'plain'].includes(read(props.variant));
+
 /**
  * A button: `variant` (solid, soft, outline, ghost, neutral, plain,
  * inverse, gradient with `gradient` { colors, angle }), `color`,
@@ -79,7 +82,8 @@ export function Button(props) {
       border: 1,
       ...joinedStyle(joined),
       ...(off
-        ? { background: page.disabled, color: page.disabledText, borderColor: 'transparent', cursor: 'not-allowed' }
+        ? // a variant without a fill (ghost, plain) keeps none, its text dimmed
+          { background: bare(props) ? 'transparent' : page.disabled, color: page.disabledText, borderColor: 'transparent', cursor: 'not-allowed' }
         : { background: c.background, color: c.color, borderColor: c.border, cursor: 'pointer', hover: { background: c.hover, color: c.hoverColor ?? c.color } }),
       ...(read(props.stretch) ? { width: '100%', self: 'stretch' } : null),
       ...(read(props.loading) ? { opacity: theme.opacity.muted } : null),

@@ -451,3 +451,51 @@ describe('Button reserve', () => {
     dispose();
   });
 });
+
+describe('Action icons', () => {
+  it('trash, edit, eye, image, ban, undo, merge, mail, exit and shield draw the same figures on both, outlined in the color given', async () => {
+    const rui = await import('rui-core');
+    const names = ['TrashIcon', 'EditIcon', 'EyeIcon', 'ImageIcon', 'BanIcon', 'UndoIcon', 'MergeIcon', 'MailIcon', 'ExitIcon', 'ShieldIcon'];
+    for (const name of names) {
+      const Icon = /** @type {any} */ (rui)[name];
+      const { dom, skia, dispose } = both(() => (
+        <Rui>
+          <Icon size={24} color="red" />
+        </Rui>
+      ));
+      const [shape] = dom.nodes('Shape');
+      const figures = [...shape.children];
+      assert.ok(figures.length >= 1, `${name} draws`);
+      // outlined: at least one figure stroked, none of them black (the color given)
+      assert.ok(figures.some((/** @type {any} */ c) => c.getAttribute('fill') === 'none'), `${name} outlined`);
+      assert.ok(figures.every((/** @type {any} */ c) => !/^(#000|black)/i.test(c.getAttribute('stroke') ?? c.getAttribute('fill') ?? '')), `${name} in its color`);
+      skia.text();
+      assert.ok(skia.skia.commands().length >= figures.length, `${name} painted on Skia`);
+      dispose();
+    }
+  });
+});
+
+describe('Disabled without a fill', () => {
+  it('a disabled ghost or plain Button and IconButton keep no fill, their text dimmed; a solid one is filled', async () => {
+    const { Button, IconButton, CloseIcon } = await import('rui-core');
+    const { dom, dispose } = both(() => (
+      <Rui>
+        <Button variant="ghost" disabled>
+          Ghost
+        </Button>
+        <Button variant="plain" disabled>
+          Plain
+        </Button>
+        <Button disabled>Solid</Button>
+        <IconButton variant="ghost" label="Close it" disabled>
+          <CloseIcon />
+        </IconButton>
+      </Rui>
+    ));
+    const [ghost, plain, solid, icon] = dom.nodes('Action');
+    for (const n of [ghost, plain, icon]) assert.match(n.style.background || n.style.backgroundColor, /transparent|rgba\(0, 0, 0, 0\)/, `${n.textContent || n.getAttribute('aria-label')} unfilled`);
+    assert.doesNotMatch(solid.style.background || solid.style.backgroundColor, /transparent/, 'a solid one filled');
+    dispose();
+  });
+});
