@@ -27,9 +27,22 @@ export function styled(props, own) {
     const theme = ui.theme();
     const scheme = ui.scheme();
     const mine = own === undefined ? null : own(theme, scheme);
+    // Pressed (an `onPress`), it shows the theme's hand, unless its own style names a cursor (null: none).
+    const hand = props.onPress != null && (mine === null || !('cursor' in mine)) ? pressLook(theme) : null;
     // A side the style props leave out keeps the component's own (py="xs" keeps its side padding).
-    const style = { ...mine, ...keepOwnSides(mine, styleProps(theme, scheme, props), props), ...read(props.style) };
+    const style = { ...hand, ...mine, ...keepOwnSides(mine, styleProps(theme, scheme, props), props), ...read(props.style) };
     if (nowrap && style.wrap === true) style.wrap = false;
     return style;
   };
+}
+
+/**
+ * The pointer's cursor over what presses, from the theme: `cursor.press` (a hand), or `cursor.disabled` while it
+ * takes no press (`off`); nothing when the theme's is null, so the renderer's own shows.
+ * @param {import('./theme.jsx').RuiThemeValue} theme @param {boolean} [off]
+ * @returns {{ cursor?: string }}
+ */
+export function pressLook(theme, off = false) {
+  const cursor = off ? theme.cursor.disabled : theme.cursor.press;
+  return cursor == null ? {} : { cursor };
 }

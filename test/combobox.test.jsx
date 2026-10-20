@@ -406,7 +406,7 @@ describe('Combobox panel geometry', () => {
     assert.equal(amazon.gap, px(T.control.iconGap));
     const nile = css(t.d.find('Nile'));
     assert.equal(nile.opacity, String(T.opacity.disabled));
-    assert.equal(nile.cursor, 'default', 'a disabled option is no press target');
+    assert.equal(nile.cursor, T.cursor.disabled, 'a disabled option takes no press: the theme says so');
     assert.equal(t.d.find('Nile').getAttribute('aria-disabled'), 'true');
     const group = css(t.d.find('Rivers'));
     assert.equal(group['font-weight'], String(T.weights.strong));
@@ -1105,7 +1105,7 @@ describe('TreeSelect, Picker', () => {
     t.dispose();
   });
 
-  it('a disabled tree row wears the option look: dimmed, the plain pointer, aria-disabled', () => {
+  it("a disabled tree row wears the option look: dimmed, the theme's disabled cursor, aria-disabled", () => {
     const data = [{ value: 'a', label: 'Open' }, { value: 'b', label: 'Shut', disabled: true }];
     for (const make of [() => <TreeSelect placeholder="Node" data={data} />]) {
       const t = setup(clock => app(clock, make));
@@ -1113,7 +1113,7 @@ describe('TreeSelect, Picker', () => {
       const shut = t.d.find('Shut');
       assert.equal(shut.getAttribute('aria-disabled'), 'true');
       assert.equal(css(shut).opacity, String(BASE_THEME.opacity.disabled));
-      assert.equal(css(shut).cursor, 'default');
+      assert.equal(css(shut).cursor, BASE_THEME.cursor.disabled);
       assert.equal(t.d.find('Open').getAttribute('aria-disabled'), null);
       t.dispose();
     }

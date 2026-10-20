@@ -4,7 +4,7 @@
 // Field and prop split of inputs/field.jsx.
 
 import { View, Shape, Action, read, $active, $signal, $read, $write } from 'ren-core';
-import { styled } from '../../theme/style.js';
+import { styled, pressLook } from '../../theme/style.js';
 import { $ui } from '../../theme/theme.jsx';
 import { pageColors, radiusOf, sized, colorOf } from '../../theme/resolve.js';
 import { chevronFigures, crossFigures } from '../overlays/shared.jsx';
@@ -27,7 +27,9 @@ function borderOf(theme, scheme, state) {
  * look, as `invalidOf`), `disabled`, `variant`
  * ('outline', 'soft', 'bare'), `start`, `end`, `focused` (an accessor),
  * `onPointerDown`, `onKey`; children in between. `multiline` lets it grow
- * (tags).
+ * (tags). `pressed`: it is pressed, not typed in, so all of it shows the
+ * theme's hand; opening on a press (`onPointerDown`), its end (the
+ * chevron) shows it always.
  * @param {Record<string, any>} props
  */
 export function FieldBox(props) {
@@ -49,11 +51,12 @@ export function FieldBox(props) {
       background: variant === 'soft' ? page.sunken : variant === 'bare' ? 'transparent' : page.field,
       color: error ? colorOf(theme, scheme, 'red') : page.text,
       fontSize: sized(theme.fontSizes, size()),
-      ...(read(props.disabled) ? { ...disabledLook(theme), background: page.disabled } : null),
+      ...(read(props.disabled) ? { ...disabledLook(theme), background: page.disabled } : read(props.pressed) ? pressLook(theme) : null),
     };
   });
-  const section = (/** @type {any} */ content) => {
+  const section = (/** @type {any} */ content, /** @type {boolean} */ opens) => {
     const s = styled({}, (theme, scheme) => ({
+      ...(opens ? pressLook(theme, read(props.disabled) === true) : null),
       width: theme.sizes.control[size()],
       height: '100%',
       shrink: 0,
@@ -83,9 +86,9 @@ export function FieldBox(props) {
   });
   return (
     <View ref={props.ref} style={style} onPointerDown={props.onPointerDown} onPointerUp={props.onPointerUp} onKey={props.onKey}>
-      {props.start === undefined ? null : section(props.start)}
+      {props.start === undefined ? null : section(props.start, false)}
       <View style={inner}>{props.children}</View>
-      {props.end === undefined ? null : section(props.end)}
+      {props.end === undefined ? null : section(props.end, props.onPointerDown !== undefined)}
     </View>
   );
 }
@@ -171,7 +174,7 @@ export function Clear(props) {
     background: 'transparent',
     align: 'center',
     justify: 'center',
-    cursor: 'pointer',
+    ...pressLook(theme),
     hover: { background: pageColors(theme, scheme).hover },
   }));
   return (

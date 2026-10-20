@@ -8,7 +8,7 @@
 // absolute positioning and percentages.
 
 import { View, Label, Action, Shape, Show, $signal, $read, $write, $active, $untrack, read } from 'ren-core';
-import { styled } from '../../theme/style.js';
+import { styled, pressLook } from '../../theme/style.js';
 import { radiusOf, sized, pageColors, colorOf, tooltipColors } from '../../theme/resolve.js';
 import { $ui } from '../../theme/theme.jsx';
 import { $value, sizeOf, clamp, stepped, starShape, disabledLook, stepOn, stepOf } from './shared.js';
@@ -112,7 +112,7 @@ export function track(props, m) {
   };
   const root = styled(props, theme => ({ direction: 'column', ...(disabled() ? disabledLook(theme) : null) }));
   /** @returns {Record<string, any>} */
-  const areaStyle = () => ({ height: Math.max(thumbSize(), trackSize()), justify: 'center', cursor: disabled() ? 'not-allowed' : 'pointer', touchAction: 'none' });
+  const areaStyle = () => ({ height: Math.max(thumbSize(), trackSize()), justify: 'center', ...pressLook(ui.theme(), disabled()), touchAction: 'none' });
   /** @returns {Record<string, any>} */
   const trackStyle = () => {
     const theme = ui.theme();
@@ -180,7 +180,7 @@ export function track(props, m) {
         border: 2,
         borderColor: disabled() ? page.disabledText : color(),
         background: page.raised,
-        cursor: disabled() ? 'not-allowed' : 'pointer',
+        ...pressLook(theme, disabled()),
       };
     };
     /** @returns {Record<string, any>} */
@@ -389,7 +389,7 @@ export function AngleSlider(props) {
     background: pageColors(theme, scheme).sunken,
     color: pageColors(theme, scheme).text,
     fontSize: sized(theme.fontSizes, 'xs'),
-    cursor: disabled() ? 'not-allowed' : 'pointer',
+    ...pressLook(theme, disabled()),
     ...(disabled() ? { opacity: theme.opacity.disabled } : null),
     touchAction: 'none',
   }));
@@ -550,7 +550,7 @@ export function Rating(props) {
     $write(hover, v);
     props.onHover?.(v);
   };
-  const root = styled(props, theme => ({ direction: 'row', align: 'center', background: 'transparent', border: 0, padding: 0, minHeight: 0, radius: theme.radius.sm, gap: 0, cursor: frozen() ? 'default' : 'pointer', justify: 'start', self: 'start' }));
+  const root = styled(props, theme => ({ direction: 'row', align: 'center', background: 'transparent', border: 0, padding: 0, minHeight: 0, radius: theme.radius.sm, gap: 0, ...(frozen() ? { cursor: 'default' } : pressLook(theme)), justify: 'start', self: 'start' }));
   return (
     <Action
       ref={(/** @type {any} */ n) => {

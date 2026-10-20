@@ -7,7 +7,7 @@
 
 import { View, Shape, Show, $active, $signal, $read, $write, $memo, read } from 'ren-core';
 import { $ui } from '../../theme/theme.jsx';
-import { styled } from '../../theme/style.js';
+import { styled, pressLook } from '../../theme/style.js';
 import { alpha } from '../../theme/colors.js';
 import { pageColors } from '../../theme/resolve.js';
 import { bandScale, pointScale, linearScale, valueAxis, num } from './scale.js';
@@ -643,7 +643,7 @@ function cartesian(props, kind) {
         <Placed items={() => $read(model).labels} color={() => colors().text} />
         <Show when={() => read(props.tooltip) !== false || selecting}>
           <View
-            style={() => ({ ...plotBox(), ...(selecting ? { cursor: 'pointer' } : null) })}
+            style={() => ({ ...plotBox(), ...(selecting ? pressLook(ui.theme()) : null) })}
             onPointerMove={move}
             onPointerLeave={() => $write(active, -1)}
             // a press chooses the category under it (the one the pointer made active, without a place)

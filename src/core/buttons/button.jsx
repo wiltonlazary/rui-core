@@ -3,7 +3,7 @@
 // every renderer).
 
 import { View, Action, Label, For, read, $lookup } from 'ren-core';
-import { styled } from '../../theme/style.js';
+import { styled, pressLook } from '../../theme/style.js';
 import { variantColors, radiusOf, sized, pageColors, flexWord } from '../../theme/resolve.js';
 import { gradientColors } from './gradient.js';
 import { $joined, joinedStyle, unjoined } from './joined.jsx';
@@ -83,8 +83,8 @@ export function Button(props) {
       ...joinedStyle(joined),
       ...(off
         ? // a variant without a fill (ghost, plain) keeps none, its text dimmed
-          { background: bare(props) ? 'transparent' : page.disabled, color: page.disabledText, borderColor: 'transparent', cursor: 'not-allowed' }
-        : { background: c.background, color: c.color, borderColor: c.border, cursor: 'pointer', hover: { background: c.hover, color: c.hoverColor ?? c.color } }),
+          { background: bare(props) ? 'transparent' : page.disabled, color: page.disabledText, borderColor: 'transparent', ...pressLook(theme, true) }
+        : { background: c.background, color: c.color, borderColor: c.border, ...pressLook(theme), hover: { background: c.hover, color: c.hoverColor ?? c.color } }),
       ...(read(props.stretch) ? { width: '100%', self: 'stretch' } : null),
       ...(read(props.loading) ? { opacity: theme.opacity.muted } : null),
     };
@@ -141,7 +141,7 @@ function reserved(text, reserve) {
 export function Pressable(props) {
   const trigger = $lookup(TriggerMeaning);
   // The page's text color: a DOM button does not inherit one.
-  const style = styled(props, (theme, scheme) => ({ background: 'transparent', color: pageColors(theme, scheme).text, border: 0, padding: 0, cursor: 'pointer' }));
+  const style = styled(props, (theme, scheme) => ({ background: 'transparent', color: pageColors(theme, scheme).text, border: 0, padding: 0, ...pressLook(theme) }));
   const onPress = pressOf(props);
   if (textual(props.children)) return <Action ref={props.ref} text={props.children} label={props.label} {...trigger} {...marks(props)} onPress={onPress} style={style} />;
   return (

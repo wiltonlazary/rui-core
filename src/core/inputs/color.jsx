@@ -8,7 +8,7 @@
 // checkerboard behind an alpha is two rows of squares.
 
 import { View, Action, $signal, $read, $write, $watch, $active, $untrack, read } from 'ren-core';
-import { styled } from '../../theme/style.js';
+import { styled, pressLook } from '../../theme/style.js';
 import { radiusOf, colorOf, shadowOf } from '../../theme/resolve.js';
 import { $ui } from '../../theme/theme.jsx';
 import { $value, sizeOf, clamp } from './shared.js';
@@ -201,7 +201,7 @@ export function thumb(size, place, onKey, label, meaning, fill) {
       borderColor: theme.white,
       background: fill(),
       shadow: shadowOf(theme, 'sm'),
-      cursor: 'pointer',
+      ...pressLook(theme),
       ...place(),
     };
   };
@@ -249,7 +249,7 @@ function colorSlider(props, m) {
   // Its ramp and thumb sit inside its border, across its padding box: the pointer maps there.
   // A value at its step, written to two decimals as the keys give it (0.57, not 0.5700000000000001).
   const d = drag(([x], end) => m.set(Math.round(Math.round((x * m.max) / m.step) * m.step * 100) / 100, end), disabled, () => bordersOf($untrack(R, root)));
-  const root = styled(props, theme => ({ height: size(), radius: size() / 2, overflow: 'visible', cursor: 'pointer', touchAction: 'none', ...(disabled() ? { opacity: theme.opacity.disabled } : null) }));
+  const root = styled(props, theme => ({ height: size(), radius: size() / 2, overflow: 'visible', ...pressLook(theme, disabled()), touchAction: 'none', ...(disabled() ? { opacity: theme.opacity.disabled } : null) }));
   // Its own aria-label, else the Field around it (not inside a ColorPicker, which the Field names), else its kind.
   const name = props.__part === true ? {} : $nameOf(props, props['aria-label']);
   const onKey = (/** @type {any} */ e) => {
@@ -387,7 +387,7 @@ export function ColorPicker(props) {
         if (parsed !== null) emit(alpha() ? parsed : { ...parsed, a: 1 }, true);
         props.onSwatchPress?.(c);
       }}
-      style={() => ({ minHeight: 0, padding: 0, border: 0, height: 0, width: '100%', radius: radiusOf(ui.theme(), 'sm'), overflow: 'hidden', background: 'transparent', cursor: 'pointer', ...swatchBox() })}
+      style={() => ({ minHeight: 0, padding: 0, border: 0, height: 0, width: '100%', radius: radiusOf(ui.theme(), 'sm'), overflow: 'hidden', background: 'transparent', ...pressLook(ui.theme()), ...swatchBox() })}
     >
       {checker(2)}
       <View style={{ position: 'absolute', inset: 0, background: c }} />
@@ -416,7 +416,7 @@ export function ColorPicker(props) {
     color: colorOf(theme, scheme, undefined),
     fontSize: theme.fontSizes.sm,
     fontWeight: theme.weights.regular,
-    cursor: 'pointer',
+    ...pressLook(theme),
     hover: { underline: true },
   }));
   return (

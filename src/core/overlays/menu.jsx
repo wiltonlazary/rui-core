@@ -8,7 +8,7 @@
 
 import { View, Label, Action, Shape, read, $active, $context, $lookup, $owner, $cleanup, $untrack, $watch } from 'ren-core';
 import { $ui } from '../../theme/theme.jsx';
-import { styled } from '../../theme/style.js';
+import { styled, pressLook } from '../../theme/style.js';
 import { pageColors, colorOf, radiusOf, shadowOf } from '../../theme/resolve.js';
 import { alpha } from '../../theme/colors.js';
 import { $popover, PopoverContext, PopoverTrigger, Panel } from './popover.jsx';
@@ -252,7 +252,7 @@ export function MenuItem(props) {
       border: 0,
       fontSize: theme.fontSizes.sm,
       color: c.text,
-      ...(disabled() ? { opacity: theme.opacity.disabled, cursor: 'not-allowed' } : { cursor: 'pointer', hover: { background: c.hover }, focus: { background: c.hover } }),
+      ...(disabled() ? { opacity: theme.opacity.disabled, ...pressLook(theme, true) } : { ...pressLook(theme), hover: { background: c.hover }, focus: { background: c.hover } }),
     };
   });
   const choose = (/** @type {any} */ e) => {

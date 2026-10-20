@@ -1,7 +1,7 @@
 // Small marks: Badge, IconBox, Swatch and Key, on View and Label.
 
 import { View, Label, Action, read } from 'ren-core';
-import { styled } from '../../theme/style.js';
+import { styled, pressLook } from '../../theme/style.js';
 import { radiusOf, pageColors, colorOf, shadowOf, sized, fontBelow } from '../../theme/resolve.js';
 import { marks } from '../../theme/meaning.js';
 import { pass } from '../layout/layout.jsx';
@@ -128,7 +128,7 @@ export function Swatch(props) {
       border: 1,
       borderColor: pageColors(theme, scheme).rule,
       ...(read(props.shadowed) === true ? { shadow: shadowOf(theme, 'xs') } : null),
-      ...(pressOf(props) ? { cursor: 'pointer' } : null),
+      ...(pressOf(props) ? pressLook(theme) : null),
     };
   });
   const press = pressOf(props);

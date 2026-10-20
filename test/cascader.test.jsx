@@ -423,14 +423,14 @@ describe('Cascader', () => {
     t.dispose();
   });
 
-  it('a disabled row: the option look dimmed, the plain pointer, aria-disabled, not chosen', () => {
+  it("a disabled row: the option look dimmed, the theme's disabled cursor, aria-disabled, not chosen", () => {
     const t = setup(field());
     t.press('Order');
     t.press('Snacks');
     const candy = t.domFind('Candy');
     assert.equal(candy.getAttribute('aria-disabled'), 'true');
     assert.equal(css(candy).opacity, String(BASE_THEME.opacity.disabled));
-    assert.equal(css(candy).cursor, 'default');
+    assert.equal(css(candy).cursor, BASE_THEME.cursor.disabled);
     assert.equal(t.domFind('Fruit').getAttribute('aria-disabled'), null);
     t.press('Candy');
     assert.deepEqual(t.values(), [null, null]);

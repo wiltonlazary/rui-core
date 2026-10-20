@@ -4,7 +4,7 @@
 // may move to.
 
 import { Action, View, Label, Lazy, Show, $active, $memo, $read, $kind, read } from 'ren-core';
-import { styled } from '../../theme/style.js';
+import { styled, pressLook } from '../../theme/style.js';
 import { $ui } from '../../theme/theme.jsx';
 import { variantColors, radiusOf, pageColors, colorOf, sized, spacing, fontBelow } from '../../theme/resolve.js';
 import { pass } from '../layout/layout.jsx';
@@ -84,7 +84,7 @@ export function Stepper(props) {
       border: 0,
       padding: 0,
       color: pageColors(theme, scheme).text,
-      cursor: pressable() ? 'pointer' : 'default',
+      ...(pressable() ? pressLook(theme) : { cursor: 'default' }),
     }));
     const chipStyle = styled({}, (theme, scheme) => {
       const side = chip();

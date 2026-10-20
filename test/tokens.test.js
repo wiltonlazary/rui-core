@@ -1,6 +1,7 @@
 // The style-token guard: every component style number in src/core,
 // src/ext, src/hooks and src/form reads a theme token (opacity, weights,
 // ratios, control, chart, spacing, fontSizes, lineHeights, radius.round,
+// cursor (a press's hand, through pressLook),
 // MOTION, LAYERS), never an inline literal. Refused: literal opacities
 // (in a style, in alpha(), in an opacity-named value, or written into a
 // '#rrggbbaa' color), weights and leadings; divisions of a size by a
@@ -84,6 +85,8 @@ const RULES = [
   ['padding', /\b(?:padding|margin|gap|rowGap|columnGap):\s*(?:\[[^\]]*?(?<![\w.])-?(?:[3-9]|\d{2,})(?:\.\d+)?(?![\w.])[^\]]*\]|-?(?:[3-9]|\d{2,})(?:\.\d+)?\b)/],
   // A font size offset by pixels: fontBelow(theme, size, steps).
   ['fontOffset', /\bfontSize:\s*(?:[^,(){}]|\((?:[^()]|\([^()]*\))*\))*[-+]\s*\d/],
+  // A press's cursor written out: pressLook(theme, off) reads theme.cursor (the app may turn the hand off).
+  ['cursor', /\bcursor:\s*[^,}]*'(?:pointer|not-allowed)'/],
   // A pill or circle by a huge radius: theme.radius.round.
   ['round', /\bradius:\s*(?:1000|9999)\b/],
   // Any literal past 2 px anywhere in a padding, margin or gap value (after a ternary, in an expression).

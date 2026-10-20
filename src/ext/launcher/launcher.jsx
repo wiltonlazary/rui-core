@@ -6,7 +6,7 @@
 // `$keys`), with or without a focus in the application.
 
 import { View, Label, Action, Edit, Scroll, Show, For, read, $active, $memo, $read, $untrack, $watch, $owner, $cleanup, $keys } from 'ren-core';
-import { styled } from '../../theme/style.js';
+import { styled, pressLook } from '../../theme/style.js';
 import { $ui } from '../../theme/theme.jsx';
 import { pageColors, fontBelow } from '../../theme/resolve.js';
 import { Modal } from '../../core/overlays/index.js';
@@ -250,7 +250,7 @@ function Item(p) {
       border: 0,
       background: selected() ? hover : 'transparent',
       color: pageColors(theme, scheme).text,
-      ...(action().disabled === true ? { opacity: theme.opacity.disabled, cursor: 'not-allowed' } : { cursor: 'pointer', hover: { background: hover } }),
+      ...(action().disabled === true ? { opacity: theme.opacity.disabled, ...pressLook(theme, true) } : { ...pressLook(theme), hover: { background: hover } }),
     };
   });
   const hint = styled({}, (theme, scheme) => ({ color: pageColors(theme, scheme).quiet, fontSize: theme.fontSizes.xs }));

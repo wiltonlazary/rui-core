@@ -8,7 +8,7 @@
 // format) shows as written, the caret then placed after what was typed.
 
 import { View, Edit, Action, Shape, $signal, $read, $write, $active, $after, $commit, $owner, read } from 'ren-core';
-import { styled } from '../../theme/style.js';
+import { styled, pressLook } from '../../theme/style.js';
 import { radiusOf, sized, pageColors } from '../../theme/resolve.js';
 import { $ui } from '../../theme/theme.jsx';
 import { heightOf, sizeOf, $value, fieldColors, clamp, chevronShape, eyeShape, marksOf, insetOf, disabledLook, stepOn, stepOf, placesOf } from './shared.js';
@@ -131,7 +131,7 @@ export function field(props, model) {
       fontSize: fz,
       lineHeight: theme.lineHeights.md,
       padding: [py, pad(false)(), py, pad(true)()],
-      ...(disabled() ? { cursor: 'not-allowed' } : null),
+      ...(disabled() ? pressLook(theme, true) : null),
       ...(model.edit?.() ?? null),
     };
   };
@@ -301,7 +301,7 @@ export function PasswordInput(props) {
       <Action
         label={() => (shown.get() ? labelsIn().hidePassword : labelsIn().showPassword)}
         onPress={() => shown.set(!shown.get())}
-        style={() => ({ background: 'transparent', padding: 0, border: 0, minHeight: 0, width: box, height: box, align: 'center', justify: 'center', radius: ui.theme().radius.sm, cursor: 'pointer', hover: { background: pageColors(ui.theme(), ui.scheme()).hover } })}
+        style={() => ({ background: 'transparent', padding: 0, border: 0, minHeight: 0, width: box, height: box, align: 'center', justify: 'center', radius: ui.theme().radius.sm, ...pressLook(ui.theme()), hover: { background: pageColors(ui.theme(), ui.scheme()).hover } })}
       >
         <Shape style={{ width: icon, height: icon }} shapes={() => eyeShape(icon, pageColors(ui.theme(), ui.scheme()).quiet, !shown.get())} />
       </Action>
@@ -444,7 +444,7 @@ export function NumberInput(props) {
           width: w,
           align: 'center',
           justify: 'center',
-          cursor: 'pointer',
+          ...pressLook(ui.theme()),
           hover: { background: pageColors(ui.theme(), ui.scheme()).hover },
         })}
       >

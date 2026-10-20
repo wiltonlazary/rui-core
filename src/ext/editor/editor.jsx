@@ -20,7 +20,7 @@
 // start, the center or the end).
 
 import { View, Label, Edit, Action, Shape, Show, For, $context, $lookup, $active, $signal, $read, $write, $untrack, $owner, $cleanup, read } from 'ren-core';
-import { styled } from '../../theme/style.js';
+import { styled, pressLook } from '../../theme/style.js';
 import { $ui } from '../../theme/theme.jsx';
 import { pageColors, radiusOf, variantColors, colorOf, shadesOf, fontBelow } from '../../theme/resolve.js';
 import { alpha } from '../../theme/colors.js';
@@ -174,7 +174,7 @@ function EditorAction(props) {
       fontSize: theme.fontSizes.sm,
       background: on ? ghost.hover : 'transparent',
       color: disabled ? page.disabledText : on ? ghost.color : page.text,
-      cursor: disabled ? 'default' : 'pointer',
+      ...pressLook(theme, disabled),
       select: 'none',
       ...(disabled || on ? null : { hover: { background: page.hover } }),
     };
@@ -400,7 +400,7 @@ function EditorColors(props) {
   const panel = styled({}, theme => ({ direction: 'column', gap: theme.spacing.xs }));
   const entry = styled({}, (theme, scheme) => {
     const c = variantColors(theme, scheme, 'plain', theme.accent);
-    return { self: 'start', padding: 0, border: 0, background: 'transparent', color: c.color, fontSize: theme.fontSizes.sm, cursor: 'pointer', hover: { color: c.hoverColor } };
+    return { self: 'start', padding: 0, border: 0, background: 'transparent', color: c.color, fontSize: theme.fontSizes.sm, ...pressLook(theme), hover: { color: c.hoverColor } };
   });
   return (
     <Popover
@@ -479,7 +479,7 @@ function LinkEditor() {
   });
   const button = styled({}, (theme, scheme) => {
     const c = variantColors(theme, scheme, 'neutral', null);
-    return { height: theme.sizes.control.sm, padding: [0, theme.spacing.sm], border: 1, borderColor: c.border, radius: radiusOf(theme, 'sm'), background: c.background, color: c.color, fontSize: theme.fontSizes.sm, cursor: 'pointer' };
+    return { height: theme.sizes.control.sm, padding: [0, theme.spacing.sm], border: 1, borderColor: c.border, radius: radiusOf(theme, 'sm'), background: c.background, color: c.color, fontSize: theme.fontSizes.sm, ...pressLook(theme) };
   });
   const bar = styled({}, theme => ({ direction: 'row', gap: theme.spacing.xs, align: 'center' }));
   return (
@@ -660,7 +660,7 @@ function Drawn(props) {
         }
         const onLink = props.onLink();
         const list = drawnRuns(b, theme, scheme, onLink);
-        return <Label ref={note(0, b.text.length)} runs={list} style={{ wrap: true, textAlign: justifyOf(b.align), ...(onLink !== null && list.some(r => r.onPress !== undefined) ? { cursor: 'pointer' } : null) }} />;
+        return <Label ref={note(0, b.text.length)} runs={list} style={{ wrap: true, textAlign: justifyOf(b.align), ...(onLink !== null && list.some(r => r.onPress !== undefined) ? pressLook(theme) : null) }} />;
       }}
     </View>
   );

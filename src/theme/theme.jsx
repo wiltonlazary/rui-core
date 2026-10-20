@@ -124,6 +124,7 @@ import { Words, wordsOver, labelsIn } from './labels.js';
  * @property {({ colors?: readonly string[], angle?: number })=} gradient the gradient variant's default: its colors (evenly spread) and angle
  * @property {number} contrastThreshold the luminance past which a background takes black text (0.179: where black and white text have equal WCAG contrast, so the pick is the more readable one)
  * @property {{ faint: number, soft: number, disabled: number, muted: number, dense: number }} opacity rui's opacity steps: a faint tint or dimmed series, a soft wash (a highlight, a quiet fill), a disabled control, a muted (resting, secondary) part, a dense fill that still lets the grid through
+ * @property {{ press: string | null, disabled: string | null }} cursor the pointer's cursor (a CSS cursor name) over what takes a press (press: a hand) and over a control that takes none now (disabled); null sets none, so the renderer's own shows
  * @property {{ regular: number, strong: number, bold: number }} weights font weights: body text, labels and emphasis, headings and marks
  * @property {{ glyph: number, mark: number, inset: number, icon: number, pad: number }} ratios parts sized by their box: a letter in its box (glyph), a dot on a badge or field (mark), a field's text inset from its start (inset), an icon in a square control (icon), each a share of the box's height; and a compact part's side padding as a share of its font size (pad)
  * @property {{ labelGap: number, panelPad: number, optionPad: readonly [number, number], iconGap: number, textStep: number, pad: Record<Size, number>, densePad: Record<Size, number>, density: Record<'tight' | 'even' | 'airy', readonly [number, number]>, lightbox: Size | null, typeahead: number }} control control geometry: the gap between a field and its label and notes, a panel's inner padding, an option's padding (y, x), the gap between an icon and its text, how many font steps a control's notes sit below its text, a button's side padding by size (pad) and a compact one's (densePad), a table cell's padding (y, x) by density, the breakpoint below which a picker's options open in a centered lightbox (null: never), and how many options a lightbox lists before it shows a search field (typeahead)
@@ -178,6 +179,8 @@ export const BASE_THEME = Object.freeze(withExtra(tables(/** @type {RuiThemeValu
   // The style tokens: every component style number reads one of these
   // (or spacing, fontSizes, lineHeights, radius), never an inline literal.
   opacity: { faint: 0.16, soft: 0.3, disabled: 0.45, muted: 0.7, dense: 0.88 },
+  // The pointer over what presses: an app turns the hand off with `cursor: { press: null }` (or 'default').
+  cursor: { press: 'pointer', disabled: 'not-allowed' },
   weights: { regular: 400, strong: 600, bold: 700 },
   ratios: { glyph: 0.42, mark: 0.3, inset: 0.3, icon: 0.62, pad: 0.75 },
   control: {

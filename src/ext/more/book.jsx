@@ -6,7 +6,7 @@
 // middle of the turn; the pages under it show as it uncovers them.
 
 import { View, Show, read, $active, $signal, $read, $write, $untrack, $watch, $lookup, $batch, $owner, $cleanup } from 'ren-core';
-import { styled } from '../../theme/style.js';
+import { styled, pressLook } from '../../theme/style.js';
 import { pageColors, shadowOf, radiusOf } from '../../theme/resolve.js';
 import { $ui } from '../../theme/theme.jsx';
 import { alpha } from '../../theme/colors.js';
@@ -143,7 +143,7 @@ export function Book(props) {
   /** A static slot: its page, pressed to turn. @param {() => number} index @param {() => number} left @param {number} dir */
   const slot = (index, left, dir) => (
     <View
-      style={() => ({ ...paper(), position: 'absolute', top: 0, left: left(), width: width(), height: height(), overflow: 'hidden' })}
+      style={() => ({ ...paper(), position: 'absolute', top: 0, left: left(), width: width(), height: height(), overflow: 'hidden', ...pressLook(ui.theme()) })}
       onPress={(/** @type {any} */ e) => {
         if (!single()) return flip(dir);
         // One page: the right half turns forward, the left half back.

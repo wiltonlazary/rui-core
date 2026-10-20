@@ -3,7 +3,7 @@
 // uncontrolled value, and the sizes and colors of a picker's controls.
 
 import { View, Show, $context, $lookup, $active, $signal, $read, $write, $kind, $untrack, read } from 'ren-core';
-import { styled } from '../../theme/style.js';
+import { styled, pressLook } from '../../theme/style.js';
 import { DECOR } from '../../theme/meaning.js';
 import { pageColors, colorOf, sized } from '../../theme/resolve.js';
 import { alpha } from '../../theme/colors.js';
@@ -143,10 +143,10 @@ export function cellStyle(theme, scheme, s, box) {
     radius: span === false ? box.radius : span === 'solo' ? end : span === 'start' ? [end, 0, 0, end] : span === 'end' ? [0, end, end, 0] : 0,
     background: 'transparent',
     color: s.weekend ? page.quiet : page.text,
-    cursor: 'pointer',
+    ...pressLook(theme),
   };
   if (s.outside) Object.assign(base, { color: page.quiet, opacity: theme.opacity.muted });
-  if (s.disabled) return { ...base, color: page.disabledText, cursor: 'default' };
+  if (s.disabled) return { ...base, color: page.disabledText, ...pressLook(theme, true) };
   if (isFilled(s)) return { ...base, background: primary, color: theme.white, hover: { background: shades[Math.min(9, theme.accentShade[scheme] + 1)] } };
   if (span !== false) return { ...base, background: dark ? alpha(primary, theme.opacity.faint) : shades[0], hover: { background: dark ? alpha(primary, theme.opacity.soft) : shades[1] } };
   return { ...base, hover: { background: page.hover } };

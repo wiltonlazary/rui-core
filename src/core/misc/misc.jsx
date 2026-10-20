@@ -2,7 +2,7 @@
 // ScrollRow and Marquee, on View, Label and Scroll.
 
 import { View, Label, Scroll, Shape, read, $active, $signal, $read, $write, $watch, $untrack, $lookup } from 'ren-core';
-import { styled, Nowrap } from '../../theme/style.js';
+import { styled, Nowrap, pressLook } from '../../theme/style.js';
 import { pageColors, spacing, colorOf, sized } from '../../theme/resolve.js';
 import { alpha } from '../../theme/colors.js';
 import { $motion, MOTION, Clock, platformClock } from '../../theme/motion.js';
@@ -294,7 +294,7 @@ export function ScrollRow(props) {
       align: 'center',
       justify: 'center',
       background: pageColors(theme, scheme).body,
-      cursor: 'pointer',
+      ...pressLook(theme),
       zIndex: 1,
     }));
     const icon = side < 0 ? props.previousIcon : props.nextIcon;

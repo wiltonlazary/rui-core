@@ -3,7 +3,7 @@
 // icon, with focus and keyboard activation on every renderer.
 
 import { Action, Label, Show, View, read, $lookup } from 'ren-core';
-import { styled } from '../../theme/style.js';
+import { styled, pressLook } from '../../theme/style.js';
 import { radiusOf, pageColors, sized } from '../../theme/resolve.js';
 import { $ui } from '../../theme/theme.jsx';
 import { Loader } from '../feedback/loader.jsx';
@@ -62,8 +62,8 @@ export function IconButton(props) {
       border: 1,
       ...joinedStyle(joined),
       ...(disabled
-        ? { background: bare(props) ? 'transparent' : page.disabled, color: page.disabledText, borderColor: 'transparent', cursor: 'not-allowed' }
-        : { background: c.background, color: c.color, borderColor: c.border, cursor: read(props.loading) ? 'default' : 'pointer', hover: { background: c.hover, color: c.hoverColor ?? c.color } }),
+        ? { background: bare(props) ? 'transparent' : page.disabled, color: page.disabledText, borderColor: 'transparent', ...pressLook(theme, true) }
+        : { background: c.background, color: c.color, borderColor: c.border, ...pressLook(theme, read(props.loading)), hover: { background: c.hover, color: c.hoverColor ?? c.color } }),
     };
   });
   const press = pressOf(props);
@@ -129,7 +129,7 @@ export function CloseButton(props) {
       radius: radiusOf(theme, read(props.radius)),
       background: 'transparent',
       color: ink(),
-      cursor: disabled ? 'not-allowed' : 'pointer',
+      ...pressLook(theme, disabled),
       ...(disabled ? { opacity: theme.opacity.disabled } : plain ? null : { hover: { background: pageColors(theme, scheme).hover } }),
     };
   });

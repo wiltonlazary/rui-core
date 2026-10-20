@@ -3,7 +3,7 @@
 // and the Collapse of this wave.
 
 import { View, Label, Action, read, $active, $signal, $read, $write, $context, $lookup, $untrack, $watch, $writable } from 'ren-core';
-import { styled } from '../../theme/style.js';
+import { styled, pressLook } from '../../theme/style.js';
 import { radiusOf, pageColors } from '../../theme/resolve.js';
 import { pass } from '../layout/layout.jsx';
 import { Collapse } from '../misc/collapse.jsx';
@@ -163,7 +163,7 @@ function AccordionTrigger(props) {
       fontWeight: theme.weights.strong,
       textAlign: 'start',
       justify: 'start',
-      ...(off ? { opacity: theme.opacity.disabled, cursor: 'not-allowed' } : { cursor: 'pointer', hover: { background: page.hover } }),
+      ...(off ? { opacity: theme.opacity.disabled, ...pressLook(theme, true) } : { ...pressLook(theme), hover: { background: page.hover } }),
     };
   });
   const ink = styled({}, (theme, scheme) => ({ color: pageColors(theme, scheme).text }));

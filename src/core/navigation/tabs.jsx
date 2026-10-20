@@ -4,7 +4,7 @@
 // tab and activate it, looping by default.
 
 import { Action, View, Label, Show, For, $parts, $context, $lookup, $owner, $active, $cleanup, $signal, $read, $write, $watch, $after, $untrack, read } from 'ren-core';
-import { styled } from '../../theme/style.js';
+import { styled, pressLook } from '../../theme/style.js';
 import { $ui } from '../../theme/theme.jsx';
 import { variantColors, radiusOf, pageColors, colorOf, flexWord, shadowOf } from '../../theme/resolve.js';
 import { pass } from '../layout/layout.jsx';
@@ -194,7 +194,7 @@ export function TabsTab(props) {
       textAlign: vertical() ? 'start' : 'center',
       radius,
       color: page.text,
-      cursor: disabled() ? 'not-allowed' : 'pointer',
+      ...pressLook(theme, disabled()),
       ...(disabled() ? { opacity: theme.opacity.disabled } : null),
     };
     if (v === 'pill') {

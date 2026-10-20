@@ -6,7 +6,7 @@
 // controls are laid out by the caller (Row, Stack).
 
 import { View, Label, Action, Shape, Show, $context, $lookup, $signal, $read, $write, $watch, $active, $after, $untrack, read } from 'ren-core';
-import { styled } from '../../theme/style.js';
+import { styled, pressLook } from '../../theme/style.js';
 import { radiusOf, sized, pageColors, colorOf, variantColors, shadowOf, fontBelow } from '../../theme/resolve.js';
 import { $ui } from '../../theme/theme.jsx';
 import { Clock, motionOn, MOTION, durationOf } from '../../theme/motion.js';
@@ -40,7 +40,7 @@ const chipOf = (theme, size) => {
 };
 
 /** The Action a control presses: no fill, no border, its content from the start. */
-const BARE = { background: 'transparent', border: 0, padding: 0, minHeight: 0, radius: 0, justify: 'start', textAlign: 'start', direction: 'row', gap: 0, align: 'start', cursor: 'pointer' };
+const BARE = { background: 'transparent', border: 0, padding: 0, minHeight: 0, radius: 0, justify: 'start', textAlign: 'start', direction: 'row', gap: 0, align: 'start' };
 
 /**
  * A control's label (decoration: the control carries it as its name),
@@ -186,7 +186,7 @@ export function Checkbox(props) {
       {...(props['aria-label'] ?? props.label) === undefined ? $fieldName(props) : null}
       selected={checked}
       onPress={toggle}
-      style={styled(props, () => ({ ...BARE, ring: false, cursor: disabled() ? 'not-allowed' : 'pointer' }))}
+      style={styled(props, theme => ({ ...BARE, ring: false, ...pressLook(theme, disabled()) }))}
     >
       {side ? body(props, size(), boxOf(ui.theme(), size())) : null}
       <View style={boxStyle}>
@@ -286,7 +286,7 @@ export function Radio(props) {
   };
   const side = read(props.labelAt) === 'start';
   return (
-    <Action ref={props.ref} role="radio" aria-checked={() => String(checked())} aria-disabled={flag(disabled)} aria-invalid={flag(() => invalidOf(read(props.error), read(props.invalid)))} label={props['aria-label'] ?? props.label} selected={checked} onPress={press} style={styled(props, () => ({ ...BARE, ring: false, cursor: disabled() ? 'not-allowed' : 'pointer' }))}>
+    <Action ref={props.ref} role="radio" aria-checked={() => String(checked())} aria-disabled={flag(disabled)} aria-invalid={flag(() => invalidOf(read(props.error), read(props.invalid)))} label={props['aria-label'] ?? props.label} selected={checked} onPress={press} style={styled(props, theme => ({ ...BARE, ring: false, ...pressLook(theme, disabled()) }))}>
       {side ? body(props, size(), boxOf(ui.theme(), size())) : null}
       <View style={ring}>
         <View style={dot} />
@@ -453,7 +453,7 @@ export function Switch(props) {
       {...(props['aria-label'] ?? props.label) === undefined ? $fieldName(props) : null}
       selected={checked}
       onPress={toggle}
-      style={styled(props, () => ({ ...BARE, ring: false, cursor: disabled() ? 'not-allowed' : 'pointer' }))}
+      style={styled(props, theme => ({ ...BARE, ring: false, ...pressLook(theme, disabled()) }))}
     >
       {side ? body(props, size(), boxOf(ui.theme(), size())) : null}
       <View style={track}>
@@ -544,7 +544,7 @@ export function Chip(props) {
       borderColor: c.border,
       background: c.background,
       color: c.color,
-      cursor: disabled() ? 'not-allowed' : 'pointer',
+      ...pressLook(theme, disabled()),
       ...(c.hover === undefined ? null : { hover: { background: c.hover } }),
     };
   });
@@ -740,7 +740,7 @@ export function SegmentedControl(props) {
         color: text,
         justify: 'center',
         align: 'center',
-        cursor: d.disabled ? 'not-allowed' : 'pointer',
+        ...pressLook(theme, d.disabled),
         ...(active || d.disabled ? null : { hover: { color: page.text } }),
       };
     };

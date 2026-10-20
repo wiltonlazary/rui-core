@@ -2,7 +2,7 @@
 // Clock context's frames), portable: opacity, transforms and sizes only.
 
 import { View, Label, Action, For, Show, read, $active, $signal, $read, $write, $untrack, $watch, $lookup, $context, $focus } from 'ren-core';
-import { styled } from '../../theme/style.js';
+import { styled, pressLook } from '../../theme/style.js';
 import { $ui } from '../../theme/theme.jsx';
 import { Clock, motionOn, MOTION, durationOf } from '../../theme/motion.js';
 import { pass } from '../../core/layout/layout.jsx';
@@ -248,7 +248,7 @@ export function FlipTrigger(props) {
       label={props['aria-label']}
       onPress={() => flip?.toggle()}
       // The page's text color, as Pressable: an Action's own is the paper's, for a filled button.
-      style={styled(props, (theme, scheme) => ({ background: 'transparent', color: pageColors(theme, scheme).text, border: 0, padding: 0, radius: radiusOf(theme, undefined), minHeight: 0, direction: 'column', align: 'stretch', justify: 'start', textAlign: 'start', cursor: 'pointer' }))}
+      style={styled(props, (theme, scheme) => ({ background: 'transparent', color: pageColors(theme, scheme).text, border: 0, padding: 0, radius: radiusOf(theme, undefined), minHeight: 0, direction: 'column', align: 'stretch', justify: 'start', textAlign: 'start', ...pressLook(theme) }))}
     >
       {children}
     </Action>

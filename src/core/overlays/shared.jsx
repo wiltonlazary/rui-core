@@ -19,7 +19,7 @@ import { Clock, MOTION } from '../../theme/motion.js';
 import { LAYERS } from '../../theme/layers.js';
 import { $ui } from '../../theme/theme.jsx';
 import { pageColors, colorOf } from '../../theme/resolve.js';
-import { styled } from '../../theme/style.js';
+import { styled, pressLook } from '../../theme/style.js';
 import { transitionStyle, presetOf } from '../misc/collapse.jsx';
 import { $tween } from '../misc/tween.js';
 import { collide } from './collide.js';
@@ -509,7 +509,7 @@ export function Close(props) {
       align: 'center',
       justify: 'center',
       shrink: 0,
-      cursor: 'pointer',
+      ...pressLook(theme),
       hover: { background: pageColors(theme, scheme).hover },
       color: page.quiet,
     };

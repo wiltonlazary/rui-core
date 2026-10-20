@@ -4,7 +4,7 @@
 // menu ArrowLeft and ArrowRight step to its neighbors.
 
 import { View, Action, read, $active, $signal, $read, $write, $untrack, $owner, $cleanup, $lookup } from 'ren-core';
-import { styled } from '../../theme/style.js';
+import { styled, pressLook } from '../../theme/style.js';
 import { pageColors } from '../../theme/resolve.js';
 import { state } from '../../theme/meaning.js';
 import { $typeAhead } from '../misc/type-ahead.js';
@@ -233,7 +233,7 @@ export function MenubarTrigger(props) {
       fontSize: theme.fontSizes.sm,
       color: page.text,
       border: 0,
-      cursor: 'pointer',
+      ...pressLook(theme),
       background: store.isOpen() ? page.hover : 'transparent',
       hover: { background: page.hover },
       focus: { background: page.hover },

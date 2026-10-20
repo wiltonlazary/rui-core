@@ -4,7 +4,7 @@
 
 import { View, Label, Action, Shape, Show, Portal, read, $active, $untrack } from 'ren-core';
 import { $ui } from '../../theme/theme.jsx';
-import { styled } from '../../theme/style.js';
+import { styled, pressLook } from '../../theme/style.js';
 import { pageColors, radiusOf, shadowOf } from '../../theme/resolve.js';
 import { Close, $controlled, keyOf, partOf, handled } from '../../core/overlays/shared.jsx';
 import { LAYERS } from '../../theme/layers.js';
@@ -192,7 +192,7 @@ export function Window(props) {
             onPointerDown={stop}
             label={() => (collapsed.get() ? labelsIn().restore : labelsIn().minimize)}
             onPress={() => collapsed.set(!$untrack(R, collapsed.get))}
-            style={styled({}, (theme, scheme) => ({ width: theme.sizes.icon.md, height: theme.sizes.icon.md, minHeight: theme.sizes.icon.md, padding: 0, border: 0, radius: theme.radius.sm, background: 'transparent', align: 'center', justify: 'center', cursor: 'pointer', hover: { background: pageColors(theme, scheme).hover } }))}
+            style={styled({}, (theme, scheme) => ({ width: theme.sizes.icon.md, height: theme.sizes.icon.md, minHeight: theme.sizes.icon.md, padding: 0, border: 0, radius: theme.radius.sm, background: 'transparent', align: 'center', justify: 'center', ...pressLook(theme), hover: { background: pageColors(theme, scheme).hover } }))}
           >
             <Shape {...DECOR} shapes={minimizeIcon} style={() => ({ width: ui.theme().sizes.glyph.sm, height: ui.theme().sizes.glyph.sm })} />
           </Action>

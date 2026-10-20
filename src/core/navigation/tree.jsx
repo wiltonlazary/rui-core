@@ -6,7 +6,7 @@
 // Space press the item.
 
 import { Action, View, Label, Show, $active, $signal, $read, $write, read } from 'ren-core';
-import { styled } from '../../theme/style.js';
+import { styled, pressLook } from '../../theme/style.js';
 import { $ui } from '../../theme/theme.jsx';
 import { variantColors, pageColors, spacing } from '../../theme/resolve.js';
 import { pass } from '../layout/layout.jsx';
@@ -167,7 +167,7 @@ export function Tree(props) {
         radius: theme.radius.sm,
         textAlign: 'start',
         fontSize: theme.fontSizes.sm,
-        cursor: 'pointer',
+        ...pressLook(theme),
         background: selected() ? c.background : 'transparent',
         color: selected() ? c.color : pageColors(theme, scheme).text,
         hover: { background: selected() ? c.hover : pageColors(theme, scheme).hover },

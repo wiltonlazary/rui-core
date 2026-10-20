@@ -4,7 +4,7 @@
 // in 24 hours, '' when empty.
 
 import { View, Label, Action, Scroll, Show, For, $active, $signal, $read, $write, read, $untrack } from 'ren-core';
-import { styled } from '../../theme/style.js';
+import { styled, pressLook } from '../../theme/style.js';
 import { radiusOf, pageColors, sized } from '../../theme/resolve.js';
 import { Popover } from '../../core/overlays/index.js';
 import { MaskInput, Field } from '../../core/inputs/index.js';
@@ -318,7 +318,7 @@ export function TimePicker(props) {
         background: 'transparent',
         color: seg.get(parts()) === null ? pageColors(theme, scheme).placeholder : pageColors(theme, scheme).text,
         fontSize: sized(theme.fontSizes, size()),
-        cursor: disabled() ? 'not-allowed' : 'text',
+        ...(disabled() ? pressLook(theme, true) : { cursor: 'text' }),
         focus: { background: pageColors(theme, scheme).hover },
       }))}
     />

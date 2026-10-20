@@ -12,7 +12,7 @@
 // Moving past what is shown turns the page; disabled controls are skipped.
 
 import { View, Label, Action, Show, For, Times, $active, $after, $owner, $cleanup, $signal, $read, $write, $untrack, read } from 'ren-core';
-import { styled } from '../../theme/style.js';
+import { styled, pressLook } from '../../theme/style.js';
 import { $ui } from '../../theme/theme.jsx';
 import { radiusOf, pageColors, fontBelow } from '../../theme/resolve.js';
 import { BackIcon, ForwardIcon } from '../../core/buttons/index.js';
@@ -175,7 +175,7 @@ export function Calendar(props) {
         radius: radiusOf(theme, read(props.radius)),
         background: 'transparent',
         color: pageColors(theme, scheme).text,
-        cursor: off() ? 'not-allowed' : 'pointer',
+        ...pressLook(theme, off()),
         ...(off() ? { opacity: theme.opacity.disabled } : { hover: { background: pageColors(theme, scheme).hover } }),
       };
     });
@@ -205,7 +205,7 @@ export function Calendar(props) {
       radius: radiusOf(theme, read(props.radius)),
       background: 'transparent',
       color: pageColors(theme, scheme).text,
-      cursor: up() ? 'pointer' : 'default',
+      ...(up() ? pressLook(theme) : { cursor: 'default' }),
       ...(up() ? { hover: { background: pageColors(theme, scheme).hover } } : null),
     }));
     const bar = styled({}, theme => ({ direction: 'row', align: 'center', margin: [0, 0, theme.spacing.xs, 0] }));
@@ -638,7 +638,7 @@ export function DatePanel(props) {
           fontSize: fontOf(theme, read(props.size) ?? 'md'),
           textAlign: 'start',
           justify: 'start',
-          cursor: 'pointer',
+          ...pressLook(theme),
           hover: { background: pageColors(theme, scheme).hover },
         }))}
       />
@@ -771,7 +771,7 @@ export function DayStrip(props) {
           justify: 'center',
           radius: radiusOf(theme, read(props.radius)),
           background: 'transparent',
-          cursor: disabled() ? 'not-allowed' : 'pointer',
+          ...pressLook(theme, disabled()),
           ...(disabled() ? { opacity: theme.opacity.disabled } : { hover: { background: pageColors(theme, scheme).hover } }),
         }))}
       >

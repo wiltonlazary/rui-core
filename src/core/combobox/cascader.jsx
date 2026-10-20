@@ -3,7 +3,7 @@
 // a trail of crumbs; a search (or the list layout) shows whole paths flat.
 
 import { View, Label, Action, Edit, Shape, For, Show, read, $active, $signal, $memo, $read, $write, $untrack, $watch } from 'ren-core';
-import { styled } from '../../theme/style.js';
+import { styled, pressLook } from '../../theme/style.js';
 import { $ui } from '../../theme/theme.jsx';
 import { fontBelow, pageColors } from '../../theme/resolve.js';
 import { $controlled, keyOf, prevent, partOf, chevronFigures, ActionRow, handled } from '../overlays/shared.jsx';
@@ -403,7 +403,7 @@ export function Cascader(props) {
 
   const crumbLook = styled({}, (theme, scheme) => {
     const page = pageColors(theme, scheme);
-    return { minHeight: 0, padding: [0, theme.control.labelGap / 2], border: 0, radius: theme.radius.sm, background: 'transparent', color: page.quiet, fontSize: fontBelow(theme, 'md'), cursor: 'pointer', hover: { background: page.hover } };
+    return { minHeight: 0, padding: [0, theme.control.labelGap / 2], border: 0, radius: theme.radius.sm, background: 'transparent', color: page.quiet, fontSize: fontBelow(theme, 'md'), ...pressLook(theme), hover: { background: page.hover } };
   });
   const crumbText = styled({}, (theme, scheme) => ({ color: pageColors(theme, scheme).quiet, fontSize: fontBelow(theme, 'md') }));
   const trailLook = styled({}, theme => ({ direction: 'row', align: 'center', wrap: true, padding: theme.control.panelPad }));
@@ -503,7 +503,7 @@ export function Cascader(props) {
       onKey={onKey}
       onFocus={focused.onFocus}
       onBlur={focused.onBlur}
-      style={{ grow: 1, shrink: 1, width: 0, minWidth: 0, height: '100%', minHeight: 0, padding: 0, border: 0, ring: false, background: 'transparent', justify: 'start', align: 'center', direction: 'row', textAlign: 'start' }}
+      style={() => ({ grow: 1, shrink: 1, width: 0, minWidth: 0, height: '100%', minHeight: 0, padding: 0, border: 0, ring: false, background: 'transparent', justify: 'start', align: 'center', direction: 'row', textAlign: 'start', ...pressLook(ui.theme(), locked()) })}
     >
       <Label text={() => fieldText() || String(read(props.placeholder) ?? '')} style={valueStyle(props, () => chosen() === null)} />
     </Action>
@@ -522,6 +522,7 @@ export function Cascader(props) {
             start={props.start}
             end={right}
             focused={focused.get}
+            pressed={() => !searchable()}
             // The whole box opens it, its padding and chevron too, the focus on the field (the press prevented, as a DOM
             // mousedown: no focus moves away); the field's own press is its own.
             onPointerDown={(/** @type {any} */ e) => {

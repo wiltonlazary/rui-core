@@ -5,7 +5,7 @@
 
 import { MOTION, durationOf } from '../../theme/motion.js';
 import { Action, View, Label, Shape, Show, For, read, $read, $parts } from 'ren-core';
-import { styled } from '../../theme/style.js';
+import { styled, pressLook } from '../../theme/style.js';
 import { $ui } from '../../theme/theme.jsx';
 import { variantColors, colorOf, radiusOf, pageColors, sized, spacing, fontBelow } from '../../theme/resolve.js';
 import { alpha } from '../../theme/colors.js';
@@ -63,7 +63,7 @@ export function Link(props) {
       background: 'transparent',
       border: 0,
       padding: 0,
-      cursor: 'pointer',
+      ...pressLook(theme),
       color: colorOf(theme, scheme, read(props.color) ?? theme.accent),
       ...(size == null ? null : { fontSize: sized(theme.fontSizes, size) }),
       ...(underline === true ? { underline: true } : underline === 'hover' ? { hover: { underline: true } } : null),
@@ -201,7 +201,7 @@ export function NavToggle(props) {
     shrink: 0,
     background: 'transparent',
     radius: radiusOf(theme, read(props.radius)),
-    cursor: 'pointer',
+    ...pressLook(theme),
   }));
   const figures = () => toggleFigures(box(), size(), Number(read(props.thickness) ?? sized(ui.theme().sizes.divider, step(), 'md')), inkOf(ui, props.color), open());
   return (
@@ -252,7 +252,7 @@ export function NavItem(props) {
       fontSize: theme.fontSizes.md,
       color: ink(),
       background: on && variant() !== 'ghost' ? c.background : 'transparent',
-      cursor: read(props.disabled) ? 'not-allowed' : 'pointer',
+      ...pressLook(theme, read(props.disabled)),
       ...(read(props.disabled) ? { opacity: theme.opacity.disabled } : on ? { hover: { background: c.hover } } : { hover: { background: pageColors(theme, scheme).hover } }),
     };
   });
@@ -344,7 +344,7 @@ export function Outline(props) {
               textAlign: 'start',
               radius: radiusOf(theme, read(props.radius)),
               fontSize: sized(theme.fontSizes, read(props.size), 'sm'),
-              cursor: 'pointer',
+              ...pressLook(theme),
               background: on && variant !== 'plain' ? c.background : 'transparent',
               color: on ? (variant === 'plain' ? colorOf(theme, scheme, read(props.color)) : c.color) : page.text,
               ...(on ? null : { hover: { background: pageColors(theme, scheme).hover } }),

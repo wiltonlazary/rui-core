@@ -4,7 +4,7 @@
 
 import { View, Label, Action, Shape, Show, For, read, $active, $signal, $read, $write, $untrack } from 'ren-core';
 import { $ui } from '../../theme/theme.jsx';
-import { styled } from '../../theme/style.js';
+import { styled, pressLook } from '../../theme/style.js';
 import { colorOf, pageColors } from '../../theme/resolve.js';
 import { pass } from '../../core/layout/layout.jsx';
 import { keyOf } from '../../core/overlays/shared.jsx';
@@ -162,7 +162,7 @@ export function JsonTree(props) {
               toggle(path, depth);
             }
           }}
-          style={/** @returns {Record<string, any>} */ () => ({ ...rowStyle(), background: 'transparent', border: 0, minHeight: 0, radius: 2, justify: 'start', cursor: 'pointer', color: pageColors(ui.theme(), ui.scheme()).text, hover: { background: pageColors(ui.theme(), ui.scheme()).hover } })}
+          style={/** @returns {Record<string, any>} */ () => ({ ...rowStyle(), background: 'transparent', border: 0, minHeight: 0, radius: 2, justify: 'start', ...pressLook(ui.theme()), color: pageColors(ui.theme(), ui.scheme()).text, hover: { background: pageColors(ui.theme(), ui.scheme()).hover } })}
         >
           <Shape {...DECOR} shapes={chevron} style={() => ({ width: chevronSide(), height: chevronSide(), shrink: 0 })} />
           {key === null ? <Label {...DECOR} text={`${read(props.title) ?? 'root'}:`} style={() => ({ color: color('key') })} /> : keyLabel(key)}

@@ -4,7 +4,7 @@
 
 import { View, Label, Action, For, Show, read } from 'ren-core';
 import { $ui } from '../../theme/theme.jsx';
-import { styled } from '../../theme/style.js';
+import { styled, pressLook } from '../../theme/style.js';
 import { pageColors } from '../../theme/resolve.js';
 import { DECOR } from '../../theme/meaning.js';
 import { pass } from '../../core/layout/layout.jsx';
@@ -59,7 +59,8 @@ export function Bars(props) {
     return { fontSize: theme.fontSizes[size], lineHeight: theme.lineHeights[size], fontWeight: theme.weights[weight], color: pageColors(theme, ui.scheme())[role] };
   };
   const line = () => ({ direction: /** @type {const} */ ('row'), justify: /** @type {const} */ ('between'), align: /** @type {const} */ ('center'), gap: ui.theme().spacing.sm });
-  const style = styled(props, theme => ({ width: '100%', gap: Number(read(props.rowGap) ?? theme.spacing.sm) }));
+  // its `onPress` is each item's: the list itself shows no hand
+  const style = styled(props, theme => ({ width: '100%', gap: Number(read(props.rowGap) ?? theme.spacing.sm), cursor: null }));
   return (
     <View role="list" {...pressless(props)} style={style}>
       <Show when={() => head() !== null}>
@@ -104,7 +105,7 @@ export function Bars(props) {
                   const page = pageColors(theme, ui.scheme());
                   const pad = theme.spacing.xs;
                   // the padding is taken back by the margin: a pressed list keeps the plain one's place
-                  return { ...gap(), background: 'transparent', color: page.text, border: 0, padding: pad, margin: -pad, radius: theme.radius.sm, cursor: 'pointer', hover: { background: page.hover } };
+                  return { ...gap(), background: 'transparent', color: page.text, border: 0, padding: pad, margin: -pad, radius: theme.radius.sm, ...pressLook(theme), hover: { background: page.hover } };
                 }}
               >
                 {body}

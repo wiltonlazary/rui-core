@@ -2,7 +2,7 @@
 // on View, Label and Action (OverflowList lives in overflow-list.jsx).
 
 import { View, Label, Action, read, $active, $signal, $read, $write, $memo, $watch, $untrack, $context, $lookup } from 'ren-core';
-import { styled } from '../../theme/style.js';
+import { styled, pressLook } from '../../theme/style.js';
 import { $ui } from '../../theme/theme.jsx';
 import { sized, pageColors, spacing, colorOf, radiusOf } from '../../theme/resolve.js';
 import { pass } from '../layout/layout.jsx';
@@ -301,7 +301,7 @@ export function Excerpt(props) {
     color: colorOf(theme, scheme, undefined),
     fontSize: theme.fontSizes.sm,
     fontWeight: theme.weights.regular,
-    cursor: 'pointer',
+    ...pressLook(theme),
     hover: { underline: true },
   }));
   return (

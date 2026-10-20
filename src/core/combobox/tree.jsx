@@ -2,7 +2,7 @@
 // an indented tree, walked with the arrow keys.
 
 import { View, Label, Action, Edit, Shape, For, Show, read, $active, $signal, $memo, $read, $write, $untrack, $watch } from 'ren-core';
-import { styled } from '../../theme/style.js';
+import { styled, pressLook } from '../../theme/style.js';
 import { $ui } from '../../theme/theme.jsx';
 import { pageColors } from '../../theme/resolve.js';
 import { $controlled, keyOf, prevent, checkFigures, ActionRow, handled } from '../overlays/shared.jsx';
@@ -301,6 +301,7 @@ export function TreeSelect(props) {
             start={props.start}
             end={right}
             focused={focused.get}
+            pressed={() => !searchable()}
             multiline={many}
             // The whole box opens it, its padding and chevron too, the focus on the field (the press prevented, as a DOM
             // mousedown: no focus moves away); the field's own press is its own.
@@ -354,7 +355,7 @@ export function TreeSelect(props) {
                 onKey={onKey}
                 onFocus={focused.onFocus}
                 onBlur={focused.onBlur}
-                style={() => ({ grow: 1, shrink: 1, minWidth: ui.theme().sizes.control[sizeOf(read(props.size))], minHeight: 0, height: ui.theme().sizes.dense[sizeOf(read(props.size))], padding: 0, border: 0, ring: false, background: 'transparent', justify: 'start', align: 'center', direction: 'row', textAlign: 'start' })}
+                style={() => ({ grow: 1, shrink: 1, minWidth: ui.theme().sizes.control[sizeOf(read(props.size))], minHeight: 0, height: ui.theme().sizes.dense[sizeOf(read(props.size))], padding: 0, border: 0, ring: false, background: 'transparent', justify: 'start', align: 'center', direction: 'row', textAlign: 'start', ...pressLook(ui.theme(), locked()) })}
               >
                 <Label
                   text={() => (many() ? (values().length === 0 ? (read(props.placeholder) ?? '') : '') : values().length === 0 ? (read(props.placeholder) ?? '') : labelOf(values()[0]))}
@@ -384,7 +385,7 @@ export function TreeSelect(props) {
                       <View {...DECOR} aria-label={() => (open() ? labelsIn().collapse(n.label) : labelsIn().expand(n.label))} onPointerDown={(/** @type {any} */ e) => {
                         e?.preventDefault?.(); // as a DOM mousedown prevented: no focus moves
                         toggleOpen(n);
-                      }} style={() => ({ width: ui.theme().sizes.iconBox.xs, height: ui.theme().sizes.iconBox.xs, shrink: 0, align: 'center', justify: 'center', cursor: 'pointer' })}>
+                      }} style={() => ({ width: ui.theme().sizes.iconBox.xs, height: ui.theme().sizes.iconBox.xs, shrink: 0, align: 'center', justify: 'center', ...pressLook(ui.theme()) })}>
                         <Turn open={open} size={ui.theme().sizes.glyph.xs} />
                       </View>
                     ) : (

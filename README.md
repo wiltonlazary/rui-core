@@ -261,6 +261,13 @@ vocabulary, so a name means the same on every renderer.
   or 12-hour with AM and PM.
 - Modifiers: Button `dense`, IconButton and
   CloseButton `field` (as tall as a field of that size).
+- The pointer over what presses is the theme's `cursor`: `press` (a hand,
+  'pointer') over every press target (a button, an option, a pressed field
+  all over and a field's chevron, a Box or Card with `onPress`, a bar…)
+  and `disabled` ('not-allowed') over one that takes no press now. An app
+  sets other CSS cursor names, or `null` for none (the renderer's own
+  pointer): `themeOf({ cursor: { press: null } })`. It shows the same on
+  the DOM, Skia and three.js.
 - Every component style number comes from a theme token, never an inline
   literal: `opacity` (faint .16, soft .3, disabled .45, muted .7, dense
   .88), `weights`

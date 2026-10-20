@@ -13,7 +13,7 @@
 // the page.
 
 import { View, Show, Portal, $context, $lookup, $active, $signal, $read, $write, $untrack, $owner, $cleanup, read } from 'ren-core';
-import { styled } from '../../theme/style.js';
+import { styled, pressLook } from '../../theme/style.js';
 import { pageColors, radiusOf, variantColors } from '../../theme/resolve.js';
 import { pass } from '../../core/layout/layout.jsx';
 import { Busy } from '../../core/overlays/index.js';
@@ -165,7 +165,7 @@ export function Dropzone(props) {
       background: page.raised,
       color: page.text,
       radius: radiusOf(theme, read(props.radius)),
-      cursor: clickable() ? 'pointer' : 'default',
+      ...(clickable() ? pressLook(theme) : { cursor: 'default' }),
       select: 'none',
     };
     if (clickable()) out.hover = { background: page.hover };
@@ -174,7 +174,7 @@ export function Dropzone(props) {
       const clear = v.background === 'transparent';
       Object.assign(out, { background: clear ? page.raised : v.background, borderColor: v.border === 'transparent' ? v.background : v.border, color: v.color, hover: null });
     }
-    if (read(props.disabled) === true) Object.assign(out, { cursor: 'not-allowed', background: page.disabled, borderColor: page.rule, color: page.disabledText, hover: null });
+    if (read(props.disabled) === true) Object.assign(out, { ...pressLook(theme, true), background: page.disabled, borderColor: page.rule, color: page.disabledText, hover: null });
     return out;
   });
   const ctx = { state: () => /** @type {DragState} */ ($read(state)) };

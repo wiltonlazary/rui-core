@@ -3,7 +3,7 @@
 // an Edit to search) as its trigger.
 
 import { View, Label, Action, Edit, read, $active, $signal, $memo, $read, $write, $untrack } from 'ren-core';
-import { styled } from '../../theme/style.js';
+import { styled, pressLook } from '../../theme/style.js';
 import { $ui } from '../../theme/theme.jsx';
 import { pageColors, sized } from '../../theme/resolve.js';
 import { $controlled } from '../overlays/shared.jsx';
@@ -159,7 +159,7 @@ export function Select(props) {
       onPointerDown={(/** @type {any} */ e) => e.stopPropagation()}
       onFocus={focused.onFocus}
       onBlur={focused.onBlur}
-      style={{ grow: 1, shrink: 1, width: 0, minWidth: 0, height: '100%', minHeight: 0, padding: 0, border: 0, ring: false, background: 'transparent', justify: 'start', align: 'center', direction: 'row', textAlign: 'start' }}
+      style={() => ({ grow: 1, shrink: 1, width: 0, minWidth: 0, height: '100%', minHeight: 0, padding: 0, border: 0, ring: false, background: 'transparent', justify: 'start', align: 'center', direction: 'row', textAlign: 'start', ...pressLook(ui.theme(), locked()) })}
     >
       <Label text={() => labelOf(value.get()) || (read(props.placeholder) ?? '')} ellipsis style={valueStyle(props, () => value.get() == null)} />
     </Action>
@@ -180,6 +180,7 @@ export function Select(props) {
             start={props.start}
             end={right}
             focused={focused.get}
+            pressed={() => !inField()}
             // The whole box opens it, its padding and chevron too, the focus on the field (the press prevented, as a DOM
             // mousedown: no focus moves away); the field's own press is its own.
             onPointerDown={(/** @type {any} */ e) => {

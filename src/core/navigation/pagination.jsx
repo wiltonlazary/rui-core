@@ -3,7 +3,7 @@
 // last, and the arrow keys, Home and End while a control has focus.
 
 import { Action, View, For, Show, read } from 'ren-core';
-import { styled } from '../../theme/style.js';
+import { styled, pressLook } from '../../theme/style.js';
 import { $ui } from '../../theme/theme.jsx';
 import { variantColors, radiusOf, pageColors, sized, spacing } from '../../theme/resolve.js';
 import { pass } from '../layout/layout.jsx';
@@ -71,13 +71,13 @@ export function Pagination(props) {
       const tone = variantColors(theme, scheme, 'solid', read(props.color)).background;
       const r = base.radius;
       // Square under the underline: the corner rounds the top only.
-      return { ...base, radius: [r, r, 0, 0], background: wash.background, color: wash.color, borderBottom: theme.sizes.divider.md, borderColor: tone, fontWeight: theme.weights.strong, cursor: 'pointer' };
+      return { ...base, radius: [r, r, 0, 0], background: wash.background, color: wash.color, borderBottom: theme.sizes.divider.md, borderColor: tone, fontWeight: theme.weights.strong, ...pressLook(theme) };
     }
     const muted = off() || disabled();
     return {
       ...base,
       color: own.text,
-      cursor: muted ? 'not-allowed' : 'pointer',
+      ...pressLook(theme, muted),
       ...(muted ? { opacity: theme.opacity.disabled } : { hover: { background: own.hover } }),
     };
   };

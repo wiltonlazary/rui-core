@@ -2,7 +2,7 @@
 // in a field that grows, an Edit to search or type after them.
 
 import { View, Label, Action, Edit, Shape, For, read, $active, $memo, $read, $untrack } from 'ren-core';
-import { styled } from '../../theme/style.js';
+import { styled, pressLook } from '../../theme/style.js';
 import { $ui } from '../../theme/theme.jsx';
 import { pageColors, radiusOf } from '../../theme/resolve.js';
 import { $controlled, crossFigures, keyOf, prevent } from '../overlays/shared.jsx';
@@ -63,7 +63,7 @@ export function Tag(props) {
       background: 'transparent',
       align: 'center',
       justify: 'center',
-      cursor: 'pointer',
+      ...pressLook(theme),
       hover: { background: pageColors(theme, scheme).hover },
     };
   });

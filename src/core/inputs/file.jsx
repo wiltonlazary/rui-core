@@ -3,7 +3,7 @@
 // field, the placeholder while empty, a clear button.
 
 import { View, Label, Action, Show, read } from 'ren-core';
-import { styled } from '../../theme/style.js';
+import { styled, pressLook } from '../../theme/style.js';
 import { radiusOf, sized, pageColors } from '../../theme/resolve.js';
 import { $ui } from '../../theme/theme.jsx';
 import { CloseButton } from '../buttons/index.js';
@@ -76,7 +76,7 @@ export function FileInput(props) {
       align: 'center',
       fontSize: sized(theme.fontSizes, size()),
       color: empty() ? c.placeholder : c.color,
-      cursor: off() ? 'not-allowed' : 'pointer',
+      ...pressLook(theme, off()),
     };
   });
   const section = (/** @type {any} */ content) => {

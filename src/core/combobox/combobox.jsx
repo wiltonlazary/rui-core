@@ -7,7 +7,7 @@
 // list is long, the options, and the field's footer.
 
 import { View, Label, Action, Edit, Shape, Show, For, read, $active, $signal, $memo, $read, $write, $context, $lookup, $owner, $cleanup, $untrack, $watch, $viewport } from 'ren-core';
-import { styled } from '../../theme/style.js';
+import { styled, pressLook } from '../../theme/style.js';
 import { $ui } from '../../theme/theme.jsx';
 import { fontBelow, pageColors, radiusOf, shadowOf, sized, variantColors } from '../../theme/resolve.js';
 import { Panel } from '../overlays/popover.jsx';
@@ -269,7 +269,7 @@ export function optionLook(theme, scheme, row) {
     background: row.on ? variantColors(theme, scheme, 'soft', theme.accent).background : 'transparent',
     color: page.text,
     fontSize: sized(theme.fontSizes, size),
-    ...(row.disabled ? { opacity: theme.opacity.disabled, cursor: 'default' } : { cursor: 'pointer', hover: { background: page.hover } }),
+    ...(row.disabled ? { opacity: theme.opacity.disabled, ...pressLook(theme, true) } : { ...pressLook(theme), hover: { background: page.hover } }),
   };
 }
 

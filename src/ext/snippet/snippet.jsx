@@ -8,7 +8,7 @@
 // Scroll on the x axis). Tabs show as two spaces.
 
 import { View, Label, Action, Shape, Scroll, Show, $active, $read, $memo, read } from 'ren-core';
-import { styled } from '../../theme/style.js';
+import { styled, pressLook } from '../../theme/style.js';
 import { $ui } from '../../theme/theme.jsx';
 import { pageColors, radiusOf } from '../../theme/resolve.js';
 import { Button, IconButton, CheckIcon, ChevronIcon } from '../../core/buttons/index.js';
@@ -292,7 +292,7 @@ export function SnippetTabs(props) {
         background: on ? page.sunken : 'transparent',
         border: 0,
         radius: 0,
-        cursor: 'pointer',
+        ...pressLook(theme),
         shrink: 0,
       };
     });

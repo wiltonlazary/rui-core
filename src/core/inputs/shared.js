@@ -7,6 +7,7 @@ import { $active, $signal, $read, $write, read } from 'ren-core';
 import { colorOf, fontBelow, pageColors, sized } from '../../theme/resolve.js';
 import { isLight } from '../../theme/colors.js';
 import { BASE_THEME } from '../../theme/theme.jsx';
+import { pressLook } from '../../theme/style.js';
 
 /** A size name the theme's scales know, `sm` by default. @param {any} size */
 export const sizeOf = size => /** @type {import('../../theme/theme.jsx').Size} */ (typeof size === 'string' && size in BASE_THEME.sizes.control ? size : 'sm');
@@ -84,8 +85,8 @@ export const noteLook = (theme, font) => ({ fontSize: fontBelow(theme, font), li
 /** How far a field's text sits in from its sides: `ratios.inset` of its height. @param {import('../../theme/theme.jsx').RuiThemeValue} theme @param {number} height */
 export const insetOf = (theme, height) => Math.round(theme.ratios.inset * height);
 
-/** A disabled control: `opacity.disabled`, and the pointer says it takes no press. @param {import('../../theme/theme.jsx').RuiThemeValue} theme */
-export const disabledLook = theme => ({ opacity: theme.opacity.disabled, cursor: 'not-allowed' });
+/** A disabled control: `opacity.disabled`, and the pointer says it takes no press (`cursor.disabled`). @param {import('../../theme/theme.jsx').RuiThemeValue} theme */
+export const disabledLook = theme => ({ opacity: theme.opacity.disabled, ...pressLook(theme, true) });
 
 /**
  * An option's padding (y, x) at a size (a combobox option, a tree row, a

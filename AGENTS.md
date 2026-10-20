@@ -44,6 +44,10 @@ shows them.
   tables; size tables keyed by step live in `theme.sizes`); a line of
   drawing math may carry `// geometry: <reason>` and a loop period
   `// cycle: <reason>`, kept few.
+- A press target's cursor reads the theme's `cursor` through `pressLook(theme, off)`
+  (src/theme/style.js), never a literal 'pointer' or 'not-allowed'; a
+  component given `onPress` shows it through `styled` unless its own style
+  names a cursor. `test/tokens.test.js` enforces it.
 - Every hook returns one handle, one object per hook with its state as
   `value` and verbs for commands: `const menu = $open(false); menu.value;
   menu.toggle()`, typed as `…Handle`.

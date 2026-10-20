@@ -5,7 +5,7 @@
 
 import { View, Label, Scroll, Shape, Action, For, Show, read, $active, $signal, $read, $write, $untrack } from 'ren-core';
 import { $ui } from '../../theme/theme.jsx';
-import { styled } from '../../theme/style.js';
+import { styled, pressLook } from '../../theme/style.js';
 import { pageColors, radiusOf, colorOf, TINTS } from '../../theme/resolve.js';
 import { alpha } from '../../theme/colors.js';
 import { pass } from '../../core/layout/layout.jsx';
@@ -233,7 +233,7 @@ export function DataTable(props) {
         align: 'stretch',
         grow: 1,
         background: selected ? alpha(color, TINTS[scheme].rest) : striped() ? page.stripe : 'transparent',
-        ...(props.onRowPress !== undefined ? { cursor: 'pointer' } : null),
+        ...(props.onRowPress !== undefined ? pressLook(theme) : null),
         ...(read(props.hoverable) === true ? { hover: { background: page.hover } } : null),
       };
     });
@@ -312,7 +312,7 @@ export function DataTable(props) {
                 <Action
                   label={String(text ? title : column.key)}
                   onPress={() => pressSort(column)}
-                  style={/** @returns {Record<string, any>} */ () => ({ grow: 1, direction: 'row', align: 'center', justify: column.align === 'end' ? 'end' : column.align === 'center' ? 'center' : 'start', gap: ui.theme().control.iconGap, background: 'transparent', border: 0, radius: ui.theme().radius.sm, padding: 0, minHeight: 0, fontWeight: ui.theme().weights.strong, cursor: 'pointer' })}
+                  style={/** @returns {Record<string, any>} */ () => ({ grow: 1, direction: 'row', align: 'center', justify: column.align === 'end' ? 'end' : column.align === 'center' ? 'center' : 'start', gap: ui.theme().control.iconGap, background: 'transparent', border: 0, radius: ui.theme().radius.sm, padding: 0, minHeight: 0, fontWeight: ui.theme().weights.strong, ...pressLook(ui.theme()) })}
                 >
                   {content}
                   <Shape {...DECOR} shapes={arrow(column)} style={() => ({ width: ui.theme().sizes.glyph.sm, height: ui.theme().sizes.glyph.sm, shrink: 0 })} />

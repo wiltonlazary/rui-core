@@ -6,7 +6,7 @@
 // press outside.
 
 import { View, Action, Show, $active, $signal, $read, $write, $untrack, $after, read } from 'ren-core';
-import { styled } from '../../theme/style.js';
+import { styled, pressLook } from '../../theme/style.js';
 import { radiusOf, pageColors, sized } from '../../theme/resolve.js';
 import { Popover, Modal } from '../../core/overlays/index.js';
 import { TextInput } from '../../core/inputs/index.js';
@@ -105,7 +105,7 @@ function field(props, o) {
       textAlign: 'start',
       fontSize: sized(theme.fontSizes, size()),
       color: o.text() === '' ? page.placeholder : page.text,
-      cursor: disabled() ? 'not-allowed' : 'pointer',
+      ...pressLook(theme, disabled()),
     };
   });
   const popover = () => ({ at: 'bottom-start', shadow: 'md', ...read(props.popover) });
