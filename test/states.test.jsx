@@ -566,6 +566,90 @@ describe('a TreeSelect chevron leaves the focus on the field', () => {
   });
 });
 
+describe('a pressed field opens from its whole box', () => {
+  const fields = {
+    Select: () => <ui.Select placeholder="Pick" data={['Alpha', 'Beta']} />,
+    Cascader: () => <ui.Cascader placeholder="Pick" data={[{ value: 'a', label: 'Alpha', children: [{ value: 'a1', label: 'Beta' }] }]} />,
+    TreeSelect: () => <ui.TreeSelect placeholder="Pick" data={[{ value: 'a', label: 'Alpha' }, { value: 'b', label: 'Beta' }]} />,
+  };
+  for (const [name, view] of Object.entries(fields)) {
+    it(`${name}: the chevron and the padding open it, the field itself toggles it (DOM and Skia)`, async t => {
+      const { pair, app } = await import('./overlay-harness.jsx');
+      const clock = ui.manualClock();
+      const p = pair(app(clock, view));
+      disposeAfter(t, () => p.dispose());
+      const settle = () => {
+        for (let i = 0; i < 3; i++) {
+          clock.advance(300);
+          p.flush();
+        }
+      };
+      const open = () => [p.d.text().includes('Alpha'), p.s.text().includes('Alpha')];
+      const shut = () => {
+        p.d.key('Escape');
+        p.s.key('Escape');
+        settle();
+        assert.deepEqual(open(), [false, false], 'Escape closes it');
+      };
+      // DOM: the combobox sits in the box's inner row; the box's last child is the end section (the chevron)
+      const combo = p.dom.document.querySelector('[role="combobox"]');
+      const box = combo.parentElement.parentElement;
+      const sItem = p.s.items().find(i => i.other?.get?.('role') === 'combobox');
+      const sBox = p.s.box(sItem.parent.parent);
+      // the chevron
+      p.d.tap(box.lastElementChild);
+      p.s.at(sBox.x + sBox.width - 8, sBox.y + sBox.height / 2);
+      settle();
+      assert.deepEqual(open(), [true, true], 'the chevron opens it');
+      shut();
+      // the padding before the field's text
+      p.d.tap(combo.parentElement);
+      p.s.at(sBox.x + 3, sBox.y + sBox.height / 2);
+      settle();
+      assert.deepEqual(open(), [true, true], 'the padding opens it');
+      shut();
+      // the field itself opens it, and pressed again closes it
+      p.d.tap(combo);
+      p.s.at(sBox.x + sBox.width / 3, sBox.y + sBox.height / 2);
+      settle();
+      assert.deepEqual(open(), [true, true], 'the field opens it');
+      p.d.tap(combo);
+      p.s.at(sBox.x + sBox.width / 3, sBox.y + sBox.height / 2);
+      settle();
+      assert.deepEqual(open(), [false, false], 'pressed again, it closes');
+    });
+  }
+});
+
+describe('a searchable field opens from its chevron, ready to type', () => {
+  it('the chevron opens it and focuses its Edit; a key then moves in the list (DOM and Skia)', async t => {
+    const { pair, app } = await import('./overlay-harness.jsx');
+    const clock = ui.manualClock();
+    const p = pair(app(clock, () => <ui.Select searchable placeholder="Pick" data={['Alpha', 'Beta']} />));
+    disposeAfter(t, () => p.dispose());
+    const settle = () => {
+      for (let i = 0; i < 3; i++) {
+        clock.advance(300);
+        p.flush();
+      }
+    };
+    const combo = p.dom.document.querySelector('[role="combobox"]');
+    const box = combo.parentElement.parentElement;
+    const sItem = p.s.items().find(i => i.other?.get?.('role') === 'combobox');
+    const sBox = p.s.box(sItem.parent.parent);
+    p.d.tap(box.lastElementChild);
+    p.s.at(sBox.x + sBox.width - 8, sBox.y + sBox.height / 2);
+    settle();
+    assert.ok(p.d.text().includes('Alpha') && p.s.text().includes('Alpha'), 'the chevron opens it on both');
+    assert.equal(p.dom.document.activeElement, combo, 'DOM: its Edit has the focus');
+    assert.equal(p.s.focused(), sItem, 'Skia: its Edit has the focus');
+    p.d.key('Escape');
+    p.s.key('Escape');
+    settle();
+    assert.ok(!p.d.text().includes('Alpha') && !p.s.text().includes('Alpha'), 'its keys work: Escape closes it');
+  });
+});
+
 describe('tab ids never collide', () => {
   it("'a b' and 'a_20b' get two ids; each panel is labelled by its own tab (DOM)", async t => {
     const { onDom } = await import('./harness.jsx');

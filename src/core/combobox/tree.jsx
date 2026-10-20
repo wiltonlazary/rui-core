@@ -302,7 +302,14 @@ export function TreeSelect(props) {
             end={right}
             focused={focused.get}
             multiline={many}
-            onPointerDown={searchable() ? () => !locked() && store.open() : undefined}
+            // The whole box opens it, its padding and chevron too, the focus on the field (the press prevented, as a DOM
+            // mousedown: no focus moves away); the field's own press is its own.
+            onPointerDown={(/** @type {any} */ e) => {
+              if (locked()) return;
+              e?.preventDefault?.();
+              store.focus();
+              store.open();
+            }}
           >
             <Show when={many}>
               <For each={values} by="position">
@@ -316,6 +323,11 @@ export function TreeSelect(props) {
             {searchable() ? (
               <Edit
                 ref={store.setTrigger}
+                // its press is its own (the caret goes where it is pressed); it opens the panel
+                onPointerDown={(/** @type {any} */ e) => {
+                  e?.stopPropagation?.();
+                  if (!locked()) store.open();
+                }}
                 value={() => ($read(typed) ? search.get() : many() || values().length === 0 ? '' : labelOf(values()[0]))}
                 label={() => (many() && values().length > 0 ? '' : (read(props.placeholder) ?? ''))}
                 {...comboOf(props, store)}
@@ -337,6 +349,8 @@ export function TreeSelect(props) {
                 label={() => read(props.placeholder) ?? labelsIn().options}
                 {...comboOf(props, store)}
                 onPress={() => !locked() && store.toggle()}
+                // its pointerdown is its own: the box's opens the panel, whose backdrop would take the press it toggles with
+                onPointerDown={(/** @type {any} */ e) => e.stopPropagation()}
                 onKey={onKey}
                 onFocus={focused.onFocus}
                 onBlur={focused.onBlur}

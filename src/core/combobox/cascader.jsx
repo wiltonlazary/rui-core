@@ -472,6 +472,11 @@ export function Cascader(props) {
   const trigger = searchable() ? (
     <Edit
       ref={store.setTrigger}
+      // its press is its own (the caret goes where it is pressed); it opens the panel
+      onPointerDown={(/** @type {any} */ e) => {
+        e?.stopPropagation?.();
+        if (!locked()) store.open();
+      }}
       value={shownText}
       label={() => read(props.placeholder) ?? ''}
       {...comboOf(props, store)}
@@ -493,6 +498,8 @@ export function Cascader(props) {
       label={() => read(props['aria-label']) ?? (fieldText() || String(read(props.placeholder) ?? ''))}
       {...comboOf(props, store)}
       onPress={() => !locked() && store.toggle()}
+      // its pointerdown is its own: the box's opens the panel, whose backdrop would take the press it toggles with
+      onPointerDown={(/** @type {any} */ e) => e.stopPropagation()}
       onKey={onKey}
       onFocus={focused.onFocus}
       onBlur={focused.onBlur}
@@ -515,7 +522,14 @@ export function Cascader(props) {
             start={props.start}
             end={right}
             focused={focused.get}
-            onPointerDown={searchable() ? () => !locked() && store.open() : undefined}
+            // The whole box opens it, its padding and chevron too, the focus on the field (the press prevented, as a DOM
+            // mousedown: no focus moves away); the field's own press is its own.
+            onPointerDown={(/** @type {any} */ e) => {
+              if (locked()) return;
+              e?.preventDefault?.();
+              store.focus();
+              store.open();
+            }}
           >
             {trigger}
           </FieldBox>

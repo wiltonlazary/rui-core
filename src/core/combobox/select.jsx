@@ -129,6 +129,11 @@ export function Select(props) {
   const typing = () => (
     <Edit
       ref={store.setTrigger}
+      // its press is its own (the caret goes where it is pressed); it opens the panel
+      onPointerDown={(/** @type {any} */ e) => {
+        e?.stopPropagation?.();
+        if (!locked()) store.open();
+      }}
       value={shownText}
       label={() => read(props.placeholder) ?? ''}
       {...comboOf(props, store)}
@@ -150,6 +155,8 @@ export function Select(props) {
       label={() => read(props['aria-label']) ?? labelOf(value.get()) ?? read(props.placeholder) ?? ''}
       {...comboOf(props, store)}
       onPress={() => !locked() && store.toggle()}
+      // its pointerdown is its own: the box's opens the panel, whose backdrop would take the press it toggles with
+      onPointerDown={(/** @type {any} */ e) => e.stopPropagation()}
       onFocus={focused.onFocus}
       onBlur={focused.onBlur}
       style={{ grow: 1, shrink: 1, width: 0, minWidth: 0, height: '100%', minHeight: 0, padding: 0, border: 0, ring: false, background: 'transparent', justify: 'start', align: 'center', direction: 'row', textAlign: 'start' }}
@@ -173,7 +180,14 @@ export function Select(props) {
             start={props.start}
             end={right}
             focused={focused.get}
-            onPointerDown={() => inField() && !locked() && store.open()}
+            // The whole box opens it, its padding and chevron too, the focus on the field (the press prevented, as a DOM
+            // mousedown: no focus moves away); the field's own press is its own.
+            onPointerDown={(/** @type {any} */ e) => {
+              if (locked()) return;
+              e?.preventDefault?.();
+              store.focus();
+              store.open();
+            }}
           >
             {trigger}
           </FieldBox>
