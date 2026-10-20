@@ -261,6 +261,11 @@ vocabulary, so a name means the same on every renderer.
   or 12-hour with AM and PM.
 - Modifiers: Button `dense`, IconButton and
   CloseButton `field` (as tall as a field of that size).
+- Text is selectable only where a component means it: an Edit, `Code`,
+  `Snippet`, or anything styled `select: 'text'`; the rest is an app's, not
+  a page's (no I-beam, no page-wide Ctrl+A, no browser menu outside an
+  Edit). The renderer's `behavior` option (`'page'`, or one switch such as
+  `{ like: 'app', select: true }`) brings a page's back.
 - The pointer over what presses is the theme's `cursor`: `press` (a hand,
   'pointer') over every press target (a button, an option, a pressed field
   all over and a field's chevron, a Box or Card with `onPress`, a bar…)

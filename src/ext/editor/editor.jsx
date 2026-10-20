@@ -711,7 +711,8 @@ function EditorContent(props) {
       const b = item();
       const page = pageColors(theme, scheme);
       /** @type {Record<string, any>} */
-      const s = { direction: 'row', align: 'start', minWidth: 0, ...textOf(theme, b), cursor: editor.editable() ? 'text' : 'default', padding: [0, 0, 0, indentOf()] };
+      // A document's text: selectable (and pressed to its character) under an app's root too.
+      const s = { direction: 'row', align: 'start', minWidth: 0, ...textOf(theme, b), select: 'text', cursor: editor.editable() ? 'text' : 'default', padding: [0, 0, 0, indentOf()] };
       if (b.type === 'rule') Object.assign(s, { padding: [theme.spacing.xs, 0], cursor: 'default' });
       if (b.type === 'quote') Object.assign(s, { border: 0, padding: [0, 0, 0, theme.spacing.md], background: 'transparent' });
       if (b.type === 'code') Object.assign(s, { padding: [theme.spacing.xs, theme.spacing.sm], radius: radiusOf(theme, 'sm'), background: page.sunken, color: page.text });
