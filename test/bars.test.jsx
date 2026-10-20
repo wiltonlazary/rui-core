@@ -152,4 +152,22 @@ describe('Bars on the DOM and on Skia', () => {
     ]);
     r.dispose();
   });
+  it('with onPress, each item is pressed: its item and index, named by its label and value, the same rows', () => {
+    /** @type {any[]} */
+    const pressed = [];
+    const r = both(() => (
+      <Rui>
+        <Bars data={downloads} w={400} format={(/** @type {number} */ v) => `${v} dl`} onPress={(/** @type {any} */ item, /** @type {number} */ i) => pressed.push([item.label, i])} />
+      </Rui>
+    ), { width: 480, height: 480 });
+    $flush(r.dom.root);
+    assert.equal(r.dom.text(), 'Linux 800 dl macOS 400 dl Windows 2 dl BSD 0 dl', 'the same text');
+    const actions = [...r.dom.host.querySelectorAll('[data-ren="Action"]')];
+    assert.deepEqual(actions.map(a => a.getAttribute('aria-label')), ['Linux: 800 dl', 'macOS: 400 dl', 'Windows: 2 dl', 'BSD: 0 dl']);
+    assert.ok(actions.every(a => a.parentElement.getAttribute('role') === 'listitem'), 'each inside its list item');
+    actions[1].dispatchEvent(new r.dom.window.MouseEvent('click', { bubbles: true }));
+    r.skia.press('Windows');
+    assert.deepEqual(pressed, [['macOS', 1], ['Windows', 2]]);
+    r.dispose();
+  });
 });

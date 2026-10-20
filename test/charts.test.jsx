@@ -342,6 +342,44 @@ describe('cartesian charts on the DOM and on Skia', () => {
     assert.ok(bottom > top + 100, `an x line: at the top by default (${top}), at the bottom when asked (${bottom})`);
   });
 
+  it('BarChart onSelect: a press chooses the category under it; focused, the arrows walk them and Enter chooses', () => {
+    /** @type {any[]} */
+    const chosen = [];
+    const { dom, skia, dispose } = both(() => (
+      <Rui>
+        <BarChart w={400} h={240} data={cups} category="day" series={kiosks} onSelect={(/** @type {number} */ i, /** @type {any} */ row) => chosen.push([i, row.day])} />
+      </Rui>
+    ));
+    same(dom, skia);
+    // The plot runs from x 56 to 380: four bands 81 px wide; Wed is the third.
+    const x = 56 + 81 * 2 + 40;
+    const nodes = mirror(dom, skia);
+    const plot = nodes.filter(n => {
+      const r = n.getBoundingClientRect();
+      return x >= r.left && x < r.right && 100 >= r.top && 100 < r.bottom;
+    }).at(-1);
+    plot.dispatchEvent(new dom.window.MouseEvent('click', { clientX: x, clientY: 100, bubbles: true }));
+    $flush(dom.root);
+    skia.skia.press(56 + 20, 100);
+    skia.skia.release(56 + 20, 100);
+    $flush(skia.root);
+    assert.deepEqual(chosen, [[2, 'Wed'], [0, 'Mon']]);
+    const root = dom.host.querySelector('[role="img"]');
+    assert.equal(root.getAttribute('tabindex'), '0', 'focusable to choose from the keys');
+    const key = (/** @type {string} */ k) => {
+      root.dispatchEvent(new dom.window.KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true }));
+      $flush(dom.root);
+    };
+    key('ArrowRight');
+    key('ArrowRight');
+    assert.match(dom.text(), /Tue Pier Park Gate 1395 1120 730$/, 'the active category shows its tooltip');
+    key('Enter');
+    key('End');
+    key(' ');
+    assert.deepEqual(chosen.slice(2), [[1, 'Tue'], [3, 'Thu']]);
+    dispose();
+  });
+
   it('BarChart: group, stack, share, cascade, vertical; the band cursor', () => {
     const { dom, skia, dispose } = both(() => (
       <Rui>

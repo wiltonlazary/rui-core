@@ -5,8 +5,8 @@
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { $signal, $read, $write, $flush } from 'rrx-core';
-import { $active } from 'ren-core';
+import { $signal, $read, $write, $flush, $untrack } from 'rrx-core';
+import { $active, View } from 'ren-core';
 import {
   Rui, Clock, manualClock, Divider, VisuallyHidden, Collapse, Transition, EFFECTS, ScrollBox, ScrollRow, Marquee, Text, Button, Stack, Row,
   Grid, AspectRatio, Shell, FocusTrap, Tiles, BASE_THEME, LAYERS, themeOf, pageColors, colorOf,
@@ -420,6 +420,57 @@ describe('rui-core misc on the DOM and on Skia', () => {
     $flush(dom.root);
     assert.equal(seen.at(-1), 30, 'DOM: the position');
     dispose();
+  });
+
+  it('ScrollBox onEnd: asks at the end, again after a page that did not fill it, and stops when there is nothing to read (Skia)', async () => {
+    const clock = manualClock();
+    /** @type {number[]} */
+    const asked = [];
+    /** @type {any} */
+    let box = null;
+    let left = 2;
+    const view = () => {
+      const R = $active();
+      const rows = $signal(R, 1);
+      // a page of one row first (the box still not full), then one of five; then nothing left to read
+      const onEnd = () => {
+        asked.push($untrack(R, () => $read(rows)));
+        if (left === 0) return undefined;
+        const page = left-- === 2 ? 1 : 5;
+        return Promise.resolve().then(() => $write(rows, $untrack(R, () => $read(rows)) + page));
+      };
+      return (
+        <Clock value={clock}>
+          <Rui>
+            <ScrollBox h={100} ref={(/** @type {any} */ n) => (box = n)} onEnd={onEnd} endGap={10}>
+              {() => Array.from({ length: $read(rows) }, (_, i) => <View style={{ height: 40 }}><Text>{`row ${i}`}</Text></View>)}
+            </ScrollBox>
+          </Rui>
+        </Clock>
+      );
+    };
+    const skia = onSkia(view);
+    const frame = async () => {
+      await new Promise(done => setTimeout(done, 0)); // timer: turn, the pages' promises settle between jobs
+      $flush(skia.root);
+      skia.text();
+      clock.advance(16);
+      $flush(skia.root);
+      skia.text();
+    };
+    for (let i = 0; i < 6; i++) await frame();
+    // one row: the end shows, so a page; two rows still leave room, so another; seven fill the box
+    assert.deepEqual(asked, [1, 2]);
+    box.scrollTop = box.scrollHeight - box.clientHeight;
+    $flush(skia.root);
+    for (let i = 0; i < 4; i++) await frame();
+    // scrolled to the end: asked once more, and nothing returned stops the asking
+    assert.deepEqual(asked, [1, 2, 7]);
+    box.scrollTop = 0;
+    $flush(skia.root);
+    for (let i = 0; i < 3; i++) await frame();
+    assert.deepEqual(asked, [1, 2, 7], 'away from the end, nothing is asked');
+    skia.dispose();
   });
 
   it('ScrollBox bars: the theme\'s bar in the page\'s border on its track, thin, none, or colors of their own', () => {

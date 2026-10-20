@@ -2,7 +2,7 @@
 // start, its value at the end) over a thin track filled by its share of
 // the largest. No text sits on a bar, so any fill color reads.
 
-import { View, Label, For, Show, read } from 'ren-core';
+import { View, Label, Action, For, Show, read } from 'ren-core';
 import { $ui } from '../../theme/theme.jsx';
 import { styled } from '../../theme/style.js';
 import { pageColors } from '../../theme/resolve.js';
@@ -14,6 +14,13 @@ import { tint, formatterOf, fieldsOf } from './shared.jsx';
 
 /** @typedef {import('../../theme/theme.jsx').RuiThemeValue} RuiThemeValue */
 /** @typedef {{ label?: any, value?: any, color?: string }} BarsItem */
+
+/** The root's passed props: an `onPress` is each item's, never the list's. @param {Record<string, any>} props */
+const pressless = props => {
+  const out = pass(props);
+  delete out.onPress;
+  return out;
+};
 
 /**
  * A bar's fill as a share of the largest value, in percent; 0 for a zero,
@@ -33,7 +40,10 @@ const shareOf = (value, max) => {
  * (between items: spacing sm), `minLength` (the least fill of a positive
  * value: `sizes.progress.sm` px), `track` (true: the unfilled part in the
  * page's track role), `w`, and the root's style props. It means a `list`
- * of `listitem`s, each an item of a `name` and a `value` (raw).
+ * of `listitem`s, each an item of a `name` and a `value` (raw). With
+ * `onPress(item, index)`, each item is pressed (a click, Enter or Space):
+ * it takes the focus, named by its label and value's text, and the page's
+ * hover tint under the pointer.
  * @param {Record<string, any>} props
  */
 export function Bars(props) {
@@ -51,7 +61,7 @@ export function Bars(props) {
   const line = () => ({ direction: /** @type {const} */ ('row'), justify: /** @type {const} */ ('between'), align: /** @type {const} */ ('center'), gap: ui.theme().spacing.sm });
   const style = styled(props, theme => ({ width: '100%', gap: Number(read(props.rowGap) ?? theme.spacing.sm) }));
   return (
-    <View role="list" {...pass(props)} style={style}>
+    <View role="list" {...pressless(props)} style={style}>
       <Show when={() => head() !== null}>
         <View {...DECOR} style={line}>
           <Label text={() => String(head()?.label ?? '')} style={text('quiet', 'strong', 'xs')} />
@@ -59,14 +69,14 @@ export function Bars(props) {
         </View>
       </Show>
       <For by="position" each={data}>
-        {item => {
+        {(item, index) => {
           const share = () => shareOf(item().value, max());
-          return (
-            <View role="listitem" itemscope style={() => ({ gap: ui.theme().control.labelGap })}>
+          const gap = () => ({ gap: ui.theme().control.labelGap });
+          const body = [
               <View style={line}>
                 <Label itemprop="name" text={() => String(item().label ?? '')} style={text('text', 'regular', 'sm')} />
                 <Label itemprop="value" content={() => /** @type {any} */ (fieldsOf(item()).value)} text={() => format(item().value)} style={text('text', 'strong', 'sm')} />
-              </View>
+              </View>,
               <View
                 style={() => {
                   const theme = ui.theme();
@@ -81,7 +91,24 @@ export function Bars(props) {
                     }}
                   />
                 </Show>
-              </View>
+              </View>,
+          ];
+          if (props.onPress == null) return <View role="listitem" itemscope style={gap}>{body}</View>;
+          return (
+            <View role="listitem" itemscope>
+              <Action
+                label={() => `${String(item().label ?? '')}: ${format(item().value)}`}
+                onPress={() => props.onPress(item(), index)}
+                style={() => {
+                  const theme = ui.theme();
+                  const page = pageColors(theme, ui.scheme());
+                  const pad = theme.spacing.xs;
+                  // the padding is taken back by the margin: a pressed list keeps the plain one's place
+                  return { ...gap(), background: 'transparent', color: page.text, border: 0, padding: pad, margin: -pad, radius: theme.radius.sm, cursor: 'pointer', hover: { background: page.hover } };
+                }}
+              >
+                {body}
+              </Action>
             </View>
           );
         }}

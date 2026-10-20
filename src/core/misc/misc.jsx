@@ -1,11 +1,12 @@
 // Miscellaneous: Divider, VisuallyHidden, ScrollBox (and its Fit),
 // ScrollRow and Marquee, on View, Label and Scroll.
 
-import { View, Label, Scroll, Shape, read, $active, $signal, $read, $write, $watch, $untrack } from 'ren-core';
+import { View, Label, Scroll, Shape, read, $active, $signal, $read, $write, $watch, $untrack, $lookup } from 'ren-core';
 import { styled, Nowrap } from '../../theme/style.js';
 import { pageColors, spacing, colorOf, sized } from '../../theme/resolve.js';
 import { alpha } from '../../theme/colors.js';
-import { $motion, MOTION } from '../../theme/motion.js';
+import { $motion, MOTION, Clock, platformClock } from '../../theme/motion.js';
+import { ending, later } from '../../hooks/shared.js';
 import { $ui } from '../../theme/theme.jsx';
 import { pass } from '../layout/layout.jsx';
 import { $tween, boxOf, capture } from './tween.js';
@@ -97,13 +98,24 @@ function barsOf(b, theme, scheme) {
  * bar), false (no bars and no room kept for them; the wheel, touch and
  * `scrollTop` still scroll it) or options: `thin` (half as wide), `color`
  * (the thumb's; the page's `border` by default) and `track` (the page's
- * `track` by default), theme colors.
+ * `track` by default), theme colors. `onEnd` (an endless list's next page)
+ * is called while the scroll down is within `endGap` px (spacing lg by
+ * default) of its end: after a scroll, and as the box or its content
+ * changes size (content that does not fill the box is at its end), at most
+ * once a frame. When it returns a promise, the end is checked again once it
+ * settles, so a page that did not fill the box asks for the next one; it
+ * returns nothing when it has nothing to read (all read, a read under way
+ * or failed), and the asking stops there.
  * @param {Record<string, any>} props
  */
 export function ScrollBox(props) {
   /** @type {any} */
   let node = null;
-  const onScroll = () => props.onScroll?.({ x: node?.scrollLeft ?? 0, y: node?.scrollTop ?? 0 });
+  const ask = props.onEnd == null ? null : $endOf(props, () => node);
+  const onScroll = () => {
+    props.onScroll?.({ x: node?.scrollLeft ?? 0, y: node?.scrollTop ?? 0 });
+    ask?.();
+  };
   const bars = (/** @type {any} */ theme, /** @type {'light' | 'dark'} */ scheme) => barsOf(read(props.bars), theme, scheme);
   return (
     <Scroll
@@ -112,13 +124,60 @@ export function ScrollBox(props) {
       ref={(/** @type {any} */ n) => {
         node = n;
         handOn(props.ref, n);
+        if (n != null) ask?.();
       }}
       onScroll={onScroll}
+      {...(ask === null ? null : { onResize: ask })}
       style={styled(props, (theme, scheme) => ({ shrink: 0, ...bars(theme, scheme), ...(read(props.gutter) ? { padding: [0, theme.spacing.xs, 0, 0] } : null) }))}
     >
-      {props.children}
+      {ask === null ? props.children : <View onResize={ask}>{props.children}</View>}
     </Scroll>
   );
+}
+
+/**
+ * A ScrollBox's `onEnd`, asked for: the end checked at the next frame of the
+ * nearest Clock (one check a frame, however many asks), and `onEnd` called
+ * when the scroll is within `endGap` of it; again once a promise it returns
+ * settles. Nothing once the box's owner ends.
+ * @param {Record<string, any>} props @param {() => any} scroller
+ */
+function $endOf(props, scroller) {
+  const R = $active();
+  const ui = $ui();
+  /** @type {import('../../theme/motion.js').ClockValue} */
+  let clock = platformClock;
+  try {
+    clock = $lookup(Clock);
+  } catch {
+    // A root outside a view: the platform's frames.
+  }
+  /** @type {(() => void) | null} */
+  let cancel = null;
+  let ended = false;
+  const check = () => {
+    const n = scroller();
+    if (n == null) return;
+    const { scrollTop, clientHeight, scrollHeight } = n;
+    if (typeof scrollTop !== 'number' || typeof clientHeight !== 'number' || typeof scrollHeight !== 'number') return;
+    const gap = Number(read(props.endGap) ?? ui.theme().spacing.lg);
+    if (scrollHeight - scrollTop - clientHeight > gap) return;
+    const next = props.onEnd?.();
+    if (next != null && typeof next.then === 'function') next.then(ask, ask);
+  };
+  const ask = () => {
+    if (cancel !== null || ended) return;
+    cancel = clock.frame(() => { // timer: feature, one check of the end per frame, however many asks came in it
+      cancel = null;
+      if (!ended) later(R, check);
+    });
+  };
+  ending(R, () => {
+    ended = true;
+    cancel?.();
+    cancel = null;
+  });
+  return ask;
 }
 
 /** A ScrollBox as high as its content, up to `maxHeight`. @param {Record<string, any>} props */

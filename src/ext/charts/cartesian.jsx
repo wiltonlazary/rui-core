@@ -596,19 +596,54 @@ function cartesian(props, kind) {
     $write(pointer, [x + m.plot.left, y + m.plot.top]);
     $write(active, n === 0 ? -1 : m.cats.index(along));
   };
+  /** The category under a pointer event. @param {any} event */
+  const indexAt = event => {
+    const m = $read(model);
+    const [x, y] = pointIn(event);
+    return m.data.length === 0 ? -1 : m.cats.index(m.horizontal ? x + m.plot.left : y + m.plot.top);
+  };
+  const selecting = props.onSelect != null;
+  /** Category `i` chosen: `onSelect(i, row)`. @param {number} i */
+  const select = i => {
+    const m = $read(model);
+    if (i >= 0 && i < m.data.length) props.onSelect?.(i, m.data[i]);
+  };
+  /** Category `i` active from the keys: its tooltip at its middle. @param {number} i */
+  const reach = i => {
+    const m = $read(model);
+    const c = m.cats.center(i);
+    $write(pointer, m.horizontal ? [c, (m.plot.top + m.plot.bottom) / 2] : [(m.plot.left + m.plot.right) / 2, c]);
+    $write(active, i);
+  };
+  const onKey = (/** @type {{ key: string, preventDefault?: () => void }} */ e) => {
+    const n = $read(model).data.length;
+    const at = $read(active);
+    const forth = e.key === 'ArrowRight' || e.key === 'ArrowDown';
+    const back = e.key === 'ArrowLeft' || e.key === 'ArrowUp';
+    if (n === 0) return;
+    if (forth || back || e.key === 'Home' || e.key === 'End') {
+      e.preventDefault?.();
+      reach(e.key === 'Home' ? 0 : e.key === 'End' ? n - 1 : at < 0 ? (forth ? 0 : n - 1) : Math.max(0, Math.min(n - 1, at + (forth ? 1 : -1))));
+    } else if ((e.key === 'Enter' || e.key === ' ') && at >= 0) {
+      e.preventDefault?.();
+      select(at);
+    }
+  };
   const style = styled(props, theme => ({ position: 'relative', width: '100%', height: theme.sizes.box.chart, direction: 'column' }));
   const legend = <Legend items={items} justify={() => legendAt(read(props.legend) ?? null, LEGEND_AT).justify} onActiveChange={key => $write(highlighted, key)} />;
   return (
-    <View {...rootProps(props, KINDS[kind])} ref={size.ref} onResize={size.onResize} style={style}>
+    <View {...rootProps(props, KINDS[kind])} {...(selecting ? { tabIndex: 0, onKey } : null)} ref={size.ref} onResize={size.onResize} style={style}>
       <Show when={() => legendShown() && !legendBottom()}>{legend}</Show>
       <View style={() => ({ position: 'relative', width: '100%', height: area(), shrink: 0 })}>
         <Shape shapes={() => $read(model).figures} style={() => ({ position: 'absolute', left: 0, top: 0, width: $read(model).width, height: $read(model).height })} />
         <Placed items={() => $read(model).labels} color={() => colors().text} />
-        <Show when={() => read(props.tooltip) !== false}>
+        <Show when={() => read(props.tooltip) !== false || selecting}>
           <View
-            style={plotBox}
+            style={() => ({ ...plotBox(), ...(selecting ? { cursor: 'pointer' } : null) })}
             onPointerMove={move}
             onPointerLeave={() => $write(active, -1)}
+            // a press chooses the category under it (the one the pointer made active, without a place)
+            {...(selecting ? { onPress: (/** @type {any} */ e) => select(e?.currentTarget != null && (e.clientX ?? e.x) != null ? indexAt(e) : $read(active)) } : null)}
           >
             <Show when={() => $read(active) >= 0 && $read(active) < $read(model).data.length}>
               <Shape shapes={() => cursorFigures($read(model), $read(active), colors(), ui.theme())} style={() => ({ ...plotBox(), left: 0, top: 0 })} />
@@ -646,7 +681,10 @@ function cartesian(props, kind) {
  * line's at 'top' or 'bottom' }),
  * `format`, `unit`, `w`, `h` (300); `endAxis` (true or { title, width, … }:
  * the series with `axis: 'end'` on it), `values` (each point's value over
- * it), a series' `stack` (series sharing one stack).
+ * it), a series' `stack` (series sharing one stack). `onSelect(index, row)`
+ * makes its categories chosen: a press on one, or, the chart focused, ←
+ * and → (↑ ↓, Home, End) walk them, their tooltip showing, and Enter or
+ * Space chooses the one shown.
  * @param {Record<string, any>} props
  */
 export function AreaChart(props) {
