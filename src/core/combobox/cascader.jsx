@@ -10,7 +10,7 @@ import { $controlled, keyOf, prevent, partOf, chevronFigures, ActionRow, handled
 import { DECOR, flag, state, $uid } from '../../theme/meaning.js';
 import { $combobox } from './store.js';
 import { Combobox, ComboboxTrigger, ComboboxPanel, ComboboxNoMatch, OptionCheck, optionLook } from './combobox.jsx';
-import { FieldBox, Outer, Opener, Clear, editStyle, $focused, comboOf } from './field.jsx';
+import { FieldBox, Outer, Opener, Clear, editStyle, $focused, comboOf, boxPress, editPress } from './field.jsx';
 import { comboboxOf, storeOf, valueStyle } from './select.jsx';
 import { parseTree } from './tree.jsx';
 import { labelsIn } from '../../theme/labels.js';
@@ -472,11 +472,7 @@ export function Cascader(props) {
   const trigger = searchable() ? (
     <Edit
       ref={store.setTrigger}
-      // its press is its own (the caret goes where it is pressed); it opens the panel
-      onPointerDown={(/** @type {any} */ e) => {
-        e?.stopPropagation?.();
-        if (!locked()) store.open();
-      }}
+      onPointerDown={editPress(store, locked)}
       value={shownText}
       label={() => read(props.placeholder) ?? ''}
       {...comboOf(props, store)}
@@ -523,14 +519,7 @@ export function Cascader(props) {
             end={right}
             focused={focused.get}
             pressed={() => !searchable()}
-            // The whole box opens it, its padding and chevron too, the focus on the field (the press prevented, as a DOM
-            // mousedown: no focus moves away); the field's own press is its own.
-            onPointerDown={(/** @type {any} */ e) => {
-              if (locked()) return;
-              e?.preventDefault?.();
-              store.focus();
-              store.open();
-            }}
+            onPointerDown={boxPress(store, locked)}
           >
             {trigger}
           </FieldBox>

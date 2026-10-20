@@ -9,7 +9,7 @@ import { $controlled, crossFigures, keyOf, prevent } from '../overlays/shared.js
 import { $combobox } from './store.js';
 import { Combobox, ComboboxTrigger, ComboboxPanel, ComboboxFilter, OptionsList, $boxed } from './combobox.jsx';
 import { Button } from '../buttons/button.jsx';
-import { FieldBox, Outer, Opener, Clear, editStyle, $focused, comboOf } from './field.jsx';
+import { FieldBox, Outer, Opener, Clear, editStyle, $focused, comboOf, boxPress, editPress } from './field.jsx';
 import { marks, named } from '../../theme/meaning.js';
 import { parseData, shown } from './data.js';
 import { firstIndex, comboboxOf, storeOf, titleOf, long } from './select.jsx';
@@ -141,6 +141,7 @@ function TagEntry(props) {
       {...marks(props)}
       disabled={disabled}
       onChange={props.onChange}
+      onPointerDown={props.onPointerDown}
       onKey={props.onKey}
       onFocus={props.onFocus}
       onBlur={props.onBlur}
@@ -226,10 +227,11 @@ export function MultiSelect(props) {
     <Outer {...props}>
       <Combobox store={store} onPick={choose} {...comboboxOf(props)} boxed={boxed.on} title={titleOf(props)} keys={() => !locked() && read(props.keys) !== false}>
         <ComboboxTrigger>
-          <FieldBox size={props.size} radius={props.radius} error={props.error} invalid={props.invalid} disabled={props.disabled} variant={props.variant} start={props.start} end={right} focused={focused.get} multiline onPointerDown={() => !locked() && store.open()}>
+          <FieldBox size={props.size} radius={props.radius} error={props.error} invalid={props.invalid} disabled={props.disabled} variant={props.variant} start={props.start} end={right} focused={focused.get} multiline onPointerDown={boxPress(store, locked)}>
             {tags(value.get, labelOf, remove, props)}
             <TagEntry
               ref={store.setTrigger}
+              onPointerDown={editPress(store, locked)}
               {...comboOf(props, store)}
               size={props.size}
               disabled={props.disabled}

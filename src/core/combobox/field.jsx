@@ -94,6 +94,30 @@ export function FieldBox(props) {
 }
 
 /**
+ * A field box's press: it opens the panel from all of the box, its padding
+ * and chevron too, the focus on the field so its keys work (the press
+ * prevented, as a DOM mousedown: no focus moves away). Nothing while
+ * `locked`.
+ * @param {{ open: () => void, focus: () => void }} store @param {() => boolean} locked
+ */
+export const boxPress = (store, locked) => (/** @type {any} */ e) => {
+  if (locked()) return;
+  e?.preventDefault?.();
+  store.focus();
+  store.open();
+};
+
+/**
+ * The press of an Edit inside a field box: its own (the caret goes where it
+ * is pressed, not the box's), and it opens the panel.
+ * @param {{ open: () => void }} store @param {() => boolean} locked
+ */
+export const editPress = (store, locked) => (/** @type {any} */ e) => {
+  e?.stopPropagation?.();
+  if (!locked()) store.open();
+};
+
+/**
  * The style of an Edit inside a FieldBox: no box of its own, the field's
  * text; the field draws its focus ring. Among tags (`multiline`) it fills the wrapped row's room (the
  * control's height less its border and the row's `control.labelGap`

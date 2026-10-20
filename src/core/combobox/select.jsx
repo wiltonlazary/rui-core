@@ -9,7 +9,7 @@ import { pageColors, sized } from '../../theme/resolve.js';
 import { $controlled } from '../overlays/shared.jsx';
 import { $combobox } from './store.js';
 import { Combobox, ComboboxTrigger, ComboboxPanel, ComboboxFilter, OptionsList, $comboboxContext, $boxed } from './combobox.jsx';
-import { FieldBox, Outer, Opener, Clear, editStyle, sizeOf, $focused, comboOf } from './field.jsx';
+import { FieldBox, Outer, Opener, Clear, editStyle, sizeOf, $focused, comboOf, boxPress, editPress } from './field.jsx';
 import { parseData, shown, grouped } from './data.js';
 import { labelsIn } from '../../theme/labels.js';
 
@@ -129,11 +129,7 @@ export function Select(props) {
   const typing = () => (
     <Edit
       ref={store.setTrigger}
-      // its press is its own (the caret goes where it is pressed); it opens the panel
-      onPointerDown={(/** @type {any} */ e) => {
-        e?.stopPropagation?.();
-        if (!locked()) store.open();
-      }}
+      onPointerDown={editPress(store, locked)}
       value={shownText}
       label={() => read(props.placeholder) ?? ''}
       {...comboOf(props, store)}
@@ -181,14 +177,7 @@ export function Select(props) {
             end={right}
             focused={focused.get}
             pressed={() => !inField()}
-            // The whole box opens it, its padding and chevron too, the focus on the field (the press prevented, as a DOM
-            // mousedown: no focus moves away); the field's own press is its own.
-            onPointerDown={(/** @type {any} */ e) => {
-              if (locked()) return;
-              e?.preventDefault?.();
-              store.focus();
-              store.open();
-            }}
+            onPointerDown={boxPress(store, locked)}
           >
             {trigger}
           </FieldBox>
@@ -267,9 +256,10 @@ export function Autocomplete(props) {
     <Outer {...props}>
       <Combobox store={store} onPick={choose} {...comboboxOf(props)} keys={() => !locked() && read(props.keys) !== false}>
         <ComboboxTrigger>
-          <FieldBox size={props.size} radius={props.radius} error={props.error} invalid={props.invalid} disabled={props.disabled} variant={props.variant} start={props.start} end={right} focused={focused.get} onPointerDown={() => !locked() && store.open()}>
+          <FieldBox size={props.size} radius={props.radius} error={props.error} invalid={props.invalid} disabled={props.disabled} variant={props.variant} start={props.start} end={right} focused={focused.get} onPointerDown={boxPress(store, locked)}>
             <Edit
               ref={store.setTrigger}
+              onPointerDown={editPress(store, locked)}
               value={value.get}
               label={() => read(props.placeholder) ?? ''}
               {...comboOf(props, store)}

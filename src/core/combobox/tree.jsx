@@ -8,7 +8,7 @@ import { pageColors } from '../../theme/resolve.js';
 import { $controlled, keyOf, prevent, checkFigures, ActionRow, handled } from '../overlays/shared.jsx';
 import { $combobox } from './store.js';
 import { Combobox, ComboboxTrigger, ComboboxPanel, ComboboxNoMatch, optionLook } from './combobox.jsx';
-import { FieldBox, Outer, Opener, Clear, editStyle, $focused, comboOf } from './field.jsx';
+import { FieldBox, Outer, Opener, Clear, editStyle, $focused, comboOf, boxPress, editPress } from './field.jsx';
 import { state as aria, flag, DECOR, $uid } from '../../theme/meaning.js';
 import { comboboxOf, storeOf, valueStyle } from './select.jsx';
 import { Tag } from './tags.jsx';
@@ -303,14 +303,7 @@ export function TreeSelect(props) {
             focused={focused.get}
             pressed={() => !searchable()}
             multiline={many}
-            // The whole box opens it, its padding and chevron too, the focus on the field (the press prevented, as a DOM
-            // mousedown: no focus moves away); the field's own press is its own.
-            onPointerDown={(/** @type {any} */ e) => {
-              if (locked()) return;
-              e?.preventDefault?.();
-              store.focus();
-              store.open();
-            }}
+            onPointerDown={boxPress(store, locked)}
           >
             <Show when={many}>
               <For each={values} by="position">
@@ -324,11 +317,7 @@ export function TreeSelect(props) {
             {searchable() ? (
               <Edit
                 ref={store.setTrigger}
-                // its press is its own (the caret goes where it is pressed); it opens the panel
-                onPointerDown={(/** @type {any} */ e) => {
-                  e?.stopPropagation?.();
-                  if (!locked()) store.open();
-                }}
+                onPointerDown={editPress(store, locked)}
                 value={() => ($read(typed) ? search.get() : many() || values().length === 0 ? '' : labelOf(values()[0]))}
                 label={() => (many() && values().length > 0 ? '' : (read(props.placeholder) ?? ''))}
                 {...comboOf(props, store)}

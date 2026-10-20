@@ -621,33 +621,47 @@ describe('a pressed field opens from its whole box', () => {
   }
 });
 
-describe('a searchable field opens from its chevron, ready to type', () => {
-  it('the chevron opens it and focuses its Edit; a key then moves in the list (DOM and Skia)', async t => {
-    const { pair, app } = await import('./overlay-harness.jsx');
-    const clock = ui.manualClock();
-    const p = pair(app(clock, () => <ui.Select searchable placeholder="Pick" data={['Alpha', 'Beta']} />));
-    disposeAfter(t, () => p.dispose());
-    const settle = () => {
-      for (let i = 0; i < 3; i++) {
-        clock.advance(300);
-        p.flush();
+describe('a typed field opens from its box, ready to type', () => {
+  // each typed field, and where its box is pressed: the chevron (the end section), else the padding before the text
+  const fields = {
+    'a searchable Select': [() => <ui.Select searchable placeholder="Pick" data={['Alpha', 'Beta']} />, 'chevron'],
+    MultiSelect: [() => <ui.MultiSelect placeholder="Pick" data={['Alpha', 'Beta']} />, 'chevron'],
+    Autocomplete: [() => <ui.Autocomplete placeholder="Pick" data={['Alpha', 'Beta']} />, 'padding'],
+  };
+  for (const [name, [view, where]] of Object.entries(fields)) {
+    it(`${name}: a press on its ${where} opens it and focuses its Edit; Escape then closes it (DOM and Skia)`, async t => {
+      const { pair, app } = await import('./overlay-harness.jsx');
+      const clock = ui.manualClock();
+      const p = pair(app(clock, view));
+      disposeAfter(t, () => p.dispose());
+      const settle = () => {
+        for (let i = 0; i < 3; i++) {
+          clock.advance(300);
+          p.flush();
+        }
+      };
+      const combo = p.dom.document.querySelector('[role="combobox"]');
+      const sItem = p.s.items().find(i => i.other?.get?.('role') === 'combobox');
+      // the Edit sits in the box's inner row; the box's last child is its end section (the chevron)
+      const box = combo.parentElement.parentElement;
+      const sBox = p.s.box(sItem.parent.parent);
+      if (where === 'chevron') {
+        p.d.tap(box.lastElementChild);
+        p.s.at(sBox.x + sBox.width - 8, sBox.y + sBox.height / 2);
+      } else {
+        p.d.tap(combo.parentElement);
+        p.s.at(sBox.x + 3, sBox.y + sBox.height / 2);
       }
-    };
-    const combo = p.dom.document.querySelector('[role="combobox"]');
-    const box = combo.parentElement.parentElement;
-    const sItem = p.s.items().find(i => i.other?.get?.('role') === 'combobox');
-    const sBox = p.s.box(sItem.parent.parent);
-    p.d.tap(box.lastElementChild);
-    p.s.at(sBox.x + sBox.width - 8, sBox.y + sBox.height / 2);
-    settle();
-    assert.ok(p.d.text().includes('Alpha') && p.s.text().includes('Alpha'), 'the chevron opens it on both');
-    assert.equal(p.dom.document.activeElement, combo, 'DOM: its Edit has the focus');
-    assert.equal(p.s.focused(), sItem, 'Skia: its Edit has the focus');
-    p.d.key('Escape');
-    p.s.key('Escape');
-    settle();
-    assert.ok(!p.d.text().includes('Alpha') && !p.s.text().includes('Alpha'), 'its keys work: Escape closes it');
-  });
+      settle();
+      assert.ok(p.d.text().includes('Alpha') && p.s.text().includes('Alpha'), `the ${where} opens it on both`);
+      assert.equal(p.dom.document.activeElement, combo, 'DOM: its Edit has the focus');
+      assert.equal(p.s.focused(), sItem, 'Skia: its Edit has the focus');
+      p.d.key('Escape');
+      p.s.key('Escape');
+      settle();
+      assert.ok(!p.d.text().includes('Alpha') && !p.s.text().includes('Alpha'), 'its keys work: Escape closes it');
+    });
+  }
 });
 
 describe('tab ids never collide', () => {
