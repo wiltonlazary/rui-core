@@ -15,7 +15,7 @@ import {
 import { dashedLine, runs, splitAt, arcPoints, angleOf, onSweep, gradientFill } from '../src/ext/charts/path.js';
 import { trendOf } from '../src/ext/charts/misc.jsx';
 import { scatterModel } from '../src/ext/charts/scatter.jsx';
-import { both } from './harness.jsx';
+import { both, onDom } from './harness.jsx';
 import { primitives, same, mirror, hover, leave, visits } from './chart-harness.jsx';
 
 // ---------------------------------------------------------------- data
@@ -378,6 +378,23 @@ describe('cartesian charts on the DOM and on Skia', () => {
     key(' ');
     assert.deepEqual(chosen.slice(2), [[1, 'Tue'], [3, 'Thu']]);
     dispose();
+  });
+
+  it('BarChart onSelect: the keys choose among the data before the chart is laid out (no width, nothing drawn)', () => {
+    /** @type {number[]} */
+    const chosen = [];
+    const dom = onDom(() => (
+      <Rui>
+        <BarChart data={cups} category="day" series={kiosks} onSelect={(/** @type {number} */ i) => chosen.push(i)} />
+      </Rui>
+    ));
+    const root = dom.host.querySelector('[role="img"]');
+    for (const k of ['ArrowLeft', 'Enter', 'Home', ' ']) {
+      root.dispatchEvent(new dom.window.KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true }));
+      $flush(dom.root);
+    }
+    assert.deepEqual(chosen, [3, 0]);
+    dom.dispose();
   });
 
   it('BarChart: group, stack, share, cascade, vertical; the band cursor', () => {

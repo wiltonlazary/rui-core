@@ -603,20 +603,24 @@ function cartesian(props, kind) {
     return m.data.length === 0 ? -1 : m.cats.index(m.horizontal ? x + m.plot.left : y + m.plot.top);
   };
   const selecting = props.onSelect != null;
+  // The categories chosen are the data's, drawn or not yet (a chart without a width yet draws none).
+  const rows = () => /** @type {Record<string, any>[]} */ (read(props.data) ?? []);
   /** Category `i` chosen: `onSelect(i, row)`. @param {number} i */
   const select = i => {
-    const m = $read(model);
-    if (i >= 0 && i < m.data.length) props.onSelect?.(i, m.data[i]);
+    const all = rows();
+    if (i >= 0 && i < all.length) props.onSelect?.(i, all[i]);
   };
-  /** Category `i` active from the keys: its tooltip at its middle. @param {number} i */
+  /** Category `i` active from the keys: its tooltip at its middle, once drawn. @param {number} i */
   const reach = i => {
     const m = $read(model);
-    const c = m.cats.center(i);
-    $write(pointer, m.horizontal ? [c, (m.plot.top + m.plot.bottom) / 2] : [(m.plot.left + m.plot.right) / 2, c]);
+    if (i < m.data.length) {
+      const c = m.cats.center(i);
+      $write(pointer, m.horizontal ? [c, (m.plot.top + m.plot.bottom) / 2] : [(m.plot.left + m.plot.right) / 2, c]);
+    }
     $write(active, i);
   };
   const onKey = (/** @type {{ key: string, preventDefault?: () => void }} */ e) => {
-    const n = $read(model).data.length;
+    const n = rows().length;
     const at = $read(active);
     const forth = e.key === 'ArrowRight' || e.key === 'ArrowDown';
     const back = e.key === 'ArrowLeft' || e.key === 'ArrowUp';
