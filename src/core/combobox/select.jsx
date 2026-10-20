@@ -64,7 +64,7 @@ export function valueStyle(props, empty) {
  * options; `search`/`onSearchChange` or `defaultSearch`,
  * `match(option, search)` (the label holds the search, by default), `limit`
  * (the most options shown)), `clearable`, `deselectable` (true), `empty` (shown when
- * nothing matches), `panelHeight` (280, in a Scroll), `check` (true),
+ * nothing matches), `panelHeight` (280: the most its list is high, as high as its options when fewer, scrolling down only, without bars), `check` (true),
  * `checkAt` ('end'), `renderOption(option, { picked })`, `disabled`, `readOnly`, `label`,
  * `description`, `error`, `required`, `size`, `radius`, `variant`,
  * `start`, `end`, `popover` (the panel's placement), `open`,

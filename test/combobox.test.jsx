@@ -458,13 +458,43 @@ describe('Select', () => {
     t.dispose();
   });
 
+  it('its list is as high as few options, panelHeight for many, scrolling down only and without bars; a long label ends with an ellipsis', () => {
+    const long = 'A fruit with a name far too long for its field, however wide that field may be';
+    const T = BASE_THEME;
+    const t = select({ data: ['Apple', 'Banana', long] });
+    t.press('Your pick');
+    // Skia: the label's row, option, group, list, the fitted content, then the list's ScrollBox
+    const content = t.s.find('Apple').parent.parent.parent.parent.parent;
+    const scroll = content.parent;
+    assert.equal(Math.round(t.s.box(scroll).height), Math.round(t.s.box(content).height), 'as high as its three options');
+    assert.ok(t.s.box(scroll).height < T.sizes.box.panel, 'not the panel height');
+    // the long label stays inside the list, cut by its ellipsis
+    const label = t.s.find(long);
+    assert.ok(t.s.box(label).right <= t.s.box(scroll).right + 0.5, 'within the list');
+    assert.ok(t.s.box(label).width < t.s.box(scroll).width, 'cut to the row');
+    // DOM: the list scrolls down only, without bars, and the long label is one line ending with an ellipsis
+    const list = t.d.nodes('Scroll').find((/** @type {any} */ n) => n.querySelector('[role="listbox"]') !== null);
+    assert.equal(list.style.overflowX, 'hidden', 'no scroll across');
+    assert.equal(list.style.getPropertyValue('--ren-bars'), 'none', 'no bars');
+    const text = t.d.nodes('Label').find((/** @type {any} */ n) => n.textContent === long);
+    assert.equal(text.style.textOverflow, 'ellipsis');
+    t.dispose();
+    // many options: the list is panelHeight high and scrolls
+    const many = select({ data: Array.from({ length: 40 }, (_, i) => `Fruit ${i + 1}`) });
+    many.press('Your pick');
+    const at = many.s.find('Fruit 1').parent.parent.parent.parent.parent.parent;
+    assert.equal(Math.round(many.s.box(at).height), T.sizes.box.panel);
+    many.dispose();
+  });
+
   it('opens under its field as wide, over what follows; chooses by press and by keys', () => {
     const t = select({});
     assert.equal(t.text(), 'Fruit Your pick Below');
     t.press('Your pick');
     assert.equal(t.text(), 'Fruit Your pick Below Apple Banana Cherry');
     const field = t.s.box(t.s.find('Your pick').parent.parent.parent);
-    const drop = t.s.box(t.s.find('Apple').parent.parent.parent.parent.parent.parent);
+    // the panel: the label's row, option, group, list, the fitted content, the list's ScrollBox, then the panel
+    const drop = t.s.box(t.s.find('Apple').parent.parent.parent.parent.parent.parent.parent);
     assert.equal(Math.round(drop.y), Math.round(field.bottom + 4), 'under the field, 4 below it');
     assert.equal(Math.round(drop.width), Math.round(field.width), 'as wide as the field');
     // An option sits over the Below button: a press there chooses it.

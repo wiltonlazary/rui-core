@@ -6,7 +6,7 @@
 // centered lightbox instead (`$boxed`): a Modal holding a filter when the
 // list is long, the options, and the field's footer.
 
-import { View, Label, Action, Edit, Scroll, Shape, Show, For, read, $active, $signal, $memo, $read, $write, $context, $lookup, $owner, $cleanup, $untrack, $watch, $viewport } from 'ren-core';
+import { View, Label, Action, Edit, Shape, Show, For, read, $active, $signal, $memo, $read, $write, $context, $lookup, $owner, $cleanup, $untrack, $watch, $viewport } from 'ren-core';
 import { styled } from '../../theme/style.js';
 import { $ui } from '../../theme/theme.jsx';
 import { fontBelow, pageColors, radiusOf, shadowOf, sized, variantColors } from '../../theme/resolve.js';
@@ -19,6 +19,7 @@ import { Opener, Clear, sizeOf } from './field.jsx';
 import { optionPadOf } from '../inputs/shared.js';
 import { grouped } from './data.js';
 import { DECOR, flag, state, $uid } from '../../theme/meaning.js';
+import { ScrollBox } from '../misc/misc.jsx';
 
 /**
  * @typedef {object} ComboboxValue
@@ -297,6 +298,7 @@ const actionBoxOf = () =>
       justify: 'center',
       gap: theme.control.iconGap,
       grow: 1,
+      minWidth: 0,
       padding: [theme.control.panelPad, theme.control.panelPad],
       radius: theme.radius.sm,
       background: soft.background,
@@ -369,7 +371,7 @@ export function ComboboxOption(props) {
       onPress={choose}
       style={style}
     >
-      <ActionRow gap={() => ui.theme().control.iconGap}>{text ? <Label text={props.children} style={{ grow: 1 }} /> : props.children}</ActionRow>
+      <ActionRow gap={() => ui.theme().control.iconGap}>{text ? <Label text={props.children} ellipsis style={{ grow: 1, minWidth: 0 }} /> : props.children}</ActionRow>
     </Action>
   );
 }
@@ -472,8 +474,9 @@ export function OptionCheck(props) {
 /**
  * The options of parsed data in the panel: groups, each option with its
  * check (`check`: true, false, or your own icon; `checkAt` 'end', the
- * default, after the label, or 'start'), `renderOption(option, { picked })`, in a Scroll `panelHeight`
- * high, and `empty` when none is shown.
+ * default, after the label, or 'start'), `renderOption(option, { picked })`, in a list as high as its options
+ * up to `panelHeight` (a ScrollBox.Fit: scrolling down only, without bars; a label too wide for the panel ends with
+ * an ellipsis), and `empty` when none is shown.
  * @param {{ options: () => import('./data.js').Option[], checked: (value: string) => boolean, multiple?: any, check?: any, checkAt?: any, renderOption?: any, panelHeight?: any, empty?: any, hide?: (value: string) => boolean }} props
  */
 export function OptionsList(props) {
@@ -505,7 +508,7 @@ export function OptionsList(props) {
           <ComboboxOption value={value} option={o} index={() => entry().index} disabled={() => o().disabled}>
             <View style={actionBox}>
               {Icon === undefined ? null : <Icon size={() => ui.theme().sizes.glyph.sm} color={ink} />}
-              <Label text={() => o().label} />
+              <Label text={() => o().label} ellipsis style={{ minWidth: 0 }} />
             </View>
           </ComboboxOption>
         </>
@@ -517,7 +520,7 @@ export function OptionsList(props) {
             const now = o();
             return $untrack(R, () => props.renderOption(now, { picked: checked() }));
           }
-        : <Label text={() => o().label} style={{ grow: 1 }} />;
+        : <Label text={() => o().label} ellipsis style={{ grow: 1, minWidth: 0 }} />;
     return (
       <ComboboxOption value={value} option={o} index={() => entry().index} disabled={() => o().disabled} chosen={checked}>
         {check() && !right() ? mark(checked) : null}
@@ -529,7 +532,7 @@ export function OptionsList(props) {
   const max = () => read(props.panelHeight) ?? ui.theme().sizes.box.panel;
   return (
     <Show when={() => props.options().length > 0} fallback={props.empty === undefined ? null : <ComboboxNoMatch>{props.empty}</ComboboxNoMatch>}>
-      <Scroll style={() => ({ maxHeight: max(), direction: 'column' })}>
+      <ScrollBox.Fit maxHeight={max} axis="y" bars={false} style={{ direction: 'column' }}>
         <ComboboxList multiple={props.multiple}>
           <For each={runs} by={(/** @type {any} */ run) => run.group ?? ''}>
             {(/** @type {any} */ run) => (
@@ -542,7 +545,7 @@ export function OptionsList(props) {
             )}
           </For>
         </ComboboxList>
-      </Scroll>
+      </ScrollBox.Fit>
     </Show>
   );
 }

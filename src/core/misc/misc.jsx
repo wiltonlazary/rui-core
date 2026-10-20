@@ -109,9 +109,28 @@ function barsOf(b, theme, scheme) {
  * @param {Record<string, any>} props
  */
 export function ScrollBox(props) {
+  return scrollBox(props, false);
+}
+
+/** A ScrollBox, as high as its content up to `maxHeight` when it `fit`s. @param {Record<string, any>} props @param {boolean} fit */
+function scrollBox(props, fit) {
   /** @type {any} */
   let node = null;
   const ask = props.onEnd == null ? null : $endOf(props, () => node);
+  // Fit (`ScrollBox.Fit`): its content's height, measured as it is laid out and changes, up to `maxHeight` (that until
+  // the first measurement, so nothing is cut). A Scroll left without a height is the renderer's region high.
+  const content = $signal($active(), /** @type {number | null} */ (null));
+  const fitted = () => {
+    const max = Number(read(props.maxHeight));
+    if (!fit || !Number.isFinite(max)) return null;
+    const h = $read(content);
+    return { height: h === null ? max : Math.min(h, max) };
+  };
+  /** The content's box changed size: a fit follows its height, an endless list checks its end. @param {{ height: number }} box */
+  const resized = box => {
+    if (fit) $write(content, box.height);
+    ask?.();
+  };
   const onScroll = () => {
     props.onScroll?.({ x: node?.scrollLeft ?? 0, y: node?.scrollTop ?? 0 });
     ask?.();
@@ -128,9 +147,9 @@ export function ScrollBox(props) {
       }}
       onScroll={onScroll}
       {...(ask === null ? null : { onResize: ask })}
-      style={styled(props, (theme, scheme) => ({ shrink: 0, ...bars(theme, scheme), ...(read(props.gutter) ? { padding: [0, theme.spacing.xs, 0, 0] } : null) }))}
+      style={styled(props, (theme, scheme) => ({ shrink: 0, ...bars(theme, scheme), ...(read(props.gutter) ? { padding: [0, theme.spacing.xs, 0, 0] } : null), ...fitted() }))}
     >
-      {ask === null ? props.children : <View onResize={ask}>{props.children}</View>}
+      {ask === null && !fit ? props.children : <View onResize={resized} style={{ shrink: 0 }}>{props.children}</View>}
     </Scroll>
   );
 }
@@ -180,9 +199,13 @@ function $endOf(props, scroller) {
   return ask;
 }
 
-/** A ScrollBox as high as its content, up to `maxHeight`. @param {Record<string, any>} props */
+/**
+ * A ScrollBox as high as its content, up to `maxHeight` (a number of px): fewer rows, a shorter box; more, `maxHeight`
+ * high and scrolling. Its content's height is measured on every renderer.
+ * @param {Record<string, any>} props
+ */
 function ScrollBoxFit(props) {
-  return <ScrollBox {...props} />;
+  return scrollBox(props, true);
 }
 ScrollBox.Fit = ScrollBoxFit;
 

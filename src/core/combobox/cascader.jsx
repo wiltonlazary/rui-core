@@ -2,7 +2,7 @@
 // column per open parent. Past `levels` columns the earliest ones fold into
 // a trail of crumbs; a search (or the list layout) shows whole paths flat.
 
-import { View, Label, Action, Edit, Scroll, Shape, For, Show, read, $active, $signal, $memo, $read, $write, $untrack, $watch } from 'ren-core';
+import { View, Label, Action, Edit, Shape, For, Show, read, $active, $signal, $memo, $read, $write, $untrack, $watch } from 'ren-core';
 import { styled } from '../../theme/style.js';
 import { $ui } from '../../theme/theme.jsx';
 import { fontBelow, pageColors } from '../../theme/resolve.js';
@@ -14,6 +14,7 @@ import { FieldBox, Outer, Opener, Clear, editStyle, $focused, comboOf } from './
 import { comboboxOf, storeOf, valueStyle } from './select.jsx';
 import { parseTree } from './tree.jsx';
 import { labelsIn } from '../../theme/labels.js';
+import { ScrollBox } from '../misc/misc.jsx';
 
 /** @typedef {import('./tree.jsx').TreeNode} TreeNode */
 
@@ -374,7 +375,7 @@ export function Cascader(props) {
     >
       <ActionRow gap={() => ui.theme().control.iconGap}>
         {checkOf(() => isChosen(node), true)}
-        <Label text={node.label} style={{ grow: 1 }} />
+        <Label text={node.label} ellipsis style={{ grow: 1, minWidth: 0 }} />
         {checkOf(() => isChosen(node), false)}
         {node.children.length > 0 ? onward() : null}
       </ActionRow>
@@ -387,13 +388,16 @@ export function Cascader(props) {
       <Show when={() => level > first()}>
         <View {...DECOR} style={rule} />
       </Show>
-      <Scroll
+      <ScrollBox.Fit
         role="listbox"
         aria-label={() => (level === 0 ? fieldName() : (openList()[level - 1]?.label ?? ''))}
-        style={() => ({ direction: 'column', width: columnWidth(), maxHeight: panelHeight(), shrink: 0 })}
+        maxHeight={panelHeight}
+        axis="y"
+        bars={false}
+        style={() => ({ direction: 'column', width: columnWidth(), shrink: 0 })}
       >
         <For each={() => nodesAt(level)}>{(/** @type {() => TreeNode} */ node) => nodeRow($untrack(R, node))}</For>
-      </Scroll>
+      </ScrollBox.Fit>
     </View>
   );
 
@@ -439,7 +443,7 @@ export function Cascader(props) {
       >
         <ActionRow gap={() => ui.theme().control.iconGap}>
           {checkOf(() => isChosen(end()), true)}
-          <Label text={() => route().text} style={{ grow: 1 }} />
+          <Label text={() => route().text} ellipsis style={{ grow: 1, minWidth: 0 }} />
           {checkOf(() => isChosen(end()), false)}
         </ActionRow>
       </Action>
@@ -448,11 +452,11 @@ export function Cascader(props) {
   const empty = () => <ComboboxNoMatch>{() => String(read(props.empty) ?? labelsIn().noMatch)}</ComboboxNoMatch>;
   const flatView = (
     <Show when={() => routes().length > 0} fallback={empty()}>
-      <Scroll role="listbox" aria-label={fieldName} style={() => ({ direction: 'column', minWidth: columnWidth(), maxHeight: panelHeight() })}>
+      <ScrollBox.Fit role="listbox" aria-label={fieldName} maxHeight={panelHeight} axis="y" bars={false} style={() => ({ direction: 'column', minWidth: columnWidth() })}>
         <For each={routes} by={(/** @type {Route} */ r) => r.key}>
           {(/** @type {() => Route} */ route, /** @type {() => number} */ index) => routeRow(route, index)}
         </For>
-      </Scroll>
+      </ScrollBox.Fit>
     </Show>
   );
   const columnsView = (

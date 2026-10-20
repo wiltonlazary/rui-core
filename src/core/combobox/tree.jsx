@@ -1,7 +1,7 @@
 // TreeSelect: hierarchical data in a combobox panel, as
 // an indented tree, walked with the arrow keys.
 
-import { View, Label, Action, Edit, Shape, Scroll, For, Show, read, $active, $signal, $memo, $read, $write, $untrack, $watch } from 'ren-core';
+import { View, Label, Action, Edit, Shape, For, Show, read, $active, $signal, $memo, $read, $write, $untrack, $watch } from 'ren-core';
 import { styled } from '../../theme/style.js';
 import { $ui } from '../../theme/theme.jsx';
 import { pageColors } from '../../theme/resolve.js';
@@ -15,6 +15,7 @@ import { Tag } from './tags.jsx';
 import { sizeOf } from '../inputs/shared.js';
 import { Chevron } from '../data/parts.jsx';
 import { labelsIn } from '../../theme/labels.js';
+import { ScrollBox } from '../misc/misc.jsx';
 
 /**
  * @typedef {object} TreeNode
@@ -72,7 +73,7 @@ export function Turn(props) {
  * or `defaultExpanded` (the open nodes' values, or `true` for all),
  * `press` ('select': a press on a parent chooses it; 'expand': it opens
  * or closes the parent instead, as Tree's `press`),
- * `max` (the most values), `clearable`, `panelHeight` (280, in a Scroll),
+ * `max` (the most values), `clearable`, `panelHeight` (280: the most its list is high, as high as its options when fewer, scrolling down only, without bars),
  * `placeholder`, `disabled`, `readOnly`, and the field's, Field's and
  * panel's props. `searchable`: the field is an Edit; typing shows the
  * nodes whose labels contain the text and their ancestors, open
@@ -351,7 +352,7 @@ export function TreeSelect(props) {
         </ComboboxTrigger>
         <ComboboxPanel>
           <Show when={() => visible().length > 0} fallback={props.empty === undefined ? null : <ComboboxNoMatch>{props.empty}</ComboboxNoMatch>}>
-          <Scroll role="tree" aria-multiselectable={flag(many)} style={() => ({ direction: 'column', maxHeight: read(props.panelHeight) ?? ui.theme().sizes.box.panel })}>
+          <ScrollBox.Fit role="tree" aria-multiselectable={flag(many)} maxHeight={() => read(props.panelHeight) ?? ui.theme().sizes.box.panel} axis="y" bars={false} style={{ direction: 'column' }}>
             <For each={visible}>
               {(/** @type {() => TreeNode} */ node) => {
                 const n = $untrack(R, node);
@@ -361,7 +362,7 @@ export function TreeSelect(props) {
                 $watch(R, on, v => (v ? store.markActive(id) : undefined));
                 const open = () => kept() !== null || expanded.get().includes(n.value);
                 return (
-                  <View style={{ direction: 'row', align: 'center' }}>
+                  <View style={{ direction: 'row', align: 'center', minWidth: 0 }}>
                     {Array.from({ length: n.depth }, (_, level) => indent(n, level))}
                     {n.children.length > 0 ? (
                       // A drawn chevron, not a button: a press opens or closes the node and the focus stays on
@@ -378,14 +379,14 @@ export function TreeSelect(props) {
                     <Action id={id} role="treeitem" aria-level={n.depth + 1} aria-expanded={n.children.length > 0 ? aria(open) : undefined} aria-checked={() => (checks() ? checkedOf(n) : undefined)} aria-selected={() => (checks() ? undefined : values().includes(n.value) ? 'true' : 'false')} aria-disabled={flag(() => n.disabled)} onPress={() => choose(n)} style={rowStyle(on, () => n.disabled, props.size)}>
                       <ActionRow gap={() => ui.theme().control.iconGap}>
                         {box(n)}
-                        <Label text={n.label} />
+                        <Label text={n.label} ellipsis style={{ minWidth: 0 }} />
                       </ActionRow>
                     </Action>
                   </View>
                 );
               }}
             </For>
-          </Scroll>
+          </ScrollBox.Fit>
           </Show>
         </ComboboxPanel>
       </Combobox>

@@ -473,6 +473,35 @@ describe('rui-core misc on the DOM and on Skia', () => {
     skia.dispose();
   });
 
+  it('ScrollBox.Fit: as high as its content up to maxHeight, following it as it changes (Skia)', () => {
+    /** @type {any[]} */
+    const boxes = [];
+    /** @type {any} */
+    let rows = null;
+    const view = () => {
+      rows = $signal($active(), 3);
+      return (
+        <Rui>
+          <ScrollBox.Fit maxHeight={200} ref={(/** @type {any} */ n) => boxes.push(n)}>
+            {() => Array.from({ length: $read(rows) }, (_, i) => <View style={{ height: 30, shrink: 0 }}><Text>{`row ${i}`}</Text></View>)}
+          </ScrollBox.Fit>
+          <ScrollBox maxHeight={200}>
+            <Text>plain</Text>
+          </ScrollBox>
+        </Rui>
+      );
+    };
+    const skia = onSkia(view);
+    const height = () => (skia.text(), boxes[0].getBoundingClientRect().height);
+    assert.equal(height(), 90, 'three rows: their height, not the region\'s');
+    $write(rows, 30);
+    assert.equal(height(), 200, 'thirty: maxHeight, scrolling');
+    assert.ok(boxes[0].scrollHeight > 200);
+    $write(rows, 1);
+    assert.equal(height(), 30, 'fewer again: it shrinks');
+    skia.dispose();
+  });
+
   it('ScrollBox bars: the theme\'s bar in the page\'s border on its track, thin, none, or colors of their own', () => {
     const page = pageColors(BASE_THEME, 'light');
     const view = () => (
