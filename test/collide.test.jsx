@@ -1,11 +1,15 @@
 // The placement solver: a table of trigger, panel and options against a
 // 400 by 300 viewport, then a Popover flipping and sliding on the DOM and
-// on Skia.
+// on Skia, and a Menu in a DOM root nested in a short frame.
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { $flush } from 'rrx-core';
+import { Root } from 'ren-core';
+import { Rui, Clock, manualClock, Button, Menu } from 'rui-core';
 import { collide } from '../src/core/overlays/collide.js';
-import { css, styledBy, placeOf, viewport } from './overlay-harness.jsx';
+import { onDom } from './harness.jsx';
+import { css, styledBy, placeOf, viewport, lend } from './overlay-harness.jsx';
 
 const screen = { x: 0, y: 0, width: 400, height: 300 };
 
@@ -88,5 +92,68 @@ describe('collide on the DOM and on Skia', () => {
       assert.equal(css(styledBy(d.find('Drop'), 'pointer-events')).left, undefined, 'not slid on the DOM');
       dispose();
     }
+  });
+
+  // happy-dom lays nothing out: the page is lent a 480 by 800 viewport, the
+  // portal layer's box (the page's, or the nested root's host: a frame 120
+  // px high near the page's bottom), the trigger near that bottom and the
+  // panel's size. The canvases have no nested root: the tests above are
+  // their placement.
+  it('a Menu in a nested DOM root opens above inside its short host; at the page root, below', () => {
+    /** @param {boolean} nested */
+    const sideIn = nested => {
+      const clock = manualClock();
+      const menu = () => (
+        <Clock value={clock}>
+          <Rui>
+            <Menu offset={8}>
+              <Menu.Trigger>
+                <Button>Open</Button>
+              </Menu.Trigger>
+              <Menu.Panel>
+                <Menu.Item>Copy</Menu.Item>
+              </Menu.Panel>
+            </Menu>
+          </Rui>
+        </Clock>
+      );
+      const dom = onDom(nested ? () => <Root id="frame">{menu}</Root> : menu, { width: 480, height: 800 });
+      // The nested root runs its own graph.
+      const flush = () => {
+        $flush(dom.root);
+        if (nested) $flush(Root('frame'));
+      };
+      const boxes = lend(dom, { width: 480, height: 800 });
+      /** @param {{ x: number, y: number, width: number, height: number }} r */
+      const at = r => ({ getBoundingClientRect: () => r });
+      const trigger = [...dom.document.querySelectorAll('[data-ren="Action"]')].find(n => n.textContent.trim() === 'Open');
+      boxes.set(trigger.parentElement, at({ x: 20, y: 690, width: 80, height: 20 }));
+      // Pressed as a browser sends it.
+      const w = dom.window;
+      const down = { bubbles: true, cancelable: true, button: 0, buttons: 1, pointerId: 1 };
+      trigger.dispatchEvent(new w.PointerEvent('pointerdown', down));
+      trigger.dispatchEvent(new w.PointerEvent('pointerup', { ...down, buttons: 0 }));
+      trigger.dispatchEvent(new w.MouseEvent('click', { bubbles: true, cancelable: true }));
+      flush();
+      clock.advance(200);
+      flush();
+      const item = [...dom.document.querySelectorAll('[data-ren]')].find(n => n.textContent.trim() === 'Copy' && n.querySelector('[data-ren]') === null);
+      // The portal layer: the page's body, or the nested root's host.
+      const host = nested ? dom.document.querySelector('[data-ren-root="frame"]') : dom.document.body;
+      const room = [...host.children].find(n => {
+        const c = css(n);
+        return c.position === 'absolute' && c.top === '0px' && c.bottom === '0px' && c['pointer-events'] === 'none';
+      });
+      if (room !== undefined) boxes.set(room, at(nested ? { x: 0, y: 600, width: 480, height: 120 } : { x: 0, y: 0, width: 480, height: 800 }));
+      boxes.set(styledBy(item, 'pointer-events'), at({ x: 0, y: 0, width: 120, height: 60 }));
+      dom.document.dispatchEvent(new dom.window.Event('scroll'));
+      clock.advance(200);
+      flush();
+      const place = css(placeOf(item));
+      dom.dispose();
+      return place.bottom === '100%' ? 'top' : place.top === '100%' ? 'bottom' : 'none';
+    };
+    assert.equal(sideIn(false), 'bottom', 'room below in the viewport: below at the page root');
+    assert.equal(sideIn(true), 'top', 'no room below in its host: above inside it');
   });
 });

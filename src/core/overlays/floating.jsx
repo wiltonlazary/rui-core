@@ -8,7 +8,7 @@ import { $ui } from '../../theme/theme.jsx';
 import { styled } from '../../theme/style.js';
 import { pageColors, radiusOf, shadowOf, spacing } from '../../theme/resolve.js';
 import { LAYERS } from '../../theme/layers.js';
-import { $controlled, $presence, timingOf, motionOf, moved, rectOf, measurable, Close, keyOf, dismissOf, handled } from './shared.jsx';
+import { $controlled, $presence, timingOf, motionOf, moved, rectOf, roomOf, measurable, Close, keyOf, dismissOf, handled } from './shared.jsx';
 import { $tween, $nextFrame } from '../misc/tween.js';
 import { DECOR } from '../../theme/meaning.js';
 import { handOn } from '../ref.js';
@@ -207,8 +207,9 @@ const capture = e => {
  * `{ min: { width, height }, max: { width, height } }` (any part may be
  * left out) keeps it in range, and the viewport too while contained;
  * `onResize(phase)` hears 'start' and 'end' around each resize. The
- * viewport is a fixed View over it; where it cannot be measured (a
- * worker's Handle) nothing is contained. The Grip takes focus (an
+ * viewport is a fixed View over it, in a Portal within the portal
+ * layer's box (`roomOf`: a nested DOM root's host); where it cannot be
+ * measured (a worker's Handle) nothing is contained. The Grip takes focus (an
  * Action, on every renderer): ArrowRight and ArrowLeft make the window
  * wider and narrower, ArrowDown and ArrowUp higher and lower, a
  * `spacing.xs` step a press (8 px), `spacing.xl` with Shift (32 px),
@@ -240,13 +241,12 @@ export function Floater(props) {
   let node = null;
   /** @type {any} */
   let screen = null;
+  /** The portal layer's box: an absolute View over it (none in place). @type {any} */
+  let layer = null;
   const constrained = () => read(props.contained) !== false;
   const gap = () => read(props.margin) ?? 0;
-  /** The viewport's box, when it can be measured. */
-  const viewport = () => {
-    const v = rectOf(screen);
-    return v === null || v.width <= 0 || v.height <= 0 ? null : v;
-  };
+  /** The room's box (the viewport within the layer's), when it can be measured. */
+  const viewport = () => roomOf(screen, layer);
   /** @type {{ x: number, y: number, top: number, left: number } | null} */
   let drag = null;
   // A Handle inside (it says so as it is made, after the window's style): the window's body then neither drags nor keeps a touch.
@@ -267,9 +267,14 @@ export function Floater(props) {
     const box = rectOf(node);
     if (v !== null && box !== null) {
       const g = gap();
+      // The room in the portal layer's own coordinates, where top and left are.
+      const o = rectOf(layer) ?? { x: 0, y: 0 };
       // Whole pixels that stay inside: a box of a fractional size rounds in, never past the edge.
-      const fit = (/** @type {number} */ x, /** @type {number} */ far) => Math.max(g, Math.min(Math.floor(far), Math.round(x)));
-      next = { top: fit(next.top, v.height - box.height - g), left: fit(next.left, v.width - box.width - g) };
+      const fit = (/** @type {number} */ x, /** @type {number} */ near, /** @type {number} */ far) => Math.max(Math.ceil(near), Math.min(Math.floor(far), Math.round(x)));
+      next = {
+        top: fit(next.top, v.y - o.y + g, v.y - o.y + v.height - box.height - g),
+        left: fit(next.left, v.x - o.x + g, v.x - o.x + v.width - box.width - g),
+      };
     }
     if (props.position === undefined) $write(own, next);
     props.onPositionChange?.(next);
@@ -384,7 +389,13 @@ export function Floater(props) {
       </View>
     </>
   );
-  return read(props.portal) === false ? view : <Portal>{view}</Portal>;
+  if (read(props.portal) === false) return view;
+  return (
+    <Portal>
+      <View ref={(/** @type {any} */ n) => (layer = n)} style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }} />
+      {view}
+    </Portal>
+  );
 }
 
 /** The part of a Floater that drags it (a title bar). @param {Record<string, any>} props */

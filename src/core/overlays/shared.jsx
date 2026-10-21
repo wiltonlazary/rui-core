@@ -225,6 +225,26 @@ export function rectOf(node) {
   return { x: r.x ?? r.left ?? 0, y: r.y ?? r.top ?? 0, width: r.width ?? 0, height: r.height ?? 0 };
 }
 
+/**
+ * The room a portal's content has: the viewport (`screen`, a fixed View
+ * over it) within the portal layer's own box (`layer`, an absolute View
+ * over it), which on ren-dom is a nested root's host's (a frame around
+ * it clips it). A layer measured empty or off the viewport leaves the
+ * viewport; null when the viewport cannot be measured.
+ * @param {any} screen @param {any} layer
+ */
+export function roomOf(screen, layer) {
+  const v = rectOf(screen);
+  if (v === null || v.width <= 0 || v.height <= 0) return null;
+  const l = rectOf(layer);
+  if (l === null) return v;
+  const x = Math.max(v.x, l.x);
+  const y = Math.max(v.y, l.y);
+  const width = Math.min(v.x + v.width, l.x + l.width) - x;
+  const height = Math.min(v.y + v.height, l.y + l.height) - y;
+  return width > 0 && height > 0 ? { x, y, width, height } : v;
+}
+
 /** True when a node can be measured (not a worker's Handle). @param {any} node */
 export const measurable = node => node != null && typeof node.getBoundingClientRect === 'function';
 
@@ -248,10 +268,12 @@ export const activeOf = node => (node != null && typeof node.getRootNode === 'fu
  * `inset: 0`) at `layer`. With `portal` false it renders in place,
  * covering its parent instead.
  *
- * On ren-dom the layer is the viewport (the portal's container is the
- * page's body); on ren-canv the portal layer is as wide and as high as the
- * viewport too. `prevent` cancels those default actions on it (a menu's
- * backdrop: the browser's context menu).
+ * On ren-dom the portal's container is the root's host element (the
+ * page's body without one), so the layer covers that element's
+ * positioned ancestor: the viewport for an application's root, a frame's
+ * box for a root nested in one; on ren-canv the portal layer is as wide
+ * and as high as the viewport. `prevent` cancels those default actions
+ * on it (a menu's backdrop: the browser's context menu).
  * @param {{ layer?: any, portal?: any, into?: any, style?: any, children?: any, onPointerDown?: any, onKey?: any, ref?: any, prevent?: any }} props
  */
 export function Layer(props) {
@@ -312,7 +334,8 @@ const same = (a, b) => a !== null && b !== null && Object.keys(a).every(k => Mat
  * Where the nodes can be measured (not a worker's Handle), it handles
  * collisions with the viewport by its `collision` (`flip` and
  * `slide`, both true by default): the viewport is a fixed View over it
- * (`inset: 0`), the panel's size its own box. It follows its trigger
+ * (`inset: 0`) within the portal layer's box (`roomOf`: a nested DOM
+ * root's host), the panel's size its own box. It follows its trigger
  * while `active()`: measured again on every scroll that can move it
  * (ren-core's `$scrolls`: an ancestor's, the page's, answered in the
  * scroll's own frame), on any other move of the trigger (ren-core's
@@ -330,8 +353,8 @@ export function Placed(props) {
   const portal = $untrack(R, props.portal) && can;
   const box = $signal(R, { x: 0, y: 0, width: 0, height: 0 });
   const fit = props.fit ?? $signal(R, /** @type {Fit | null} */ (null));
-  /** @type {any} */
-  let origin = null;
+  /** The portal layer's box: an absolute View over it (its corner is the panel's origin). @type {any} */
+  let layer = null;
   /** @type {any} */
   let screen = null;
   /** @type {any} */
@@ -341,13 +364,13 @@ export function Placed(props) {
     const r = rectOf(node);
     if (r === null) return;
     if (portal) {
-      const o = rectOf(origin) ?? { x: 0, y: 0 };
+      const o = rectOf(layer) ?? { x: 0, y: 0 };
       const next = { x: r.x - o.x, y: r.y - o.y, width: r.width, height: r.height };
       if (!same(next, $untrack(R, () => $read(box)))) $write(box, next);
     }
-    const v = rectOf(screen);
+    const v = roomOf(screen, portal ? layer : null);
     const d = rectOf(child);
-    if (v === null || d === null || v.width <= 0 || v.height <= 0 || (d.width === 0 && d.height === 0)) return;
+    if (v === null || d === null || (d.width === 0 && d.height === 0)) return;
     const [side, align] = sideOf($untrack(R, props.at));
     const m = $untrack(R, collision);
     const next = collide(r, d, v, { side, align, offset: $untrack(R, props.offset), clear: $untrack(R, ui.theme).spacing.xs, flip: m.flip !== false, slide: m.slide !== false });
@@ -410,7 +433,7 @@ export function Placed(props) {
     );
   return (
     <Portal>
-      <View ref={(/** @type {any} */ n) => (origin = n)} style={{ position: 'absolute', top: 0, left: 0, width: 0, height: 0 }} />
+      <View ref={(/** @type {any} */ n) => (layer = n)} style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }} onResize={follow} />
       <View
         style={() => {
           const b = $read(box);

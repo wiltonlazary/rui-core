@@ -5,7 +5,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { $signal, $read, $write, $flush } from 'rrx-core';
-import { $active, View, Action, Edit, Scroll, Show } from 'ren-core';
+import { $active, View, Action, Edit, Scroll, Show, Root } from 'ren-core';
 import {
   Rui, Clock, manualClock, Button, Text, Box, BASE_THEME, MOTION as BASE_MOTION,
   Backdrop, Busy, Modal, Drawer, Dialog, Popover, HoverCard, Tooltip, Menu,
@@ -2478,6 +2478,40 @@ describe('Pin, ActionBar, Glider, Floater', () => {
       } else assert.equal(css(node).left, '640px');
       dispose();
     }
+  });
+
+  // happy-dom lays nothing out: the page is lent a 480 by 800 viewport, the
+  // nested root's host a frame 120 px high near its bottom, and the window's box.
+  it('Floater in a nested DOM root stays inside its host while dragged', () => {
+    const st = states();
+    const view = () => (
+      <Root id="frame">
+        {() => (
+          <Rui>
+            <Floater defaultPosition={{ top: 40, left: 40 }} w={160} margin={10} onPositionChange={(/** @type {any} */ p) => st.add(p)}>
+              <Text>Window</Text>
+            </Floater>
+          </Rui>
+        )}
+      </Root>
+    );
+    const dom = onDom(view, { width: 480, height: 800 });
+    const boxes = lend(dom, { width: 480, height: 800 });
+    const host = dom.document.querySelector('[data-ren-root="frame"]');
+    const room = [...host.children].find(n => {
+      const c = css(n);
+      return c.position === 'absolute' && c.top === '0px' && c.bottom === '0px' && c['pointer-events'] === 'none';
+    });
+    if (room !== undefined) boxes.set(room, { getBoundingClientRect: () => ({ x: 0, y: 600, width: 480, height: 120 }) });
+    const label = [...host.querySelectorAll('[data-ren="Label"]')].find(n => n.textContent === 'Window');
+    const node = styledBy(label, 'top');
+    boxes.set(node, { getBoundingClientRect: () => ({ x: 40, y: 640, width: 160, height: 40 }) });
+    const w = dom.window;
+    node.dispatchEvent(new w.PointerEvent('pointerdown', { bubbles: true, clientX: 50, clientY: 650, pointerId: 1, button: 0 }));
+    node.dispatchEvent(new w.PointerEvent('pointermove', { bubbles: true, clientX: 650, clientY: 1250, pointerId: 1 }));
+    node.dispatchEvent(new w.PointerEvent('pointerup', { bubbles: true, clientX: 650, clientY: 1250, pointerId: 1 }));
+    assert.deepEqual(st.list.at(-1), { top: 120 - 40 - 10, left: 480 - 160 - 10 }, "the host's bottom right corner less the margin, in its own coordinates");
+    dom.dispose();
   });
 
   it('Floater resizes by its Grip within its bounds', () => {
