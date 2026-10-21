@@ -94,6 +94,28 @@ export function chordOf(text, os) {
   return join(held, key);
 }
 
+/** The modifiers as Apple's menus write them, before the key with no `+`. @type {Record<string, string>} */
+const APPLE_MARKS = { ctrl: '⌃', alt: '⌥', shift: '⇧', meta: '⌘' };
+/** The modifiers as the other platforms' menus write them. @type {Record<string, string>} */
+const WORDS_SHOWN = { ctrl: 'Ctrl', alt: 'Alt', shift: 'Shift', meta: 'Meta' };
+/** Named keys as a menu shows them. @type {Map<string, string>} */
+const KEYS_SHOWN = new Map([['plus', '+'], ['space', 'Space'], ['escape', 'Esc'], ['delete', 'Del'], ['arrowup', '↑'], ['arrowdown', '↓'], ['arrowleft', '←'], ['arrowright', '→']]);
+
+/**
+ * A shortcut as the platform's menus write it: `primary+shift+z` is '⇧⌘Z'
+ * on macOS and iOS, 'Ctrl+Shift+Z' elsewhere; a letter in upper case.
+ * @param {string} text a shortcut, as `chordOf` reads it
+ * @param {OS | string} [os] the platform (the running one by default)
+ * @returns {string}
+ */
+export function chordText(text, os) {
+  const place = os ?? $os().value;
+  const parts = chordOf(text, place).split('+');
+  const key = /** @type {string} */ (parts.pop());
+  const shown = KEYS_SHOWN.get(key) ?? (key.length === 1 ? key.toUpperCase() : key[0].toUpperCase() + key.slice(1));
+  return APPLE.has(place) ? parts.map(m => APPLE_MARKS[m]).join('') + shown : [...parts.map(m => WORDS_SHOWN[m]), shown].join('+');
+}
+
 /**
  * A key event's candidate chords: by its `key`, then by the letter or digit
  * its `code` names (a layout that types another character, Shift with a

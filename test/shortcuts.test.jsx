@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { $root, $dispose, $flush, $read } from 'rrx-core';
 import { View, Label, Action, Edit } from 'ren-core';
 import { $shortcuts, $counter } from 'rui-core/hooks';
-import { chordOf, eventChords } from '../src/hooks/shortcuts.js';
+import { chordOf, chordText, eventChords } from '../src/hooks/shortcuts.js';
 import { both } from './harness.jsx';
 
 /** A plain key event that records whether its default was prevented. @param {Record<string, any>} fields */
@@ -52,6 +52,21 @@ describe('shortcuts: the grammar', () => {
   it('ignores the space around each part', () => {
     assert.equal(chordOf(' ctrl + shift +  k '), 'ctrl+shift+k');
     assert.equal(chordOf('primary + P', 'windows'), 'ctrl+p');
+  });
+
+  it('writes a chord as the platform\'s menus do: Apple\'s marks, the others\' words', () => {
+    assert.equal(chordText('primary+x', 'macos'), '⌘X');
+    assert.equal(chordText('primary+shift+z', 'ios'), '⇧⌘Z');
+    assert.equal(chordText('ctrl+y', 'macos'), '⌃Y');
+    assert.equal(chordText('alt+meta+k', 'macos'), '⌥⌘K');
+    assert.equal(chordText('primary+x', 'windows'), 'Ctrl+X');
+    assert.equal(chordText('primary+shift+z', 'linux'), 'Ctrl+Shift+Z');
+    assert.equal(chordText('alt+meta+k', 'windows'), 'Alt+Meta+K');
+    assert.equal(chordText('shift+F10', 'linux'), 'Shift+F10');
+    assert.equal(chordText('primary+plus', 'linux'), 'Ctrl++');
+    assert.equal(chordText('ctrl+ArrowUp', 'linux'), 'Ctrl+↑');
+    assert.equal(chordText('esc', 'macos'), 'Esc');
+    assert.equal(chordText('primary+v'), chordText('primary+v', 'unknown'), 'the running platform (node: none known, so words)');
   });
 
   it('throws on an empty text or part, no key, two keys and a repeated modifier, naming the text', () => {

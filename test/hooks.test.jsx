@@ -489,6 +489,25 @@ describe('platform hooks', () => {
     }
   });
 
+  it('$clipboard pastes through navigator.clipboard.readText, or gives null and the error', async () => {
+    const c = $clipboard(R);
+    const g = /** @type {any} */ (globalThis);
+    const had = Object.getOwnPropertyDescriptor(g, 'navigator');
+    try {
+      Object.defineProperty(g, 'navigator', { value: { clipboard: { readText: async () => 'pasted' } }, configurable: true });
+      assert.equal(await c.paste(), 'pasted');
+      assert.equal(now(c.error), null);
+      Object.defineProperty(g, 'navigator', { value: { clipboard: { readText: async () => Promise.reject(new Error('NotAllowedError')) } }, configurable: true });
+      assert.equal(await c.paste(), null, 'refused');
+      assert.match(String(now(c.error)), /NotAllowedError/);
+      Object.defineProperty(g, 'navigator', { value: {}, configurable: true });
+      assert.equal(await c.paste(), null, 'no clipboard (a worker, node)');
+      assert.match(String(now(c.error)), /no clipboard/);
+    } finally {
+      if (had) Object.defineProperty(g, 'navigator', had);
+    }
+  });
+
   it('media queries follow matchMedia, with inert defaults where there is none', () => {
     assert.equal($read($fits(R, '(min-width: 1px)').value), false);
     assert.equal($read($fits(R, '(min-width: 1px)', true).value), true);

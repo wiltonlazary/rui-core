@@ -201,14 +201,16 @@ export function $sessionStorage(...args) {
  * @typedef {object} ClipboardHandle
  * @property {Readable<boolean>} value copied: true for `hold` after a copy
  * @property {(text: string) => Promise<boolean>} copy writes the text; resolves to whether it did
- * @property {Readable<Error | null>} error why the last copy failed
+ * @property {() => Promise<string | null>} paste reads the clipboard's text; resolves to null where the platform has none or refuses it
+ * @property {Readable<Error | null>} error why the last copy or paste failed
  * @property {() => void} reset
  */
 
 /**
- * Copies text with the platform's clipboard (`navigator.clipboard`).
- * Where there is none (node, a worker without it), a copy fails into
- * `error`. `hold` is how long `value` stays true after a copy: a MOTION
+ * Copies text with the platform's clipboard (`navigator.clipboard`), and
+ * reads it (`paste`, through `readText`, which the browser may refuse or
+ * ask the user about). Where there is none (node, a worker without it), a
+ * copy or a paste fails into `error`. `hold` is how long `value` stays true after a copy: a MOTION
  * name or ms, read at each copy (MOTION.hold by default).
  * @overload
  * @param {Root} root @param {{ hold?: number | string | (() => number | string) }} [options]
@@ -251,7 +253,19 @@ export function $clipboard(...args) {
     t.set(() => void $write(copied, false), durationOf(read(options.hold), MOTION.hold));
     return true;
   };
-  return { value: copied, error, copy, reset };
+  const paste = async () => {
+    const clipboard = /** @type {any} */ (globalThis).navigator?.clipboard;
+    try {
+      if (clipboard == null || typeof clipboard.readText !== 'function') throw new Error('RUI: no clipboard to read on this platform');
+      const text = String(await clipboard.readText());
+      later(R, () => void $write(error, null));
+      return text;
+    } catch (failure) {
+      later(R, () => void $write(error, failure instanceof Error ? failure : new Error(String(failure))));
+      return null;
+    }
+  };
+  return { value: copied, error, copy, paste, reset };
 }
 
 // ---------------------------------------------------------------------------
