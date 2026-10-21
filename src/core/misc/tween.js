@@ -130,6 +130,9 @@ export function $nextFrame() {
   };
 }
 
+/** A pointer event's point in the surface's space (the DOM's clientX/Y, ren-canv's x/y). @param {any} e */
+export const pointOf = e => ({ x: Number(e?.clientX ?? e?.x ?? 0), y: Number(e?.clientY ?? e?.y ?? 0) });
+
 /**
  * A primitive's border box where it was last laid out (zeros before, or
  * where the renderer cannot say).

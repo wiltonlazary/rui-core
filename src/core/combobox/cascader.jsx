@@ -15,6 +15,7 @@ import { comboboxOf, storeOf, valueStyle } from './select.jsx';
 import { parseTree } from './tree.jsx';
 import { labelsIn } from '../../theme/labels.js';
 import { ScrollBox } from '../misc/misc.jsx';
+import { $editMenu } from '../inputs/edit-menu.jsx';
 
 /** @typedef {import('./tree.jsx').TreeNode} TreeNode */
 
@@ -94,8 +95,8 @@ function edgeOf(nodes, last = false) {
  * false or `{ at: 'start' | 'end' }`), `layout` ('columns' or 'list': every
  * choosable path in one list), `searchable` (`search`/`onSearchChange` or
  * `defaultSearch`, `match(nodes, search)`, `limit`), `empty` ('No match'),
- * `clearable`, `placeholder`, `disabled`, `readOnly`, and the field's,
- * Field's and panel's props.
+ * `clearable`, `placeholder`, `disabled`, `readOnly`, `editMenu` (as
+ * Select's), and the field's, Field's and panel's props.
  * @param {Record<string, any>} props
  */
 export function Cascader(props) {
@@ -469,25 +470,27 @@ export function Cascader(props) {
   );
 
   const shownText = () => ($read(typed) ? search.get() : fieldText());
+  const menu = $editMenu(props);
   const trigger = searchable() ? (
-    <Edit
-      ref={store.setTrigger}
-      onPointerDown={editPress(store, locked)}
-      value={shownText}
-      label={() => read(props.placeholder) ?? ''}
-      {...comboOf(props, store)}
-      onChange={(/** @type {{ value: string }} */ e) => {
-        if (locked()) return;
-        search.set(e.value);
-        $write(typed, true);
-        store.open();
-        $write(row, $untrack(R, routes).findIndex(r => !r.disabled));
-      }}
-      onKey={onKey}
-      onFocus={focused.onFocus}
-      onBlur={focused.onBlur}
-      style={editStyle(props)}
-    />
+    <>
+      <Edit
+        {...menu.bind({ ref: store.setTrigger, onPointerDown: editPress(store, locked), onKey })}
+        value={shownText}
+        label={() => read(props.placeholder) ?? ''}
+        {...comboOf(props, store)}
+        onChange={(/** @type {{ value: string }} */ e) => {
+          if (locked()) return;
+          search.set(e.value);
+          $write(typed, true);
+          store.open();
+          $write(row, $untrack(R, routes).findIndex(r => !r.disabled));
+        }}
+        onFocus={focused.onFocus}
+        onBlur={focused.onBlur}
+        style={editStyle(props)}
+      />
+      {menu.menu}
+    </>
   ) : (
     <Action
       ref={store.setTrigger}

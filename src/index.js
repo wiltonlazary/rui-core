@@ -2,7 +2,8 @@
 // primitives, the same on ren-dom, ren-skia and ren-three.
 
 export { BASE_COLORS, alpha, shade, luminance, isLight, channels } from './theme/colors.js';
-export { BASE_THEME, themeOf, Theme, Scheme, Rui, $ui } from './theme/theme.jsx';
+export { BASE_THEME, themeOf, Theme, Scheme, $ui } from './theme/theme.jsx';
+export { Rui } from './theme/rui.jsx';
 export { BASE_LABELS } from './theme/labels.js';
 export { colorOf, shadesOf, sized, radiusOf, pageColors, variantColors, shadowOf, styleProps, flexWord, spacing, accentShade, TINTS, fontBelow } from './theme/resolve.js';
 export { LAYERS } from './theme/layers.js';

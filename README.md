@@ -266,6 +266,32 @@ vocabulary, so a name means the same on every renderer.
   a page's (no I-beam, no page-wide Ctrl+A, no browser menu outside an
   Edit). The renderer's `behavior` option (`'page'`, or one switch such as
   `{ like: 'app', select: true }`) brings a page's back.
+- An application's own menus, off by default, the same on the DOM, Skia
+  and three.js (each acts through ren-core's text actions):
+  - The field menu: with `control.editMenu` 'app' in the theme (or a
+    field's own `editMenu` prop, which wins: every text field, the
+    combobox fields' search, Combobox.Filter, TagInput's entry, Launcher's
+    field, the Editor's link field), a right press, a finger's long press,
+    Shift+F10 or the ContextMenu key opens rui's menu in place of the
+    platform's: Undo, Redo, Cut, Copy, Paste and Select all, each with its
+    keys as the platform writes them ('Ctrl+X', '⌘X'). It keeps the field's
+    selection and focus (opened by the keys, the focus goes to its first
+    item); each item puts them back before it acts; Cut and Copy leave a
+    secret field alone, and Undo, Redo, Cut and Paste a read-only one; a
+    disabled field keeps the platform's. Paste reads the clipboard
+    (`$clipboard`'s `paste`); where the platform refuses, the item turns
+    into 'Paste with Ctrl+V' and the menu stays open. A right press on a
+    combobox's field opens this menu, not its list. In worker mode the
+    field's actions stay on the main thread, so the platform's menu stays.
+    The Editor's blocks keep their own behavior (the platform's menu).
+  - The text menu: with `control.textMenu` true, a right press on static
+    text (a Label's, not a press target's or a field's) opens Copy (that
+    text) and Select text (that text alone becomes selectable, all of it
+    selected, until a press elsewhere or Escape; a drag in it keeps a part,
+    which Ctrl+C or the menu copies); over a selection it opens Copy of the
+    selection. The outermost `Rui` holds it (no box: its menu is a portal).
+    A ContextMenu's region or a field's menu that took the press keeps it.
+    A finger's long press does not open it.
 - The pointer over what presses is the theme's `cursor`: `press` (a hand,
   'pointer') over every press target (a button, an option, a pressed field
   all over and a field's chevron, a Box or Card with `onPress`, a bar…)
@@ -333,6 +359,7 @@ presets and the layers.
 | Excerpt | height 120, 'More' / 'Less' |
 | Carousel | align 'start', `span` 100 %, ends 'open' (or 'fill': the frame stays filled), dots named `n / total`, duration calm, buttonSize 32, buttonInset xs, autoplay 5000 (never starting itself while the user asks for reduced motion; its play still starts it); a percent span holds the gap; its `region` and slide `group`s carry `aria-roledescription` |
 | CopyButton, `$clipboard` | `hold` MOTION.hold (1500 ms); CopyButton 'Copy' / 'Done' (as Snippet) |
+| Field menu, text menu | `control.editMenu` 'browser' (the platform's; 'app': rui's own), `control.textMenu` false; the menu at the press's point ('bottom-start'), a long press held 600 ms (twice `MOTION.calm`) by a finger or a pen, canceled past 10 px; 'Undo', 'Redo', 'Cut', 'Copy', 'Paste', 'Select all', 'Select text', `pasteWithKeys(keys)` ('Paste with Ctrl+V') |
 | TagInput | separators `[',', ';']` |
 | FileInput | one file shows its name ('file' when it has none), several `countText(n)` ('N files'); empty is null in every mode, and a clear sets null |
 | Chip.Group | single: null, `toggle` true (a press on the chosen chip clears it); `multiple`: `[]` in press order, `max` none |
@@ -531,7 +558,7 @@ focus: a ScrollBox at -1 is a skip link's target, focused by its ref's
   a key given as undefined removed, no write when nothing changes),
   `$model` → `{ value, set, controlled }`, `$interval` → `{ value (running), start, stop, toggle }`,
   `$timeout` → `{ value (pending), start, stop }`, `$clipboard` → `{ value
-  (copied), error, copy, reset }`, `$fullscreen` → `{ value (shown), ref,
+  (copied), error, copy, paste, reset }` (`paste()` the clipboard's text, null where the platform refuses or has none), `$fullscreen` → `{ value (shown), ref,
   toggle }`, `$localStorage({ key, fallback, print, parse })` → `{ value, set, remove }` (JSON by default), and `$fits`,
   `$scheme`, `$online`, `$os` → `{ value }`. `$debounce` returns the
   debounced function with `cancel`, `flush` and `pending`.

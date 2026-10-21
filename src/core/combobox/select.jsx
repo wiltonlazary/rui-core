@@ -12,6 +12,7 @@ import { Combobox, ComboboxTrigger, ComboboxPanel, ComboboxFilter, OptionsList, 
 import { FieldBox, Outer, Opener, Clear, editStyle, sizeOf, $focused, comboOf, boxPress, editPress } from './field.jsx';
 import { parseData, shown, grouped } from './data.js';
 import { labelsIn } from '../../theme/labels.js';
+import { $editMenu } from '../inputs/edit-menu.jsx';
 
 /** @typedef {import('./data.js').Option} Option */
 
@@ -29,7 +30,7 @@ export function firstIndex(options) {
 }
 
 /** The combobox props a component passes on (`popover`: the panel's placement and look, and its size). @param {Record<string, any>} props */
-export const comboboxOf = props => ({ size: props.size, ...(read(props.popover) ?? {}) });
+export const comboboxOf = props => ({ size: props.size, editMenu: props.editMenu, ...(read(props.popover) ?? {}) });
 
 /** A field's name, the title of its lightbox: its label, else its aria-label, else its placeholder. @param {Record<string, any>} props */
 export const titleOf = props => () => read(props.label) ?? read(props['aria-label']) ?? read(props.placeholder) ?? '';
@@ -72,7 +73,9 @@ export function valueStyle(props, empty) {
  * below which; the theme's `control.lightbox` by default): the options then
  * open in a centered lightbox titled by the label, the field pressed rather
  * than typed in, and a filter at its top while it lists more than
- * `control.typeahead` options (or the field is `searchable`).
+ * `control.typeahead` options (or the field is `searchable`); `editMenu`
+ * ('browser' or 'app': the menu a right press on its search field and its
+ * filter opens; the theme's `control.editMenu` by default).
  * @param {Record<string, any>} props
  */
 export function Select(props) {
@@ -126,25 +129,31 @@ export function Select(props) {
     return read(props.clearable) === true && value.get() != null && !locked() ? <Clear onPress={clear} /> : <Opener />;
   };
   const shownText = () => ($read(typed) ? search.get() : labelOf(value.get()));
-  const typing = () => (
-    <Edit
-      ref={store.setTrigger}
-      onPointerDown={editPress(store, locked)}
-      value={shownText}
-      label={() => read(props.placeholder) ?? ''}
-      {...comboOf(props, store)}
-      onChange={(/** @type {{ value: string }} */ e) => {
-        if (locked()) return;
-        search.set(e.value);
-        $write(typed, true);
-        store.open();
-        store.activate(firstIndex($untrack(R, options)));
-      }}
-      onFocus={focused.onFocus}
-      onBlur={focused.onBlur}
-      style={editStyle(props)}
-    />
-  );
+  // Built afresh each time the field turns to typing (its menu with it).
+  const typing = () => {
+    const menu = $editMenu(props);
+    return (
+      <>
+        <Edit
+          {...menu.bind({ ref: store.setTrigger, onPointerDown: editPress(store, locked) })}
+          value={shownText}
+          label={() => read(props.placeholder) ?? ''}
+          {...comboOf(props, store)}
+          onChange={(/** @type {{ value: string }} */ e) => {
+            if (locked()) return;
+            search.set(e.value);
+            $write(typed, true);
+            store.open();
+            store.activate(firstIndex($untrack(R, options)));
+          }}
+          onFocus={focused.onFocus}
+          onBlur={focused.onBlur}
+          style={editStyle(props)}
+        />
+        {menu.menu}
+      </>
+    );
+  };
   const pressing = () => (
     <Action
       ref={store.setTrigger}
@@ -230,8 +239,9 @@ export function PlainSelect(props) {
  * (the text) or `defaultValue`, `data` (suggestions; a choice fills the
  * text with its label), `onPick(value, option)` (a suggestion chosen), `match(option, search)`, `limit` (the
  * most suggestions shown), `placeholder`, `panelHeight`,
- * `renderOption(option, { picked })`, `clearable`, and the
- * field's and panel's props. The panel shows while suggestions match.
+ * `renderOption(option, { picked })`, `clearable`, `editMenu` (as
+ * Select's), and the field's and panel's props. The panel shows while
+ * suggestions match.
  * @param {Record<string, any>} props
  */
 export function Autocomplete(props) {
@@ -252,14 +262,14 @@ export function Autocomplete(props) {
   // Disabled or read-only: no typing, no opening, no clearing (as Select).
   const locked = () => read(props.disabled) === true || read(props.readOnly) === true;
   const right = () => (props.end !== undefined ? props.end : read(props.clearable) === true && value.get() !== '' && !locked() ? <Clear onPress={() => value.set('')} /> : undefined);
+  const menu = $editMenu(props);
   return (
     <Outer {...props}>
       <Combobox store={store} onPick={choose} {...comboboxOf(props)} keys={() => !locked() && read(props.keys) !== false}>
         <ComboboxTrigger>
           <FieldBox size={props.size} radius={props.radius} error={props.error} invalid={props.invalid} disabled={props.disabled} variant={props.variant} start={props.start} end={right} focused={focused.get} onPointerDown={boxPress(store, locked)}>
             <Edit
-              ref={store.setTrigger}
-              onPointerDown={editPress(store, locked)}
+              {...menu.bind({ ref: store.setTrigger, onPointerDown: editPress(store, locked) })}
               value={value.get}
               label={() => read(props.placeholder) ?? ''}
               {...comboOf(props, store)}
@@ -275,6 +285,7 @@ export function Autocomplete(props) {
               onBlur={focused.onBlur}
               style={editStyle(props)}
             />
+            {menu.menu}
           </FieldBox>
         </ComboboxTrigger>
         <ComboboxPanel shown={() => options().length > 0}>

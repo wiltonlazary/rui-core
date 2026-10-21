@@ -35,6 +35,7 @@ import { ColorPicker, parseColor, formatColor } from '../../core/inputs/index.js
 import { Swatch } from '../../core/data/index.js';
 import { DECOR, flag, state } from '../../theme/meaning.js';
 import { $fieldName } from '../../core/inputs/field.jsx';
+import { $editMenu } from '../../core/inputs/edit-menu.jsx';
 
 /** @typedef {ReturnType<typeof $editor>} EditorHandle */
 /** @typedef {import('./model.js').Block} Block */
@@ -42,7 +43,7 @@ import { $fieldName } from '../../core/inputs/field.jsx';
 /** @typedef {import('./state.js').Caret} Caret */
 
 /** What the parts of an editor share: the editor and its labels. */
-const EditorContext = $context(/** @type {{ editor: EditorHandle, labels: Record<string, any>, link: { open: () => boolean, set: (on: boolean) => void } } | null} */ (null));
+const EditorContext = $context(/** @type {{ editor: EditorHandle, labels: Record<string, any>, link: { open: () => boolean, set: (on: boolean) => void }, editMenu?: any } | null} */ (null));
 
 /**
  * The default labels of the parts, keyed by each part's own name; the
@@ -89,7 +90,8 @@ const $parts = () => {
  * A rich text editor: `store` (from
  * `$editor()`; one is made from `content`, `editable` and `onChange`
  * when absent), `labels` (over
- * `LABELS`), and its parts as children: Editor.Toolbar
+ * `LABELS`), `editMenu` (as Input's: the link field's menu; the blocks
+ * keep their own, the platform's), and its parts as children: Editor.Toolbar
  * with Editor.Group and the actions, then Editor.Content.
  * @param {Record<string, any>} props
  */
@@ -97,7 +99,7 @@ export function Editor(props) {
   const editor = props.store ?? $editor({ content: read(props.content), editable: read(props.editable) !== false, onChange: props.onChange });
   handClock(editor, /** @type {any} */ ($lookup(Clock)));
   const open = $signal($active(), false);
-  const ctx = { editor, labels: { ...LABELS, ...read(props.labels) }, link: { open: () => $read(open), set: (/** @type {boolean} */ on) => $write(open, on) } };
+  const ctx = { editor, labels: { ...LABELS, ...read(props.labels) }, link: { open: () => $read(open), set: (/** @type {boolean} */ on) => $write(open, on) }, editMenu: props.editMenu };
   const style = styled(props, (theme, scheme) => {
     const page = pageColors(theme, scheme);
     // The frame draws the focus ring of the block being edited, along its corners.
@@ -482,9 +484,11 @@ function LinkEditor() {
     return { height: theme.sizes.control.sm, padding: [0, theme.spacing.sm], border: 1, borderColor: c.border, radius: radiusOf(theme, 'sm'), background: c.background, color: c.color, fontSize: theme.fontSizes.sm, ...pressLook(theme) };
   });
   const bar = styled({}, theme => ({ direction: 'row', gap: theme.spacing.xs, align: 'center' }));
+  const menu = $editMenu({ editMenu: ctx.editMenu });
   return (
     <View style={bar}>
       <Edit
+        {...menu.bind()}
         value={() => $read(url)}
         label={ctx.labels.linkHint}
         aria-label={ctx.labels.linkAddress}
@@ -492,6 +496,7 @@ function LinkEditor() {
         onSubmit={save}
         style={field}
       />
+      {menu.menu}
       <Action text={ctx.labels.linkApply} onPress={save} style={button} />
     </View>
   );

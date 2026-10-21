@@ -20,6 +20,7 @@ import { optionPadOf } from '../inputs/shared.js';
 import { grouped } from './data.js';
 import { DECOR, flag, state, $uid } from '../../theme/meaning.js';
 import { ScrollBox } from '../misc/misc.jsx';
+import { $editMenu } from '../inputs/edit-menu.jsx';
 
 /**
  * @typedef {object} ComboboxValue
@@ -382,10 +383,18 @@ export function ComboboxOption(props) {
  * `onChange` (the event: `{ value }`), `placeholder`; as high as a field of
  * the panel's size, its text where the options' text is. It takes the
  * trigger's keys, and is where the store's `focusFilter()` puts the focus.
+ * `editMenu` ('browser' or 'app'; the Combobox's `editMenu`, else the
+ * theme's `control.editMenu`) is the menu a right press on it opens.
  * @param {Record<string, any>} props
  */
 export function ComboboxFilter(props) {
   const c = $comboboxContext();
+  const menu = $editMenu({
+    editMenu: () => {
+      const own = read(props.editMenu);
+      return own !== undefined ? own : read(c.root.editMenu);
+    },
+  });
   const style = styled(props, (theme, scheme) => {
     const size = sizeOf(read(c.root.size));
     return {
@@ -404,16 +413,19 @@ export function ComboboxFilter(props) {
   return (
     <>
       <Edit
-        ref={(/** @type {any} */ n) => c.store.setFilter(n)}
+        {...menu.bind({
+          ref: (/** @type {any} */ n) => c.store.setFilter(n),
+          onKey: (/** @type {any} */ e) => {
+            props.onKey?.(e);
+            c.keys(e, false);
+          },
+        })}
         value={props.value}
         label={() => read(props.placeholder) ?? ''}
         onChange={props.onChange}
-        onKey={(/** @type {any} */ e) => {
-          props.onKey?.(e);
-          c.keys(e, false);
-        }}
         style={style}
       />
+      {menu.menu}
       <View {...DECOR} style={line} />
     </>
   );

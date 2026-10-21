@@ -16,6 +16,7 @@ import { sizeOf } from '../inputs/shared.js';
 import { Chevron } from '../data/parts.jsx';
 import { labelsIn } from '../../theme/labels.js';
 import { ScrollBox } from '../misc/misc.jsx';
+import { $editMenu } from '../inputs/edit-menu.jsx';
 
 /**
  * @typedef {object} TreeNode
@@ -81,7 +82,8 @@ export function Turn(props) {
  * `empty`). `guides` (false): hairlines in the rule color join each node to
  * its parent, down from the middle of the parent's chevron. ArrowUp and
  * ArrowDown move, ArrowRight opens (or goes to the first child), ArrowLeft
- * closes (or goes to the parent), Enter chooses.
+ * closes (or goes to the parent), Enter chooses. `editMenu` (as Select's)
+ * is the menu a right press on its search field opens.
  * @param {Record<string, any>} props
  */
 export function TreeSelect(props) {
@@ -287,6 +289,31 @@ export function TreeSelect(props) {
       }}
     />
   );
+  // Built where the field is searchable (its menu with it).
+  const typing = () => {
+    const menu = $editMenu(props);
+    return (
+      <>
+        <Edit
+          {...menu.bind({ ref: store.setTrigger, onPointerDown: editPress(store, locked), onKey })}
+          value={() => ($read(typed) ? search.get() : many() || values().length === 0 ? '' : labelOf(values()[0]))}
+          label={() => (many() && values().length > 0 ? '' : (read(props.placeholder) ?? ''))}
+          {...comboOf(props, store)}
+          onChange={(/** @type {{ value: string }} */ e) => {
+            if (locked()) return;
+            search.set(e.value);
+            $write(typed, true);
+            store.open();
+            $write(cursor, $untrack(R, visible).findIndex(n => !n.disabled));
+          }}
+          onFocus={focused.onFocus}
+          onBlur={focused.onBlur}
+          style={editStyle({ size: props.size, multiline: many })}
+        />
+        {menu.menu}
+      </>
+    );
+  };
   return (
     <Outer {...props}>
       <Combobox store={store} keys={false} {...comboboxOf(props)}>
@@ -315,24 +342,7 @@ export function TreeSelect(props) {
               </For>
             </Show>
             {searchable() ? (
-              <Edit
-                ref={store.setTrigger}
-                onPointerDown={editPress(store, locked)}
-                value={() => ($read(typed) ? search.get() : many() || values().length === 0 ? '' : labelOf(values()[0]))}
-                label={() => (many() && values().length > 0 ? '' : (read(props.placeholder) ?? ''))}
-                {...comboOf(props, store)}
-                onChange={(/** @type {{ value: string }} */ e) => {
-                  if (locked()) return;
-                  search.set(e.value);
-                  $write(typed, true);
-                  store.open();
-                  $write(cursor, $untrack(R, visible).findIndex(n => !n.disabled));
-                }}
-                onKey={onKey}
-                onFocus={focused.onFocus}
-                onBlur={focused.onBlur}
-                style={editStyle({ size: props.size, multiline: many })}
-              />
+              typing()
             ) : (
               <Action
                 ref={store.setTrigger}

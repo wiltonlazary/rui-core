@@ -1,14 +1,14 @@
 // The theme: the base theme (palette, accent color and shade, scales for
 // spacing, radius, font sizes, line heights, breakpoints, shadows and
 // headings) as one plain object, provided with the color scheme through two
-// rrx-core contexts, Theme and Scheme (Rui provides both, and the words of
-// `labels`). A component reads them with `$ui()`; a new theme or scheme
+// rrx-core contexts, Theme and Scheme (Rui, rui.jsx, provides both, and the
+// words of `labels`). A component reads them with `$ui()`; a new theme or scheme
 // restyles every component in place (their styles are bindings).
 
 import { $context, $lookup, read } from 'ren-core';
 import { BASE_COLORS } from './colors.js';
 import { own, ownValue, tables } from '../own.js';
-import { Words, wordsOver, labelsIn } from './labels.js';
+import { labelsIn } from './labels.js';
 
 /** @typedef {'xs' | 'sm' | 'md' | 'lg' | 'xl'} Size */
 /** @typedef {Size | number} SizeValue a scale step or pixels */
@@ -127,7 +127,7 @@ import { Words, wordsOver, labelsIn } from './labels.js';
  * @property {{ press: string | null, disabled: string | null }} cursor the pointer's cursor (a CSS cursor name) over what takes a press (press: a hand) and over a control that takes none now (disabled); null sets none, so the renderer's own shows
  * @property {{ regular: number, strong: number, bold: number }} weights font weights: body text, labels and emphasis, headings and marks
  * @property {{ glyph: number, mark: number, inset: number, icon: number, pad: number }} ratios parts sized by their box: a letter in its box (glyph), a dot on a badge or field (mark), a field's text inset from its start (inset), an icon in a square control (icon), each a share of the box's height; and a compact part's side padding as a share of its font size (pad)
- * @property {{ labelGap: number, panelPad: number, optionPad: readonly [number, number], iconGap: number, textStep: number, pad: Record<Size, number>, densePad: Record<Size, number>, density: Record<'tight' | 'even' | 'airy', readonly [number, number]>, lightbox: Size | null, typeahead: number }} control control geometry: the gap between a field and its label and notes, a panel's inner padding, an option's padding (y, x), the gap between an icon and its text, how many font steps a control's notes sit below its text, a button's side padding by size (pad) and a compact one's (densePad), a table cell's padding (y, x) by density, the breakpoint below which a picker's options open in a centered lightbox (null: never), and how many options a lightbox lists before it shows a search field (typeahead)
+ * @property {{ labelGap: number, panelPad: number, optionPad: readonly [number, number], iconGap: number, textStep: number, pad: Record<Size, number>, densePad: Record<Size, number>, density: Record<'tight' | 'even' | 'airy', readonly [number, number]>, lightbox: Size | null, typeahead: number, editMenu: 'browser' | 'app', textMenu: boolean }} control control geometry: the gap between a field and its label and notes, a panel's inner padding, an option's padding (y, x), the gap between an icon and its text, how many font steps a control's notes sit below its text, a button's side padding by size (pad) and a compact one's (densePad), a table cell's padding (y, x) by density, the breakpoint below which a picker's options open in a centered lightbox (null: never), how many options a lightbox lists before it shows a search field (typeahead), the menu a text field opens on a right press, a long touch or Shift+F10 (editMenu: 'browser', the platform's; 'app', rui's own: undo, redo, cut, copy, paste, select all), and whether a right press on static text opens rui's text menu (textMenu: copy the text, or the selection, and select the text)
  * @property {{ pointArea: number, axisWidth: number, band: number, bandGap: number, labelOffset: number, outer: number, inner: number, dim: number, pointLabel: Size, reference: string, frame: { top: number, right: number }, tick: number, charWidth: number, near: number, line: number, legend: number }} chart chart geometry: a point's area (px²), a value axis's width, a bar's share of its band and the least gap between bars, a label's offset from its mark, a radial chart's outer and inner radius (shares of half its box), the opacity of the series not highlighted, the point labels' size and the reference lines' color; the plot's margins at the top and end (frame), a tick's length, a label character's estimated width, how near a point must be for its tooltip, a label line's height, and the legend's height
  * @property {RuiSizes} sizes component sizes by size step (see RuiSizes)
  * @property {Record<string, any>} extra free values for the application
@@ -194,6 +194,8 @@ export const BASE_THEME = Object.freeze(withExtra(tables(/** @type {RuiThemeValu
     density: { tight: /** @type {[number, number]} */ ([4, 8]), even: /** @type {[number, number]} */ ([8, 12]), airy: /** @type {[number, number]} */ ([12, 16]) },
     lightbox: /** @type {Size | null} */ (null),
     typeahead: 10,
+    editMenu: /** @type {'browser' | 'app'} */ ('browser'),
+    textMenu: false,
   },
   chart: { pointArea: 48, axisWidth: 56, band: 0.72, bandGap: 6, labelOffset: 6, outer: 0.84, inner: 0.16, dim: 0.16, pointLabel: /** @type {Size} */ ('xs'), reference: 'orange', frame: { top: 10, right: 20 }, tick: 6, charWidth: 7, near: 24, line: 16, legend: 32 },
   sizes: {
@@ -310,30 +312,6 @@ export function themeOf(overrides = {}, base = BASE_THEME) {
 export const Theme = $context(/** @type {any} */ (BASE_THEME));
 /** The color scheme in effect, 'light' or 'dark': a value, or a signal or accessor of one. */
 export const Scheme = $context(/** @type {any} */ ('light'));
-
-/**
- * Provides a `theme` and a color `scheme` to everything inside, and
- * `labels`: words over BASE_LABELS (and over an outer Rui's) for the
- * texts components show of their own, each a value or a signal or
- * accessor; a component's own prop for a text still wins.
- * @param {{ theme?: any, scheme?: any, labels?: any, children?: any }} props
- */
-export function Rui(props) {
-  if (props.labels === undefined) {
-    return (
-      <Theme value={props.theme ?? BASE_THEME}>
-        <Scheme value={props.scheme ?? 'light'}>{props.children}</Scheme>
-      </Theme>
-    );
-  }
-  return (
-    <Theme value={props.theme ?? BASE_THEME}>
-      <Scheme value={props.scheme ?? 'light'}>
-        <Words value={wordsOver(props.labels)}>{props.children}</Words>
-      </Scheme>
-    </Theme>
-  );
-}
 
 /**
  * The theme and scheme in effect, for a component: call the accessors inside

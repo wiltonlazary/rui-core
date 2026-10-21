@@ -48,6 +48,9 @@ shows them.
   (src/theme/style.js), never a literal 'pointer' or 'not-allowed'; a
   component given `onPress` shows it through `styled` unless its own style
   names a cursor. `test/tokens.test.js` enforces it.
+- Every text field's Edit takes the field menu: its props through
+  `$editMenu(props).bind(own)` and the hook's `menu` rendered beside it
+  (src/core/inputs/edit-menu.jsx), with an `editMenu` prop on its component.
 - Every hook returns one handle, one object per hook with its state as
   `value` and verbs for commands: `const menu = $open(false); menu.value;
   menu.toggle()`, typed as `…Handle`.

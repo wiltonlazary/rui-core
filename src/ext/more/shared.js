@@ -2,13 +2,10 @@
 // capture, a measured width, and each root's window order.
 
 import { read, $active, $signal, $read, $write, $untrack, $unowned, $writable, $owner, $cleanup } from 'ren-core';
-import { boxOf, capture } from '../../core/misc/tween.js';
+import { boxOf, capture, pointOf } from '../../core/misc/tween.js';
 import { handOn } from '../../core/ref.js';
 
-export { boxOf, capture };
-
-/** A pointer event's point in the surface's space (the DOM's clientX/Y, ren-canv's x/y). @param {any} e */
-export const pointOf = e => ({ x: Number(e?.clientX ?? e?.x ?? 0), y: Number(e?.clientY ?? e?.y ?? 0) });
+export { boxOf, capture, pointOf };
 
 /** A number kept between two bounds. @param {number} v @param {number} lo @param {number} hi */
 export const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));

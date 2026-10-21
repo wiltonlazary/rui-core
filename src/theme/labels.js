@@ -53,8 +53,22 @@ export const BASE_LABELS = Object.freeze({
   noMatches: 'No matches',
   /** Launcher's search field, empty. */
   findAction: 'Find an action',
-  /** CopyButton's and Snippet's copy. */
+  /** CopyButton's and Snippet's copy, and the field and text menus'. */
   copy: 'Copy',
+  /** The field menu's cut. */
+  cut: 'Cut',
+  /** The field menu's paste. */
+  paste: 'Paste',
+  /** The field menu's paste where the platform refuses to read the clipboard: the keys that paste instead (`chordText`'s, as 'Ctrl+V'). */
+  pasteWithKeys: (/** @type {string} */ keys) => `Paste with ${keys}`,
+  /** The field menu's select all. */
+  selectAll: 'Select all',
+  /** The field menu's undo. */
+  undo: 'Undo',
+  /** The field menu's redo. */
+  redo: 'Redo',
+  /** The text menu's selection of the text under the pointer. */
+  selectText: 'Select text',
   /** CopyButton's and Snippet's copy once done, the date pickers' done, and a MultiSelect lightbox's. */
   done: 'Done',
   /** Excerpt's press that shows it whole. */

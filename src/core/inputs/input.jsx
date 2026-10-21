@@ -18,6 +18,7 @@ import { flag } from '../../theme/meaning.js';
 import { Field, outerOf, fieldOf, invalidOf, $fieldName, $nameOf } from './field.jsx';
 import { handOn } from '../ref.js';
 import { labelsIn } from '../../theme/labels.js';
+import { $editMenu } from './edit-menu.jsx';
 
 // ---------------------------------------------------------------------------
 // The field
@@ -28,7 +29,9 @@ import { labelsIn } from '../../theme/labels.js';
  * bare), `size` (xs to xl: 24 to 52 high), `radius`, `disabled`,
  * `readOnly`, `error` (a message: the invalid look), `invalid` (the look
  * without a message), `required` (`aria-required`), `start`, `end` (and `startWidth`, `endWidth`),
- * `onFocus`, `onBlur`, `onKey`, `onSubmit`.
+ * `onFocus`, `onBlur`, `onKey`, `onSubmit`, `editMenu` ('browser' or
+ * 'app': the menu a right press opens; the theme's `control.editMenu` by
+ * default; edit-menu.jsx).
  * @param {Record<string, any>} props
  */
 export function Input(props) {
@@ -183,14 +186,22 @@ export function field(props, model) {
       edit.setSelectionRange(p, p);
     };
   };
+  const menu = $editMenu(props);
   return (
     <View style={style}>
       {props.start === undefined ? null : section(props.start, props.startWidth)}
       <Edit
-        ref={(/** @type {any} */ n) => {
-          node = n;
-          handOn(ref, n);
-        }}
+        {...menu.bind({
+          ref: (/** @type {any} */ n) => {
+            node = n;
+            handOn(ref, n);
+          },
+          onKey: (/** @type {any} */ e) => {
+            // An input method's keys are its own: the field's commands (steps, Enter, a cell's Backspace) skip them.
+            if (!composing(e)) model.key?.(e);
+            key?.(e);
+          },
+        })}
         lines={model.lines}
         autosize={() => {
           const grow = model.grow?.() ?? null;
@@ -208,11 +219,6 @@ export function field(props, model) {
         secret={model.secret ?? false}
         onChange={input}
         onSubmit={props.onSubmit}
-        onKey={(/** @type {any} */ e) => {
-          // An input method's keys are its own: the field's commands (steps, Enter, a cell's Backspace) skip them.
-          if (!composing(e)) model.key?.(e);
-          key?.(e);
-        }}
         onFocus={(/** @type {any} */ e) => {
           $write(focused, true);
           model.focus?.(e);
@@ -225,6 +231,7 @@ export function field(props, model) {
         }}
         style={inner}
       />
+      {menu.menu}
       {props.end === undefined ? null : section(props.end, props.endWidth)}
     </View>
   );
@@ -610,6 +617,7 @@ export function PinInput(props) {
         style: () => ({ width: h(), minWidth: h() }),
         onFocus: props.onFocus,
         onBlur: props.onBlur,
+        editMenu: props.editMenu,
       },
       {
         text: () => chars()[i],

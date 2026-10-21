@@ -14,6 +14,7 @@ import { marks, named } from '../../theme/meaning.js';
 import { parseData, shown } from './data.js';
 import { firstIndex, comboboxOf, storeOf, titleOf, long } from './select.jsx';
 import { labelsIn } from '../../theme/labels.js';
+import { $editMenu } from '../inputs/edit-menu.jsx';
 
 /** A tag's remove button: a circle 2 px inside the tag's height on every side. @param {number} h */
 const removeSide = h => h - 4;
@@ -99,7 +100,7 @@ Tag.Group = TagGroup;
 /**
  * A field that holds tags, its children (Tags), and its own text entry
  * after them: `search`/`onSearchChange` or `defaultSearch` (the text
- * typed), `placeholder`, `onKey`; the field's props (`size`, `radius`,
+ * typed), `placeholder`, `onKey`, `editMenu` (as Input's); the field's props (`size`, `radius`,
  * `error`, `disabled`, `variant`, `start`, `end`) and the Field's
  * (`label`, `description`, `error`, `asterisk`). The entry is named by
  * the label.
@@ -115,6 +116,7 @@ export function TagBox(props) {
         {props.children}
         <TagEntry
           aria-label={label}
+          editMenu={props.editMenu}
           size={props.size}
           value={search.get}
           placeholder={props.placeholder}
@@ -129,24 +131,31 @@ export function TagBox(props) {
   );
 }
 
-/** The text entry after the tags: an Edit (`value`, `onChange`, `placeholder`, `onKey`, `disabled`; a `role` and `aria-*` props pass on). @param {Record<string, any>} props */
+/**
+ * The text entry after the tags: an Edit (`value`, `onChange`,
+ * `placeholder`, `onKey`, `disabled`, `readOnly` (its menu's), `editMenu`;
+ * a `role` and `aria-*` props pass on), its menu beside it.
+ * @param {Record<string, any>} props
+ */
 function TagEntry(props) {
   const disabled = () => read(props.disabled) === true;
+  const menu = $editMenu(props);
   return (
-    <Edit
-      ref={props.ref}
-      value={props.value}
-      label={() => read(props.placeholder) ?? ''}
-      aria-disabled={() => (disabled() ? true : undefined)}
-      {...marks(props)}
-      disabled={disabled}
-      onChange={props.onChange}
-      onPointerDown={props.onPointerDown}
-      onKey={props.onKey}
-      onFocus={props.onFocus}
-      onBlur={props.onBlur}
-      style={editStyle({ size: props.size, multiline: true })}
-    />
+    <>
+      <Edit
+        {...menu.bind({ ref: props.ref, onPointerDown: props.onPointerDown, onKey: props.onKey })}
+        value={props.value}
+        label={() => read(props.placeholder) ?? ''}
+        aria-disabled={() => (disabled() ? true : undefined)}
+        {...marks(props)}
+        disabled={disabled}
+        onChange={props.onChange}
+        onFocus={props.onFocus}
+        onBlur={props.onBlur}
+        style={editStyle({ size: props.size, multiline: true })}
+      />
+      {menu.menu}
+    </>
   );
 }
 
@@ -175,7 +184,7 @@ function tags(values, labelOf, remove, props) {
  * `onSearchChange` or `defaultSearch`, `match(option, search)`, `max` (the most
  * values), `picked` (true: the picked options stay in the list),
  * `clearable`, `empty`, `panelHeight` (280), `check` (true), `checkAt`,
- * `renderOption(option, { picked })`, `placeholder` (while empty), `disabled`, `readOnly`, and
+ * `renderOption(option, { picked })`, `placeholder` (while empty), `disabled`, `readOnly`, `editMenu` (as Select's), and
  * the field's and Field's props. Backspace in the empty search removes
  * the last value; the panel stays open as values are picked. `lightbox`
  * (as Select's): the options open in a centered lightbox, picked and
@@ -231,6 +240,8 @@ export function MultiSelect(props) {
             {tags(value.get, labelOf, remove, props)}
             <TagEntry
               ref={store.setTrigger}
+              editMenu={props.editMenu}
+              readOnly={props.readOnly}
               onPointerDown={editPress(store, locked)}
               {...comboOf(props, store)}
               size={props.size}
@@ -298,7 +309,7 @@ export function MultiSelect(props) {
  * Enter adds the typed tag (or the active suggestion), `max` (the most
  * tags), `duplicates` (false), `onRepeat(tag)` (a tag refused as already
  * there), `clearable`, `search`/`onSearchChange` or `defaultSearch`,
- * `placeholder`, and
+ * `placeholder`, `editMenu` (as Input's), and
  * the field's and Field's props. Backspace in the empty entry removes
  * the last tag.
  * @param {Record<string, any>} props
@@ -375,6 +386,8 @@ export function TagInput(props) {
             {tags(value.get, v => v, remove, props)}
             <TagEntry
               ref={store.setTrigger}
+              editMenu={props.editMenu}
+              readOnly={props.readOnly}
               {...comboOf(props, store)}
               size={props.size}
               disabled={props.disabled}

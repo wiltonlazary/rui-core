@@ -17,6 +17,7 @@ import { LauncherContext, $launcher, launcherMatch, firstActions, matching, isGr
 import { DECOR, flag, state, $uid } from '../../theme/meaning.js';
 import { $nextFrame } from '../../core/misc/tween.js';
 import { labelsIn } from '../../theme/labels.js';
+import { $editMenu } from '../../core/inputs/edit-menu.jsx';
 
 /** @typedef {import('./store.js').LauncherAction} LauncherAction */
 /** @typedef {import('./store.js').LauncherItem} LauncherItem */
@@ -60,7 +61,8 @@ function runsOf(items) {
  * `defaultSearch`, `keepSearch` (false: closing clears the search),
  * `sticky` (false: running an action closes it), `loop` (true: the arrow
  * keys wrap), `placeholder` ('Find an
- * action'), `start` (before the field), `onOpenChange(open)`, and Modal's
+ * action'), `editMenu` (as Input's: the menu a right press on the field
+ * opens), `start` (before the field), `onOpenChange(open)`, and Modal's
  * look (`size` `sizes.box.launcherWidth` (640), `offset` `sizes.box.launcher.offset` (96) from the top, `radius`, `shadow`, `layer`,
  * `motion`, `backdrop`, `portal`). The field is as tall as an xl field in
  * the lg type; the actions are padded as options, a group's label a step
@@ -174,6 +176,7 @@ export function Launcher(props) {
       </Show>
     </View>
   );
+  const menu = $editMenu(props);
   return (
     <LauncherContext value={store}>
       {props.children === undefined ? null : (
@@ -201,16 +204,16 @@ export function Launcher(props) {
         <View style={{ direction: 'row', align: 'center' }}>
           {props.start === undefined ? null : <View style={() => ({ padding: [0, 0, 0, ui.theme().spacing.md], color: pageColors(ui.theme(), ui.scheme()).quiet })}>{props.start}</View>}
           <Edit
-            ref={(/** @type {any} */ n) => (field = n)}
+            {...menu.bind({ ref: (/** @type {any} */ n) => (field = n), onKey: keys })}
             value={search}
             label={() => String(read(props.placeholder) ?? labelsIn().findAction)}
             role="combobox"
             aria-expanded="true"
             aria-activedescendant={() => list.activeId()}
             onChange={(/** @type {any} */ e) => setSearch(String(e?.value ?? ''))}
-            onKey={keys}
             style={fieldStyle}
           />
+          {menu.menu}
         </View>
         <View {...DECOR} style={line} />
         <Scroll style={() => ({ maxHeight: read(props.height) ?? ui.theme().sizes.box.launcher.list, direction: 'column' })}>{actions}</Scroll>

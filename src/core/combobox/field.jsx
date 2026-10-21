@@ -97,11 +97,12 @@ export function FieldBox(props) {
  * A field box's press: it opens the panel from all of the box, its padding
  * and chevron too, the focus on the field so its keys work (the press
  * prevented, as a DOM mousedown: no focus moves away). Nothing while
- * `locked`.
+ * `locked`, nor for another button than the main one (a right press is a
+ * menu's).
  * @param {{ open: () => void, focus: () => void }} store @param {() => boolean} locked
  */
 export const boxPress = (store, locked) => (/** @type {any} */ e) => {
-  if (locked()) return;
+  if (locked() || (e?.button ?? 0) !== 0) return;
   e?.preventDefault?.();
   store.focus();
   store.open();
@@ -109,10 +110,13 @@ export const boxPress = (store, locked) => (/** @type {any} */ e) => {
 
 /**
  * The press of an Edit inside a field box: its own (the caret goes where it
- * is pressed, not the box's), and it opens the panel.
+ * is pressed, not the box's), and it opens the panel. Another button than
+ * the main one opens nothing and goes on: a right press is the field's
+ * menu's (rui's, the platform's or a ContextMenu's around).
  * @param {{ open: () => void }} store @param {() => boolean} locked
  */
 export const editPress = (store, locked) => (/** @type {any} */ e) => {
+  if ((e?.button ?? 0) !== 0) return;
   e?.stopPropagation?.();
   if (!locked()) store.open();
 };

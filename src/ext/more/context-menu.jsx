@@ -1,15 +1,16 @@
 // ContextMenu: a right press (pointer button 2) or a long press opens a Menu
-// at the pointer. The canvases have no contextmenu event, so the pointer's
-// button is the portable signal; on the DOM the browser's own menu is
-// canceled (`prevent="contextmenu"`).
+// at the pointer (core's `$menuPress`). The canvases have no contextmenu
+// event, so the pointer's button is the portable signal; on the DOM the
+// browser's own menu is canceled (`prevent="contextmenu"`). A right press a
+// field's own menu took (its default prevented) is that menu's.
 
-import { View, read, $active, $signal, $read, $write, $untrack } from 'ren-core';
+import { View, read, $active, $signal, $read, $write } from 'ren-core';
 import { Menu } from '../../core/overlays/menu.jsx';
-import { $delay, $controlled } from '../../core/overlays/shared.jsx';
+import { $controlled } from '../../core/overlays/shared.jsx';
+import { $menuPress } from '../../core/overlays/menu-press.js';
 import { styled } from '../../theme/style.js';
-import { MOTION, durationOf } from '../../theme/motion.js';
 import { pass } from '../../core/layout/layout.jsx';
-import { pointOf, boxOf } from './shared.js';
+import { boxOf } from './shared.js';
 import { handOn } from '../../core/ref.js';
 import { bordersOf } from '../../core/misc/tween.js';
 
@@ -17,8 +18,8 @@ import { bordersOf } from '../../core/misc/tween.js';
  * A region with a context menu: `children` (the region), `menu` (the
  * Menu.Item, Menu.Label and Menu.Divider to show), `open` +
  * `onOpenChange(open, point)` (the point in the region when it opens) or
- * `defaultOpen`, `longPress` (true: a held primary press opens it too)
- * after `hold` (a MOTION preset's name or ms; unset: twice `MOTION.calm`,
+ * `defaultOpen`, `longPress` (true: a held primary press opens it too;
+ * 'touch': a finger's or a pen's only; false: none) after `hold` (a MOTION preset's name or ms; unset: twice `MOTION.calm`,
  * 600 ms, long enough that a slow tap does not open it; timed on the
  * Clock, canceled by a move past 10 px or a release), `disabled`, and Menu's props in `popover`
  * (`width`, `shadow`, `at` 'bottom-start', …).
@@ -32,11 +33,7 @@ export function ContextMenu(props) {
   /** @type {{ x: number, y: number } | undefined} */
   let opening;
   const state = $controlled(props, 'open', 'defaultOpen', false, value => props.onOpenChange?.(value, value ? opening : undefined));
-  const timer = $delay();
-  /** @type {{ x: number, y: number } | null} */
-  let pressed = null;
-  const open = (/** @type {any} */ e) => {
-    const p = pointOf(e);
+  const open = (/** @type {{ x: number, y: number }} */ p) => {
     const box = boxOf(region);
     const point = { x: Math.round(p.x - box.x), y: Math.round(p.y - box.y) };
     $write(at, point);
@@ -45,36 +42,7 @@ export function ContextMenu(props) {
     opening = undefined;
   };
   const disabled = () => read(props.disabled) === true;
-  const onPointerDown = (/** @type {any} */ e) => {
-    if ($untrack(R, disabled)) return;
-    const button = e?.button ?? 0;
-    if (button === 2) {
-      e?.preventDefault?.();
-      timer.cancel();
-      open(e);
-      return;
-    }
-    if (button !== 0 || read(props.longPress) === false) return;
-    const p = pointOf(e);
-    pressed = p;
-    const event = { clientX: p.x, clientY: p.y };
-    timer.run(durationOf(read(props.hold), MOTION.calm * 2), () => {
-      pressed = null;
-      open(event);
-    });
-  };
-  const onPointerMove = (/** @type {any} */ e) => {
-    if (pressed === null) return;
-    const p = pointOf(e);
-    if (Math.abs(p.x - pressed.x) > 10 || Math.abs(p.y - pressed.y) > 10) {
-      pressed = null;
-      timer.cancel();
-    }
-  };
-  const onPointerUp = () => {
-    pressed = null;
-    timer.cancel();
-  };
+  const press = $menuPress({ open, disabled, longPress: () => read(props.longPress) ?? true, hold: () => read(props.hold) });
   const menu = read(props.popover) ?? {};
   const style = styled(props, () => ({ position: 'relative' }));
   return (
@@ -85,10 +53,10 @@ export function ContextMenu(props) {
         handOn(props.ref, n);
       }}
       prevent="contextmenu"
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      onPointerCancel={onPointerUp}
+      onPointerDown={press.onPointerDown}
+      onPointerMove={press.onPointerMove}
+      onPointerUp={press.onPointerUp}
+      onPointerCancel={press.onPointerCancel}
       style={style}
     >
       {props.children}
