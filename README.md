@@ -560,7 +560,7 @@ focus: a ScrollBox at -1 is a skip link's target, focused by its ref's
   a key given as undefined removed, no write when nothing changes),
   `$model` → `{ value, set, controlled }`, `$interval` → `{ value (running), start, stop, toggle }`,
   `$timeout` → `{ value (pending), start, stop }`, `$clipboard` → `{ value
-  (copied), error, copy, paste, reset }` (`paste()` the clipboard's text, null where the platform refuses or has none), `$fullscreen` → `{ value (shown), ref,
+  (copied), error, copy, paste, reset }` (`copy` through the Clipboard API, else the browser's copy command, so it copies outside a secure context too; `paste()` the clipboard's text, null where the platform refuses or has none), `$fullscreen` → `{ value (shown), ref,
   toggle }`, `$localStorage({ key, fallback, print, parse })` → `{ value, set, remove }` (JSON by default), and `$fits`,
   `$scheme`, `$online`, `$os` → `{ value }`. `$debounce` returns the
   debounced function with `cancel`, `flush` and `pending`.

@@ -198,6 +198,52 @@ export function $sessionStorage(...args) {
 // $clipboard
 
 /**
+ * Copies text through the browser's own copy command over a hidden field,
+ * where the Clipboard API is missing (a page outside a secure context) or
+ * refuses: the field is appended to the document, its text selected and
+ * copied, then removed, and the focus (with a field's selection) or the
+ * page's selection comes back. False where there is no document (node, a
+ * worker) or the command does nothing.
+ * @param {string} text
+ */
+function commandCopy(text) {
+  const doc = /** @type {any} */ (globalThis).document;
+  if (doc == null || typeof doc.execCommand !== 'function' || doc.body == null) return false;
+  const active = doc.activeElement ?? null;
+  const field = active != null && typeof active.selectionStart === 'number' ? [active.selectionStart, active.selectionEnd, active.selectionDirection ?? 'none'] : null;
+  const page = doc.getSelection?.() ?? null;
+  const ranges = page === null ? [] : Array.from({ length: page.rangeCount }, (_, i) => page.getRangeAt(i));
+  const area = doc.createElement('textarea');
+  area.value = text;
+  area.setAttribute('readonly', '');
+  area.setAttribute('aria-hidden', 'true');
+  area.setAttribute('tabindex', '-1');
+  area.style.cssText = 'position:fixed;top:0;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none;user-select:text;-webkit-user-select:text';
+  doc.body.appendChild(area);
+  let copiedNow = false;
+  try {
+    area.focus();
+    area.select();
+    area.setSelectionRange?.(0, text.length);
+    copiedNow = doc.execCommand('copy') === true;
+  } catch {
+    copiedNow = false;
+  }
+  area.remove();
+  try {
+    if (active !== null && active !== doc.body) active.focus?.();
+    if (field !== null) active.setSelectionRange(field[0], field[1], field[2]);
+    else if (page !== null && ranges.length > 0) {
+      page.removeAllRanges();
+      for (const range of ranges) page.addRange(range);
+    }
+  } catch {
+    // A field that cannot take its selection back keeps the focus alone.
+  }
+  return copiedNow;
+}
+
+/**
  * @typedef {object} ClipboardHandle
  * @property {Readable<boolean>} value copied: true for `hold` after a copy
  * @property {(text: string) => Promise<boolean>} copy writes the text; resolves to whether it did
@@ -207,9 +253,11 @@ export function $sessionStorage(...args) {
  */
 
 /**
- * Copies text with the platform's clipboard (`navigator.clipboard`), and
- * reads it (`paste`, through `readText`, which the browser may refuse or
- * ask the user about). Where there is none (node, a worker without it), a
+ * Copies text with the platform's clipboard (`navigator.clipboard`), else
+ * (a page outside a secure context has none, or it refuses) through the
+ * browser's own copy command; and reads it (`paste`, through `readText`,
+ * which the browser may refuse or ask the user about, and which a page
+ * outside a secure context lacks). Where neither works (node, a worker), a
  * copy or a paste fails into `error`. `hold` is how long `value` stays true after a copy: a MOTION
  * name or ms, read at each copy (MOTION.hold by default).
  * @overload
@@ -233,25 +281,36 @@ export function $clipboard(...args) {
     $write(copied, false);
     $write(error, null);
   };
-  /** @param {string} text */
-  const copy = async text => {
-    const clipboard = /** @type {any} */ (globalThis).navigator?.clipboard;
-    try {
-      if (clipboard == null || typeof clipboard.writeText !== 'function') throw new Error('RUI: no clipboard on this platform');
-      await clipboard.writeText(text);
-    } catch (failure) {
-      later(R, () => {
-        $write(copied, false);
-        $write(error, failure instanceof Error ? failure : new Error(String(failure)));
-      });
-      return false;
-    }
+  const done = () => {
     later(R, () => {
       $write(error, null);
       $write(copied, true);
     });
     t.set(() => void $write(copied, false), durationOf(read(options.hold), MOTION.hold));
     return true;
+  };
+  /** @param {string} text */
+  const copy = async text => {
+    const clipboard = /** @type {any} */ (globalThis).navigator?.clipboard;
+    /** @type {unknown} */
+    let failure = new Error('RUI: no clipboard on this platform');
+    // The Clipboard API, where the page has it (a secure context: https or localhost).
+    if (clipboard != null && typeof clipboard.writeText === 'function') {
+      try {
+        await clipboard.writeText(text);
+        return done();
+      } catch (refused) {
+        failure = refused;
+      }
+    }
+    // Else, or refused (a frame without the permission, an unfocused document), the browser's own copy command: with no
+    // Clipboard API it runs at once, still in the press that asked.
+    if (commandCopy(text)) return done();
+    later(R, () => {
+      $write(copied, false);
+      $write(error, failure instanceof Error ? failure : new Error(String(failure)));
+    });
+    return false;
   };
   const paste = async () => {
     const clipboard = /** @type {any} */ (globalThis).navigator?.clipboard;

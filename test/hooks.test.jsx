@@ -489,6 +489,61 @@ describe('platform hooks', () => {
     }
   });
 
+  it("$clipboard copies through the browser's copy command where the Clipboard API is missing or refuses, the focus given back", async () => {
+    const c = $clipboard(R);
+    const g = /** @type {any} */ (globalThis);
+    const had = { navigator: Object.getOwnPropertyDescriptor(g, 'navigator'), document: Object.getOwnPropertyDescriptor(g, 'document') };
+    /** @type {string[]} */
+    const log = [];
+    /** A document with a focused field (its selection 2..4), whose copy command copies the focused field's selection. */
+    const fake = (/** @type {boolean} */ works) => {
+      /** @type {any[]} */
+      const body = [];
+      const field = { selectionStart: 2, selectionEnd: 4, selectionDirection: 'forward', focus: () => void (doc.activeElement = field), setSelectionRange: (/** @type {number} */ a, /** @type {number} */ b) => void log.push(`field ${a}-${b}`) };
+      /** @type {any} */
+      const doc = {
+        activeElement: field,
+        body: { appendChild: (/** @type {any} */ n) => void body.push(n) },
+        getSelection: () => null,
+        createElement: () => {
+          /** @type {any} */
+          const area = { value: '', style: {}, setAttribute: () => {}, focus: () => void (doc.activeElement = area), select: () => {}, setSelectionRange: () => {}, remove: () => void body.splice(body.indexOf(area), 1) };
+          return area;
+        },
+        execCommand: (/** @type {string} */ command) => {
+          log.push(`${command} ${doc.activeElement.value}`);
+          return works;
+        },
+      };
+      return { doc, field, body };
+    };
+    try {
+      // No Clipboard API (a page outside a secure context).
+      Object.defineProperty(g, 'navigator', { value: {}, configurable: true });
+      let f = fake(true);
+      Object.defineProperty(g, 'document', { value: f.doc, configurable: true });
+      assert.equal(await c.copy('x'), true, 'copied by the command');
+      assert.deepEqual(log.splice(0), ['copy x', 'field 2-4'], "the command copied the hidden field's text; the field took its selection back");
+      assert.equal(f.body.length, 0, 'the hidden field is gone');
+      assert.equal(f.doc.activeElement, f.field, 'the focus is back');
+      assert.equal(now(c.error), null);
+      // The Clipboard API refuses: the command still copies.
+      Object.defineProperty(g, 'navigator', { value: { clipboard: { writeText: async () => Promise.reject(new Error('NotAllowedError')) } }, configurable: true });
+      assert.equal(await c.copy('y'), true);
+      assert.deepEqual(log.splice(0), ['copy y', 'field 2-4']);
+      // Both fail: the error is the API's.
+      f = fake(false);
+      Object.defineProperty(g, 'document', { value: f.doc, configurable: true });
+      assert.equal(await c.copy('z'), false);
+      assert.match(String(now(c.error)), /NotAllowedError/);
+    } finally {
+      for (const [name, d] of Object.entries(had)) {
+        if (d) Object.defineProperty(g, name, d);
+        else delete g[name];
+      }
+    }
+  });
+
   it('$clipboard pastes through navigator.clipboard.readText, or gives null and the error', async () => {
     const c = $clipboard(R);
     const g = /** @type {any} */ (globalThis);
