@@ -12,7 +12,8 @@ import { ContextMenu } from 'rui-core/more';
 import { pair } from './overlay-harness.jsx';
 
 const APP = themeOf({ control: { editMenu: 'app' } });
-const TEXT = themeOf({ control: { textMenu: true } });
+const TEXT = themeOf({ control: { textMenu: 'text' } });
+const ALL = themeOf({ control: { textMenu: 'all' } });
 
 /** The field menu's items as both renderers show them in node (no platform known: Ctrl's words). */
 const ITEMS = 'Undo Ctrl+Z Redo Ctrl+Shift+Z Cut Ctrl+X Copy Ctrl+C Paste Ctrl+V Select all Ctrl+A';
@@ -435,4 +436,42 @@ describe('the text menu on the DOM and on Skia', () => {
       m.dispose();
     }
   });
+
+  it("with 'all', opens over a button's text too: Copy, and Select text whose presses select, never press it", () =>
+    withClipboard(async written => {
+      let pressed = 0;
+      const m = menus(() => (
+        <Rui theme={ALL}>
+          <Text>Hello there</Text>
+          <Button onPress={() => pressed++}>Go</Button>
+        </Rui>
+      ));
+      const go = () => [m.d.find('Go'), m.s.find('Go')];
+      const right = () => {
+        const [d, s] = go();
+        return [m.rightDom(d).taken, m.rightSkia(s).shut];
+      };
+      assert.deepEqual(right(), [true, true], "the button's text takes the right press");
+      assert.equal(m.d.text(), 'Hello there Go Copy Select text');
+      assert.equal(m.s.text(), m.d.text());
+      m.choose('Copy');
+      assert.deepEqual(written, ['Go', 'Go']);
+      right();
+      m.choose('Select text');
+      assert.deepEqual(go().map(selectedText), ['Go', 'Go'], 'all of it selected');
+      // A press inside the selected text selects; the button does not press.
+      const [d, s] = go();
+      m.d.tap(d);
+      const box = m.s.box(s);
+      m.s.at(box.x + 2, box.y + box.height / 2);
+      assert.equal(pressed, 0, 'its presses select, never press the button');
+      // Escape ends it: the button presses again.
+      m.d.key('Escape');
+      m.s.key('Escape');
+      m.d.tap(go()[0]);
+      const again = m.s.box(go()[1]);
+      m.s.at(again.x + 2, again.y + again.height / 2);
+      assert.equal(pressed, 2, 'pressed on both after Escape');
+      m.dispose();
+    }));
 });

@@ -284,8 +284,10 @@ vocabulary, so a name means the same on every renderer.
     combobox's field opens this menu, not its list. In worker mode the
     field's actions stay on the main thread, so the platform's menu stays.
     The Editor's blocks keep their own behavior (the platform's menu).
-  - The text menu: with `control.textMenu` true, a right press on static
-    text (a Label's, not a press target's or a field's) opens Copy (that
+  - The text menu: with `control.textMenu` 'text', a right press on
+    static text (a Label's, not a press target's or a field's), with 'all'
+    on any text but a field's (a button's, a pressable row's, a bar's too;
+    while one is selected its presses select, never press it), opens Copy (that
     text) and Select text (that text alone becomes selectable, all of it
     selected, until a press elsewhere or Escape; a drag in it keeps a part,
     which Ctrl+C or the menu copies); over a selection it opens Copy of the
@@ -359,7 +361,7 @@ presets and the layers.
 | Excerpt | height 120, 'More' / 'Less' |
 | Carousel | align 'start', `span` 100 %, ends 'open' (or 'fill': the frame stays filled), dots named `n / total`, duration calm, buttonSize 32, buttonInset xs, autoplay 5000 (never starting itself while the user asks for reduced motion; its play still starts it); a percent span holds the gap; its `region` and slide `group`s carry `aria-roledescription` |
 | CopyButton, `$clipboard` | `hold` MOTION.hold (1500 ms); CopyButton 'Copy' / 'Done' (as Snippet) |
-| Field menu, text menu | `control.editMenu` 'browser' (the platform's; 'app': rui's own), `control.textMenu` false; the menu at the press's point ('bottom-start'), a long press held 600 ms (twice `MOTION.calm`) by a finger or a pen, canceled past 10 px; 'Undo', 'Redo', 'Cut', 'Copy', 'Paste', 'Select all', 'Select text', `pasteWithKeys(keys)` ('Paste with Ctrl+V') |
+| Field menu, text menu | `control.editMenu` 'browser' (the platform's; 'app': rui's own), `control.textMenu` 'off' ('text', 'all'); the menu at the press's point ('bottom-start'), a long press held 600 ms (twice `MOTION.calm`) by a finger or a pen, canceled past 10 px; 'Undo', 'Redo', 'Cut', 'Copy', 'Paste', 'Select all', 'Select text', `pasteWithKeys(keys)` ('Paste with Ctrl+V') |
 | TagInput | separators `[',', ';']` |
 | FileInput | one file shows its name ('file' when it has none), several `countText(n)` ('N files'); empty is null in every mode, and a clear sets null |
 | Chip.Group | single: null, `toggle` true (a press on the chosen chip clears it); `multiple`: `[]` in press order, `max` none |

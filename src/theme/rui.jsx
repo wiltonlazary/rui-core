@@ -16,7 +16,7 @@ const Inside = $context(false);
  * `labels`: words over BASE_LABELS (and over an outer Rui's) for the
  * texts components show of their own, each a value or a signal or
  * accessor; a component's own prop for a text still wins. The outermost
- * Rui holds the text menu while its theme's `control.textMenu` is on; it
+ * Rui holds the text menu while its theme's `control.textMenu` is not 'off'; it
  * renders no box of its own.
  * @param {{ theme?: any, scheme?: any, labels?: any, children?: any }} props
  */
@@ -44,7 +44,7 @@ function Outermost(props) {
   return (
     <Inside value={true}>
       {props.children}
-      <Show when={() => ui.theme().control.textMenu === true}>{() => <TextMenu />}</Show>
+      <Show when={() => ui.theme().control.textMenu !== 'off'}>{() => <TextMenu />}</Show>
     </Inside>
   );
 }
