@@ -10,7 +10,7 @@ import {
   Rui, Clock, manualClock, Text, BASE_THEME, themeOf, variantColors,
   Link, Breadcrumbs, NavToggle, NavItem, Pagination, Tabs, Tree, $treeState, Outline, Button,
 } from 'rui-core';
-import { both, onDom } from './harness.jsx';
+import { both, onDom, onSkia } from './harness.jsx';
 import { items, KIND } from './scene.js';
 
 /** The DOM's Action with this accessible label or text. @param {any} dom @param {string} name */
@@ -135,6 +135,27 @@ describe('Link and Breadcrumbs', () => {
     skia.press('Home');
     assert.deepEqual(hits.map(h => $read(h)), [1, 1]);
     dispose();
+  });
+
+  it('a crumb wider than the row shrinks, so a truncated text ends with …', () => {
+    const view = () => (
+      <Rui>
+        <Breadcrumbs>
+          <Link>Home</Link>
+          <Text truncate>Shared expenses of the beach house with the childhood friends</Text>
+        </Breadcrumbs>
+      </Rui>
+    );
+    const skia = onSkia(view, { width: 200, height: 120 });
+    skia.text();
+    const last = skia.skia.commands().filter((/** @type {any[]} */ c) => c[0] === 'text').at(-1);
+    assert.match(String(last?.[1]), /…$/, `the last crumb ends with …: ${last?.[1]}`);
+    const dom = onDom(view, { width: 200, height: 120 });
+    dom.text();
+    const items = [...dom.document.querySelectorAll('[role="listitem"]')];
+    assert.deepEqual(items.map(n => [n.style.minWidth, n.style.flexShrink]), [['0px', '1'], ['0px', '1']], 'the DOM: each item may shrink');
+    skia.dispose();
+    dom.dispose();
   });
 });
 

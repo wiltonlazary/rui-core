@@ -102,6 +102,9 @@ Link.inline = (props, theme, scheme) => {
   };
 };
 
+/** A crumb: it shrinks to the row's width, so a long one's truncated text ends with "…". */
+const ITEM = Object.freeze({ direction: 'row', align: 'center', minWidth: 0, shrink: 1 });
+
 /**
  * Items in a row with a `separator` ('›' by default, text or an element)
  * between them, `separatorGap` ('sm') around it. It means a navigation
@@ -132,7 +135,7 @@ export function Breadcrumbs(props) {
         <For each={items}>
           {(item, i) => [
             () => (i() > 0 ? between() : null),
-            <View role="listitem" aria-current={() => (i() === $read(items).length - 1 ? 'page' : undefined)} style={{ direction: 'row', align: 'center' }}>
+            <View role="listitem" aria-current={() => (i() === $read(items).length - 1 ? 'page' : undefined)} style={ITEM}>
               {item}
             </View>,
           ]}
