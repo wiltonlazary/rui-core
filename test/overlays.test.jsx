@@ -294,6 +294,57 @@ describe('Modal', () => {
     dispose();
   });
 
+  it('with its opener gone on close, gives the focus to the one standing in its place, else to the nearest focusable around it', () => {
+    const clock = manualClock();
+    const st = states();
+    const view = app(clock, () => {
+      const open = $signal($active(), false);
+      // Bumped: the rows are built anew; `rows` the rows there are.
+      const version = $signal($active(), 0);
+      const rows = $signal($active(), ['a', 'b']);
+      st.add({ open, version, rows });
+      return (
+        <>
+          <View tabIndex={-1} aria-label="Rows">
+            {() => ($read(version), $read(rows).map(r => <Button onPress={() => $write(open, true)}>{`Edit ${r}`}</Button>))}
+          </View>
+          <Modal open={open} onOpenChange={(/** @type {boolean} */ v) => $write(open, v)} title="Hello" size="xs">
+            <Text>Inside</Text>
+          </Modal>
+        </>
+      );
+    });
+    const { d, s, flush, dispose } = pair(view);
+    const each = (/** @type {(x: any) => void} */ fn) => {
+      st.list.forEach(fn);
+      flush();
+    };
+    /** Opens the dialog from Edit b by the keyboard's focus, `meanwhile` changes the rows, Escape closes it. @param {(x: any) => void} meanwhile */
+    const round = meanwhile => {
+      d.find('Edit b').focus();
+      s.find('Edit b').focus();
+      each(x => $write(x.open, true));
+      clock.advance(250);
+      flush();
+      assert.equal(d.focused().getAttribute('aria-label'), 'Close', 'the DOM: the focus in');
+      assert.equal(s.focused()?.label, 'Close', 'Skia: the focus in');
+      each(meanwhile);
+      d.key('Escape');
+      s.key('Escape');
+      clock.advance(250);
+      flush();
+    };
+    round(x => $write(x.version, $read(x.version) + 1));
+    assert.equal(d.text(), 'Edit a Edit b');
+    assert.equal(d.focused()?.textContent, 'Edit b', 'the DOM: on the Edit b built anew');
+    assert.equal(s.focused()?.text, 'Edit b', 'Skia: on the Edit b built anew');
+    round(x => $write(x.rows, ['a']));
+    assert.equal(d.text(), 'Edit a');
+    assert.equal(d.focused()?.getAttribute('aria-label'), 'Rows', 'the DOM: on the region around it');
+    assert.equal(s.focused()?.get('aria-label'), 'Rows', 'Skia: on the region around it');
+    dispose();
+  });
+
   it('without a close button its first field takes the focus ($focus), before the holder', () => {
     const clock = manualClock();
     const view = app(clock, () => (

@@ -22,6 +22,56 @@ import { labelsIn } from '../../theme/labels.js';
 
 
 
+/** A node's parent on every renderer: a DOM node's `parentNode`, a canvas item's `parent`. @param {any} n @returns {any} */
+const up = n => n.parentNode ?? n.parent ?? null;
+
+/** A node's children on every renderer: a DOM element's elements, a canvas item's items. @param {any} n @returns {any[]} */
+const kids = n => {
+  if (n.children != null) return [...n.children];
+  const out = [];
+  for (let c = n.first ?? null; c != null; c = c.next) out.push(c);
+  return out;
+};
+
+/**
+ * Where a node stands: each of its ancestors, nearest first, with the place
+ * among its children of the one below it.
+ * @param {any} node @returns {{ parent: any, index: number }[]}
+ */
+const placeOf = node => {
+  const out = [];
+  for (let n = node, p = up(node); p !== null; n = p, p = up(p)) out.push({ parent: p, index: kids(p).indexOf(n) });
+  return out;
+};
+
+/** Whether a node still hangs from `top`. @param {any} node @param {any} top */
+const under = (node, top) => {
+  let n = node;
+  for (let p = up(n); p !== null; p = up(p)) n = p;
+  return n === top;
+};
+
+/** Focuses a node; whether it took the focus. @param {any} node */
+const took = node => (focus(node), activeOf(node) === node);
+
+/**
+ * The focus given back to an opener gone from the page, from where it
+ * stood (`placeOf`): to the node standing in its place now (the same places
+ * down from its nearest ancestor still there: the opener built anew, or the
+ * next row's), else to the nearest of those ancestors that takes the focus.
+ * @param {{ parent: any, index: number }[]} place
+ */
+function refocusFrom(place) {
+  if (place.length === 0) return;
+  const top = place[place.length - 1].parent;
+  const k = place.findIndex(p => under(p.parent, top));
+  if (k < 0) return;
+  let n = place[k].parent;
+  for (let j = k; j >= 0 && n != null; j--) n = kids(n)[place[j].index];
+  if (n != null && took(n)) return;
+  for (let a = place[k].parent; a !== null; a = up(a)) if (took(a)) return;
+}
+
 /** A size: a scale step, pixels or a percent string. @param {Record<string, number>} scale @param {any} size */
 const sizeOf = (scale, size) => (typeof size === 'number' ? size : typeof size === 'string' && size.endsWith('%') ? size : (scale[size ?? 'md'] ?? scale.md));
 
@@ -49,8 +99,15 @@ function $dialog(props, kind) {
   const first = () => closer ?? holder;
   /** @type {(() => void) | null} */
   let cancel = null;
-  /** The element focused before it opens, to give the focus back to. @type {any} */
+  /** The element focused before it opens, to give the focus back to, and where it stood. @type {any} */
   let before = null;
+  /** @type {{ parent: any, index: number }[]} */
+  let place = [];
+  /** Notes the element focused now, in the content's document. @param {any} node */
+  const note = node => {
+    before = activeOf(node);
+    place = before === null ? [] : placeOf(before);
+  };
   /**
    * Moves focus in once the content is laid out (the next frame), noting
    * where it was: to its first focusable (ren-core's `$focus`: the close
@@ -62,14 +119,14 @@ function $dialog(props, kind) {
       // Untrapped, the focus stays where the content puts it (a Launcher's search), but `refocus` still
       // gives it back on close: note it once the flush that shows the content attaches it, before any frame.
       $after(R, () => {
-        if (isOpen()) before = activeOf(node);
+        if (isOpen()) note(node);
       });
       return;
     }
     cancel?.();
     cancel = clock.frame(() => { // timer: feature, the focus once the modal's content is laid out (a measurement's frame)
       cancel = null;
-      before = activeOf(node);
+      note(node);
       // The holder of an earlier opening goes first, so the search below never lands on it (and
       // never loses the focus as it goes).
       $batch(R, () => $write(needHolder, false));
@@ -79,12 +136,16 @@ function $dialog(props, kind) {
       focus(first());
     });
   };
-  // Closed: the focus goes back where it was (`refocus`).
+  // Closed: the focus goes back where it was (`refocus`); with that element gone, to what stands in its place.
   $watch(R, isOpen, open => {
     if (open) return;
     const to = before;
+    const from = place;
     before = null;
-    if (to !== null && read(props.refocus) !== false) focus(to);
+    place = [];
+    if (to === null || read(props.refocus) === false) return;
+    if (from.length === 0 || under(to, from[from.length - 1].parent)) focus(to);
+    else refocusFrom(from);
   });
   const owner = $owner(R);
   if (owner != null) $cleanup(/** @type {any} */ (owner), () => cancel?.());
@@ -444,7 +505,9 @@ function Composed(props) {
  * `opacity.disabled`, `opacity.muted` in the dark scheme), `dismiss` (`{ escape, outside }`, both true; false
  * for neither), `trap` (true: focus moves into it and Tab stays in it),
  * `refocus` (true: on close the focus goes back to the element that had
- * it on open, trapped or not), `motion` ('base', a grow; a preset's name or `{ effect, duration,
+ * it on open, trapped or not; that one gone from the page, to the one
+ * standing in its place, else to the nearest element around where it was
+ * that takes the focus), `motion` ('base', a grow; a preset's name or `{ effect, duration,
  * exit, easing }`), `portal` (true), `layer` (`LAYERS.sheet`), `offset`
  * (`sizes.box.modalTop` from the top, md from the sides; or `{ x, y }`), `onEntered`,
  * `onExited`, `stack` (an id
