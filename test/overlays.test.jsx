@@ -345,6 +345,47 @@ describe('Modal', () => {
     dispose();
   });
 
+  it('removed while open with the part of the page around it, gives the focus to the opener built anew', () => {
+    const clock = manualClock();
+    const st = states();
+    const view = app(clock, () => {
+      // Bumped: the part holding the opener and its dialog is built anew.
+      const version = st.add($signal($active(), 0));
+      return (
+        <View>
+          {() => {
+            $read(version);
+            const open = $signal($active(), false);
+            return (
+              <View>
+                <Button onPress={() => $write(open, true)}>Edit</Button>
+                <Modal open={open} onOpenChange={(/** @type {boolean} */ v) => $write(open, v)} title="Hello" size="xs">
+                  <Text>Inside</Text>
+                </Modal>
+              </View>
+            );
+          }}
+        </View>
+      );
+    });
+    const { d, s, flush, dispose } = pair(view);
+    d.find('Edit').focus();
+    s.find('Edit').focus();
+    d.press('Edit');
+    s.press('Edit');
+    clock.advance(250);
+    flush();
+    assert.equal(d.focused().getAttribute('aria-label'), 'Close', 'the DOM: the focus in');
+    assert.equal(s.focused()?.label, 'Close', 'Skia: the focus in');
+    st.list.forEach(v => $write(v, 1));
+    flush();
+    assert.equal(d.text(), 'Edit');
+    assert.equal(s.text(), 'Edit');
+    assert.ok(d.focused() === d.find('Edit'), 'the DOM: on the Edit built anew');
+    assert.equal(s.focused()?.text, 'Edit', 'Skia: on the Edit built anew');
+    dispose();
+  });
+
   it('without a close button its first field takes the focus ($focus), before the holder', () => {
     const clock = manualClock();
     const view = app(clock, () => (

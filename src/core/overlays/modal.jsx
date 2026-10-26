@@ -136,9 +136,8 @@ function $dialog(props, kind) {
       focus(first());
     });
   };
-  // Closed: the focus goes back where it was (`refocus`); with that element gone, to what stands in its place.
-  $watch(R, isOpen, open => {
-    if (open) return;
+  /** Gives the focus back where it was on open (`refocus`); with that element gone, to what stands in its place. */
+  const giveBack = () => {
     const to = before;
     const from = place;
     before = null;
@@ -146,9 +145,21 @@ function $dialog(props, kind) {
     if (to === null || read(props.refocus) === false) return;
     if (from.length === 0 || under(to, from[from.length - 1].parent)) focus(to);
     else refocusFrom(from);
-  });
+  };
+  $watch(R, isOpen, open => open || giveBack());
   const owner = $owner(R);
-  if (owner != null) $cleanup(/** @type {any} */ (owner), () => cancel?.());
+  if (owner != null)
+    $cleanup(/** @type {any} */ (owner), () => {
+      cancel?.();
+      // Removed while open, with the part of the page it was built in: once the flush has built what replaces that
+      // part, the focus goes back as on close, unless it went somewhere meanwhile.
+      if (before === null || place.length === 0) return;
+      const top = place[place.length - 1].parent;
+      $after(R, () => {
+        const active = activeOf(top);
+        if (active == null || active === active.ownerDocument?.body) giveBack();
+      });
+    });
   const onKey = (/** @type {any} */ e) => {
     if (keyOf(e) === 'Escape' && dismiss().escape) {
       handled(e);
