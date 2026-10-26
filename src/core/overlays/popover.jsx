@@ -281,8 +281,9 @@ function $store() {
  * Events from the panel (inline, it sits in this wrapper) are not the
  * trigger's. Focus bubbling to the wrapper (`onFocusIn`, `onFocusOut`)
  * shows a Tooltip at once and hides it as focus leaves the wrapper. A
- * function child gets the trigger props to spread (`onPress`, `onKey`,
- * `ref`); its wrapper stretches as its parent lays
+ * function child gets the trigger props to spread on a press target
+ * (`onPress`, `onKey`, `ref`: Enter and Space open it through the target's
+ * press); its wrapper stretches as its parent lays
  * it out (a field fills its row), where a plain child's hugs it (`self`
  * 'start'). `style` adds to the wrapper's style in both forms.
  * @param {Record<string, any>} props
@@ -301,7 +302,8 @@ export function PopoverTrigger(props) {
     down = false;
     if (store.mode === 'click') store.toggle();
   };
-  const onKey = (/** @type {any} */ e) => {
+  // `pressed`: the control fires onPress from Enter and Space itself (a function child's), so the key only says the keyboard opens it.
+  const keyed = (/** @type {any} */ e, /** @type {boolean} */ pressed) => {
     if (e != null && e === store.inside) return;
     const key = keyOf(e);
     if (key === 'Escape' && dismissOf(read(store.props.dismiss)).escape) {
@@ -316,7 +318,7 @@ export function PopoverTrigger(props) {
     store.setTrigger(e?.target ?? null);
     if (key === 'Enter' || key === ' ') {
       store.keyboard = true;
-      store.toggle();
+      if (!pressed) store.toggle();
     } else if ((key === 'ArrowDown' || key === 'ArrowUp') && store.arrow !== undefined && $untrack(R, store.isOpen)) {
       e?.preventDefault?.();
       store.arrow(key);
@@ -326,6 +328,7 @@ export function PopoverTrigger(props) {
       store.open();
     }
   };
+  const onKey = (/** @type {any} */ e) => keyed(e, false);
   const hover = store.hovers ? { onPointerEnter: store.enter, onPointerLeave: store.leave } : null;
   const children = props.children;
   // What the control inside says of the layer: a menu (Menu.Trigger) and whether it is open, or
@@ -344,7 +347,7 @@ export function PopoverTrigger(props) {
   if (typeof children === 'function' && children.length >= 1) {
     return (
       <View ref={store.setAnchor} style={() => ({ ...read(props.style) })} onResize={() => store.follow?.()} {...focusing} {...hover}>
-        {children({ ...meaning, onPress: () => (store.mode === 'click' ? store.toggle() : undefined), onKey, ref: store.setTrigger })}
+        {children({ ...meaning, onPress: () => (store.mode === 'click' ? store.toggle() : undefined), onKey: (/** @type {any} */ e) => keyed(e, true), ref: store.setTrigger })}
       </View>
     );
   }

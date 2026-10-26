@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { $signal, $read, $write, $flush } from 'rrx-core';
 import { $active, View, Action, Edit, Scroll, Show, Root } from 'ren-core';
 import {
-  Rui, Clock, manualClock, Button, Text, Box, BASE_THEME, MOTION as BASE_MOTION,
+  Rui, Clock, manualClock, Button, Pressable, Text, Box, BASE_THEME, MOTION as BASE_MOTION,
   Backdrop, Busy, Modal, Drawer, Dialog, Popover, HoverCard, Tooltip, Menu,
   Pin, ActionBar, Glider, Floater, Select,
 } from 'rui-core';
@@ -1790,6 +1790,52 @@ describe('Menu', () => {
     dispose();
   });
 
+  it("a Button or Pressable spreading a function child's trigger props takes its keys: ArrowDown and Enter open with the focus in", () => {
+    for (const Control of [Button, Pressable]) {
+      const clock = manualClock();
+      const view = app(clock, () => (
+        <Menu>
+          <Menu.Trigger>{(/** @type {any} */ t) => <Control {...t}>Actions</Control>}</Menu.Trigger>
+          <Menu.Panel>
+            <Menu.Item>Rename</Menu.Item>
+            <Menu.Item>Delete</Menu.Item>
+          </Menu.Panel>
+        </Menu>
+      ));
+      const { d, s, dom, flush, dispose } = pair(view);
+      const settle = () => {
+        clock.advance(200);
+        flush();
+      };
+      // A browser's Enter on a button: its keydown, then a click unless a handler prevented it.
+      const enter = () => {
+        const node = dom.document.activeElement;
+        const e = new dom.window.KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+        node.dispatchEvent(e);
+        if (!e.defaultPrevented) node.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
+        $flush(dom.root);
+      };
+      const name = Control === Button ? 'Button' : 'Pressable';
+      for (const open of ['ArrowDown', 'Enter']) {
+        d.find('Actions').focus();
+        s.find('Actions').focus();
+        if (open === 'Enter') enter();
+        else d.key(open);
+        s.key(open);
+        settle();
+        assert.equal(d.text(), 'Actions Rename Delete', `${name}, the DOM: ${open} opens`);
+        assert.equal(s.text(), 'Actions Rename Delete', `${name}, Skia: ${open} opens`);
+        assert.equal(d.focused()?.textContent, 'Rename', `${name}, the DOM: ${open} moves the focus in`);
+        assert.equal(s.focused()?.first?.first?.text, 'Rename', `${name}, Skia: ${open} moves the focus in`);
+        d.key('Escape');
+        s.key('Escape');
+        settle();
+        assert.equal(d.text(), 'Actions', `${name}, the DOM: Escape closes`);
+        assert.equal(s.text(), 'Actions', `${name}, Skia: Escape closes`);
+      }
+      dispose();
+    }
+  });
 });
 
 describe('Menu: display order', () => {

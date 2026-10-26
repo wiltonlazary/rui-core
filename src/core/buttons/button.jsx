@@ -53,7 +53,7 @@ export const bare = props => ['ghost', 'plain'].includes(read(props.variant));
  * 'end', 'between', 'around' or 'evenly'), `reserve` (the texts it may
  * show, as a list or an accessor of one: its text keeps the width of the
  * widest, in its own font, so what follows does not move as the text
- * changes), `onPress`. In a
+ * changes), `onPress`, `onKey` (a trigger's function child hands it on). In a
  * Button.Group it draws no border and no radius (the group's frame draws
  * its edge, the lines between its children and its corners).
  * @param {Record<string, any>} props
@@ -97,7 +97,7 @@ export function Button(props) {
   const sections = props.start !== undefined || props.end !== undefined;
   const reserving = props.reserve !== undefined && textual(props.children);
   if (!sections && !reserving && textual(props.children))
-    return <Action ref={props.ref} text={props.children} label={props.label} {...trigger} {...marks(props)} aria-disabled={flag(() => read(props.disabled) || read(props.loading))} onPress={onPress} style={style} />;
+    return <Action ref={props.ref} text={props.children} label={props.label} {...trigger} {...marks(props)} aria-disabled={flag(() => read(props.disabled) || read(props.loading))} onPress={onPress} onKey={props.onKey} style={style} />;
   return (
     <Action
       ref={props.ref}
@@ -106,6 +106,7 @@ export function Button(props) {
       {...marks(props)}
       aria-disabled={flag(() => read(props.disabled) || read(props.loading))}
       onPress={onPress}
+      onKey={props.onKey}
       style={style}
     >
       {unjoined([props.start, reserving ? reserved(props.children, props.reserve) : textual(props.children) ? <Label text={props.children} /> : props.children, props.end])}
@@ -137,15 +138,15 @@ function reserved(text, reserve) {
   );
 }
 
-/** A press area with no style of its own: `onPress`. @param {Record<string, any>} props */
+/** A press area with no style of its own: `onPress`, `onKey`. @param {Record<string, any>} props */
 export function Pressable(props) {
   const trigger = $lookup(TriggerMeaning);
   // The page's text color: a DOM button does not inherit one.
   const style = styled(props, (theme, scheme) => ({ background: 'transparent', color: pageColors(theme, scheme).text, border: 0, padding: 0, ...pressLook(theme) }));
   const onPress = pressOf(props);
-  if (textual(props.children)) return <Action ref={props.ref} text={props.children} label={props.label} {...trigger} {...marks(props)} onPress={onPress} style={style} />;
+  if (textual(props.children)) return <Action ref={props.ref} text={props.children} label={props.label} {...trigger} {...marks(props)} onPress={onPress} onKey={props.onKey} style={style} />;
   return (
-    <Action ref={props.ref} label={props.label} {...trigger} {...marks(props)} onPress={onPress} style={style}>
+    <Action ref={props.ref} label={props.label} {...trigger} {...marks(props)} onPress={onPress} onKey={props.onKey} style={style}>
       {props.children}
     </Action>
   );
