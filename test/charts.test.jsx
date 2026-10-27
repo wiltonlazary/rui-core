@@ -1070,6 +1070,34 @@ describe('a value axis as wide as its tick labels', () => {
     assert.ok(hold(right), JSON.stringify(right));
   });
 
+  it('at most a third of the width, a longer label cut: the plot keeps 60 % at least', () => {
+    // "1,5 mi Reais brasileiros": a tick of an amount in its currency's name, 25 characters
+    const named = (/** @type {number} */ t) => `${t / 1000000} mi Reais brasileiros`.padEnd(25, '.');
+    const W = 320;
+    /** The plot's share of the width from its labels' boxes, and every axis label cut. @param {any[]} axis @param {number} right the plot's end */
+    const plotOf = (axis, right) => (right - T.chart.frame.right - (axis[0].w + room)) / W;
+    const one = cartesianModel({ data: rows, category: 'm', series: [{ key: 'v' }], yAxis: { format: named } }, 'bar', T, 'light', W, 220, null);
+    assert.ok(left(one).length >= 2 && left(one).every((/** @type {any} */ l) => l.cut === true && l.text.length === 25), JSON.stringify(left(one)));
+    assert.ok(plotOf(left(one), W) >= 0.6, `the plot keeps ${plotOf(left(one), W)}`);
+    const two = cartesianModel({ data: rows, category: 'm', series: [{ key: 'v' }, { key: 'w', axis: 'end' }], yAxis: { format: named }, endAxis: { format: named } }, 'line', T, 'light', W, 220, null);
+    const end = two.labels.filter((/** @type {any} */ l) => l.align === 'start' && l.cut === true);
+    assert.ok(end.length >= 2 && [...end, ...left(two)].every((/** @type {any} */ l) => l.w + room <= W / 3), JSON.stringify(two.labels));
+    const scatter = scatterModel({ data: [{ points: [{ x: 0, y: 0 }, { x: 1, y: 2756700 }] }], yAxis: { format: named } }, T, 'light', W, 220);
+    assert.ok(left(scatter).every((/** @type {any} */ l) => l.cut === true) && plotOf(left(scatter), W) >= 0.6, JSON.stringify(left(scatter)));
+    const bubble = bubbleModel({ data: [{ label: 'a', value: 2756700, size: 1 }, { label: 'b', value: 0, size: 2 }], format: named }, T, 'light', W, 220);
+    const ticks = bubble.labels.filter((/** @type {any} */ l) => l.x === 0 && l.align === 'end');
+    assert.ok(ticks.every((/** @type {any} */ l) => l.cut === true && l.w <= W / 3), JSON.stringify(ticks));
+    // drawn: each tick label on one line, ending with an ellipsis
+    const { dom, dispose } = both(() => (
+      <Rui>
+        <BarChart w={W} h={220} data={rows} category="m" series={[{ key: 'v' }]} yAxis={{ format: named }} />
+      </Rui>
+    ));
+    const drawn = [...dom.host.querySelectorAll('[data-ren="Label"]')].filter(n => /Reais/.test(n.textContent));
+    assert.ok(drawn.length >= 2 && drawn.every(n => n.style.textOverflow === 'ellipsis' && n.style.overflow === 'hidden'), drawn.map(n => n.getAttribute('style')).join('\n'));
+    dispose();
+  });
+
   it('in a scatter chart and a bubble chart', () => {
     const scatter = scatterModel({ data: [{ points: [{ x: 0, y: 0 }, { x: 1, y: 2756700 }] }], yAxis: { format: long } }, T, 'light', 320, 220);
     assert.ok(hold(left(scatter)), JSON.stringify(left(scatter)));

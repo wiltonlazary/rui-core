@@ -31,6 +31,7 @@ import { labelsIn } from '../../theme/labels.js';
  * @property {number=} rotate degrees, about `origin`
  * @property {[number, number]=} origin the rotation's center in the box (px; its center by default)
  * @property {number=} size a font size of its own
+ * @property {boolean=} cut one line, ending with an ellipsis, when the text is wider than `w` at `chart.charWidth` a character
  */
 
 /**
@@ -129,6 +130,7 @@ export function Placed(props) {
         <Label
           {...DECOR}
           text={() => item().text}
+          ellipsis={() => item().cut === true && charsWide(ui.theme(), item().text.length) > item().w}
           style={() => {
             const p = item();
             const theme = ui.theme();
@@ -343,10 +345,11 @@ export const charsWide = (theme, n) => n * theme.chart.charWidth;
 
 /**
  * A value axis's width when it is not given: as wide as the longest of its tick labels `texts` (`chart.charWidth` a
- * character) and the room `beside` them (a tick, a gap), at least `chart.axisWidth`.
- * @param {RuiThemeValue} theme @param {string[]} texts @param {number} beside
+ * character) and the room `beside` them (a tick, a gap), at least `chart.axisWidth` and at most `chart.axisShare` of
+ * the chart's `width`, where a longer label is cut (its `cut`).
+ * @param {RuiThemeValue} theme @param {string[]} texts @param {number} beside @param {number} width
  */
-export const axisWide = (theme, texts, beside) => Math.max(theme.chart.axisWidth, charsWide(theme, Math.max(0, ...texts.map(t => t.length))) + beside);
+export const axisWide = (theme, texts, beside, width) => Math.max(theme.chart.axisWidth, Math.min(Math.floor(width * theme.chart.axisShare), charsWide(theme, Math.max(0, ...texts.map(t => t.length))) + beside));
 
 /**
  * Where a tooltip goes beside a point (in the chart's box): on the right of

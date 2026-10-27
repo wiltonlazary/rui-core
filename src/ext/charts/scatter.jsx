@@ -72,7 +72,7 @@ export function scatterModel(props, theme, scheme, width, height) {
   // the x axis takes a tick, the gap, a line of text and the gap.
   const tickGap = labelGap(theme);
   // The y axis: yAxis.width wide, else as its tick labels.
-  const left = withY ? Number(yProps.width ?? axisWide(theme, ya.ticks.map(fy), theme.chart.tick + tickGap)) : 0;
+  const left = withY ? Number(yProps.width ?? axisWide(theme, ya.ticks.map(fy), theme.chart.tick + tickGap, width)) : 0;
   const { top, right } = theme.chart.frame;
   const xRow = theme.chart.tick + tickGap + theme.chart.line + tickGap;
   const plot = { left, top, right: Math.max(left, width - right), bottom: Math.max(top, height - (withX ? xRow : top) - (xTitle === null ? 0 : theme.chart.line + tickGap)) };
@@ -87,7 +87,7 @@ export function scatterModel(props, theme, scheme, width, height) {
   if (withY) {
     for (const t of ya.ticks) {
       if (ticks === 'y' || ticks === 'both') figures.push({ kind: 'line', x: plot.left - theme.chart.tick, y: sy(t), right: plot.left, bottom: sy(t), color: c.text, stroke: 1 });
-      labels.push({ text: fy(t), x: 0, y: Math.round(sy(t) - theme.chart.line / 2), w: plot.left - theme.chart.tick - tickGap, align: 'end' });
+      labels.push({ text: fy(t), x: 0, y: Math.round(sy(t) - theme.chart.line / 2), w: plot.left - theme.chart.tick - tickGap, align: 'end', cut: true });
     }
   }
   if (withX) {

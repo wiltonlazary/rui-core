@@ -229,8 +229,8 @@ export function cartesianModel(props, kind, theme, scheme, width, height, highli
   const onRight = series.some(s => s.right);
   const rAxis = onRight ? axisOf(true, rProps) : axis;
   const rightText = (/** @type {number} */ t) => (percent ? `${t}%` : typeof rProps.format === 'function' ? String(rProps.format(t)) : format(t));
-  /** A value axis's width: its own `width`, else its ticks' labels'. @param {Record<string, any>} own @param {number[]} ticks @param {(t: number) => string} text */
-  const valueWidth = (own, ticks, text) => Number(own.width ?? axisWide(theme, ticks.map(text), theme.chart.tick + tickGap));
+  /** A value axis's width: its own `width`, else its ticks' labels' (`chart.axisShare` of the width at most). @param {Record<string, any>} own @param {number[]} ticks @param {(t: number) => string} text */
+  const valueWidth = (own, ticks, text) => Number(own.width ?? axisWide(theme, ticks.map(text), theme.chart.tick + tickGap, width));
 
   // The plot: the y axis on the left, yAxis.width wide (a value axis's width by its ticks, or `theme.chart.axisWidth`
   // for the categories across).
@@ -275,11 +275,11 @@ export function cartesianModel(props, kind, theme, scheme, width, height, highli
   const every = typeof xProps.interval === 'number' ? xProps.interval + 1 : Math.max(1, Math.ceil((across / Math.max(1, Math.abs(cats.step))) - 1e-9));
   const yAt = (/** @type {number} */ y) => Math.round(y - theme.chart.line / 2);
   if (withY) {
-    if (horizontal) axis.ticks.forEach((t, k) => labels.push({ text: valueText(t), x: 0, y: yAt(valueTicks[k]), w: plot.left - theme.chart.tick - tickGap, align: 'end' }));
+    if (horizontal) axis.ticks.forEach((t, k) => labels.push({ text: valueText(t), x: 0, y: yAt(valueTicks[k]), w: plot.left - theme.chart.tick - tickGap, align: 'end', cut: true }));
     else for (let i = 0; i < n; i += every) labels.push({ text: catText(i), x: 0, y: yAt(catTicks[i]), w: plot.left - theme.chart.tick - tickGap, align: 'end' });
   }
   if (withRight) {
-    rAxis.ticks.forEach((t, k) => labels.push({ text: rightText(t), x: plot.right + theme.chart.tick + tickGap, y: yAt(rightTicks[k]), w: Math.max(0, width - plot.right - theme.chart.tick - tickGap), align: 'start' }));
+    rAxis.ticks.forEach((t, k) => labels.push({ text: rightText(t), x: plot.right + theme.chart.tick + tickGap, y: yAt(rightTicks[k]), w: Math.max(0, width - plot.right - theme.chart.tick - tickGap), align: 'start', cut: true }));
   }
   if (withX) {
     const y = plot.bottom + theme.chart.tick + tickGap;
