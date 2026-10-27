@@ -1,7 +1,8 @@
 // What the inputs share: controlled and uncontrolled values
 // (`value` + `onChange` or `defaultValue`), the input sizes, the field
-// colors of each variant, and the small icons (check, dash, chevrons, eye)
-// drawn as portable shapes.
+// colors of each variant, the locale's number marks, digit grouping and
+// stepping, and the small icons (check, dash, chevrons, eye) drawn as
+// portable shapes.
 
 import { $active, $signal, $read, $write, read } from 'ren-core';
 import { colorOf, fontBelow, pageColors, sized } from '../../theme/resolve.js';

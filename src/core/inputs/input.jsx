@@ -1,5 +1,6 @@
 // Text inputs: Input (the field), and in a Field (field.jsx) TextInput,
-// Textarea, PasswordInput, NumberInput and PinInput. An input is a row (the
+// Textarea, PasswordInput, NumberInput, CurrencyInput (with `currencyAffixes`
+// and `currencyDecimals`) and PinInput. An input is a row (the
 // start slot, the portable Edit, the end slot) whose border shows focus and
 // error.
 //
