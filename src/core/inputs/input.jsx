@@ -355,7 +355,8 @@ const after = (text, k, counted, start) => {
  * empty) + `onChange`, `min`, `max`, `step` (1; one not above 0 is 1), `clamp` ('commit': into
  * `min`..`max` on blur and Enter; 'always': as typed; false: never),
  * `negative` (true; false: no sign, and a floor of 0 its steps, clamps and
- * `aria-valuemin` keep), `decimal` (true), `decimals`, `fixedDecimals`,
+ * `aria-valuemin` keep), `decimal` (true), `decimals`, `fixedDecimals` (all
+ * `decimals` written out at rest; the text stays as typed until blur or Enter),
  * `prefix`, `suffix`, `locale` (a BCP 47 tag; the platform's by default),
  * `groupMark` (true: the locale's group mark; or the mark itself),
  * `decimalMark` (the locale's by default), `controls` (true: the step
@@ -415,8 +416,11 @@ export function NumberInput(props) {
       if (c !== n) n = c;
     }
     // A zero after the decimal mark ('2.0', '3.50') is the number already: it commits, and the text stays as
-    // typed, unless the value committed is another (clamped), which then shows.
-    $write(draft, text.includes('.') && text.endsWith('0') && n === Number(text) ? next : null);
+    // typed, unless the value committed is another (clamped), which then shows. fixedDecimals pads nothing
+    // while typing ('12' stays '12', with room for the decimal mark and digits after it): blur and Enter pad.
+    const loose = formatNumber(n, { ...f, fixedDecimals: false });
+    const typed = n !== Number(text) ? null : text.includes('.') && text.endsWith('0') ? next : loose !== formatNumber(n, f) ? loose : null;
+    $write(draft, typed);
     commit(n);
   };
   const increment = (/** @type {number} */ dir) => {
@@ -534,8 +538,8 @@ export const currencyDecimals = currency => new Intl.NumberFormat('en', { style:
 /**
  * A field for an amount of money: NumberInput with `currency` (an ISO code) shown as `display` ('symbol' by default,
  * 'narrowSymbol', 'code', 'name' or 'none') on the side and with the spacing `locale` writes money with (R$ 12,50;
- * 12,50 €), the currency's decimals unless `decimals` is given, always written out (R$ 12,50, not R$ 12,5) unless
- * `fixedDecimals` is false, and NumberInput's other props.
+ * 12,50 €), the currency's decimals unless `decimals` is given, written out at rest (R$ 12,50, not R$ 12,5; as typed
+ * until blur or Enter) unless `fixedDecimals` is false, and NumberInput's other props.
  * @param {Record<string, any>} props
  */
 export function CurrencyInput(props) {

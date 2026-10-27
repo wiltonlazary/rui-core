@@ -1717,4 +1717,93 @@ describe('CurrencyInput', () => {
     assert.deepEqual(shown(4), ['R$ 12,5', 'R$ 12,5'], 'fixedDecimals false: as the number is');
     dispose();
   });
+
+  /** One CurrencyInput with its value in a state per root, focused on both. @param {Record<string, any>} props */
+  const focused = props => {
+    const s = states();
+    const view = () => {
+      const v = s.make(/** @type {number | string} */ (props.value ?? ''));
+      return (
+        <Rui>
+          <CurrencyInput label="Paid" {...props} value={v} onChange={(/** @type {any} */ x) => $write(v, x)} />
+        </Rui>
+      );
+    };
+    const { dom, skia, dispose } = both(view);
+    dom.nodes('Edit')[0].focus();
+    items(skia, 4)[0].focus();
+    const shown = () => values(dom, skia, 0).map((/** @type {string} */ v) => v.replace(/[\u00a0\u202f]/g, ' '));
+    /** Each key typed at the caret on both, and the text after it. @param {string} text */
+    const keys = text => [...text].map(ch => {
+      typeHere(dom, skia, 0, ch);
+      return shown()[0];
+    });
+    return { s, dom, skia, dispose, shown, keys };
+  };
+
+  it('keeps the text as typed while focused, writes out the decimals on blur, and steps and empties as before', () => {
+    const { s, dom, skia, dispose, shown, keys } = focused({ currency: 'USD', locale: 'en' });
+    assert.deepEqual(keys('12.5'), ['$1', '$12', '$12.', '$12.5'], 'no padding while typing');
+    assert.deepEqual(shown(), ['$12.5', '$12.5']);
+    assert.deepEqual(s.get(), [12.5, 12.5]);
+    blur(dom, skia, 0);
+    assert.deepEqual(shown(), ['$12.50', '$12.50'], 'all its decimals at rest');
+    assert.deepEqual(s.get(), [12.5, 12.5]);
+    // The step buttons: up, then down, each shown with its decimals.
+    dom.nodes('Action')[0].dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
+    tap(skia, items(skia, 5)[0]);
+    assert.deepEqual(s.get(), [13, 13]);
+    assert.deepEqual(shown(), ['$13.00', '$13.00']);
+    dom.nodes('Action')[1].dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
+    tap(skia, items(skia, 5)[1]);
+    assert.deepEqual(s.get(), [12, 12]);
+    // Emptied, it is empty, and stays so on blur.
+    replace(dom, skia, 0, '');
+    assert.deepEqual(s.get(), ['', '']);
+    assert.deepEqual(shown(), ['', '']);
+    blur(dom, skia, 0);
+    assert.deepEqual(shown(), ['', '']);
+    dispose();
+  });
+
+  it("keeps the text as typed with the locale's decimal mark; a currency without decimals takes no mark", () => {
+    const brl = focused({ currency: 'BRL', locale: 'pt-BR', controls: false });
+    assert.deepEqual(brl.keys('120,5'), ['R$ 1', 'R$ 12', 'R$ 120', 'R$ 120,', 'R$ 120,5']);
+    assert.deepEqual(brl.s.get(), [120.5, 120.5]);
+    blur(brl.dom, brl.skia, 0);
+    assert.deepEqual(brl.shown(), ['R$ 120,50', 'R$ 120,50']);
+    brl.dispose();
+    const yen = focused({ currency: 'JPY', locale: 'en', controls: false });
+    assert.deepEqual(yen.keys('12.5'), ['¥1', '¥12', '¥12', '¥125'], 'the decimal mark refused');
+    assert.deepEqual(yen.s.get(), [125, 125]);
+    blur(yen.dom, yen.skia, 0);
+    assert.deepEqual(yen.shown(), ['¥125', '¥125']);
+    yen.dispose();
+  });
+
+  it('keeps the text Backspace leaves, and what is typed after it', () => {
+    const { s, dom, skia, dispose, shown, keys } = focused({ currency: 'USD', locale: 'en', value: 100, controls: false });
+    assert.deepEqual(shown(), ['$100.00', '$100.00']);
+    caretAt(dom, skia, 0, 7);
+    const node = dom.nodes('Edit')[0];
+    const back = () => {
+      const at = node.selectionStart;
+      node.value = node.value.slice(0, at - 1) + node.value.slice(at);
+      node.setSelectionRange(at - 1, at - 1);
+      node.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+      $flush(dom.root);
+      skia.skia.key('Backspace');
+      $flush(skia.root);
+      return shown()[0];
+    };
+    assert.deepEqual([back(), back(), back()], ['$100.0', '$100.', '$100']);
+    assert.deepEqual(shown(), ['$100', '$100']);
+    assert.deepEqual(keys('5'), ['$1005']);
+    assert.deepEqual(s.get(), [1005, 1005]);
+    assert.deepEqual(keys('.5'), ['$1005.', '$1005.5']);
+    assert.deepEqual(s.get(), [1005.5, 1005.5]);
+    blur(dom, skia, 0);
+    assert.deepEqual(shown(), ['$1005.50', '$1005.50']);
+    dispose();
+  });
 });
