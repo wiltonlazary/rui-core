@@ -1741,7 +1741,7 @@ describe('CurrencyInput', () => {
     return { s, dom, skia, dispose, shown, keys };
   };
 
-  it('keeps the text as typed while focused, writes out the decimals on blur, and steps and empties as before', () => {
+  it('keeps the text as typed while focused, writes out the decimals on blur and on a step, and empties', () => {
     const { s, dom, skia, dispose, shown, keys } = focused({ currency: 'USD', locale: 'en' });
     assert.deepEqual(keys('12.5'), ['$1', '$12', '$12.', '$12.5'], 'no padding while typing');
     assert.deepEqual(shown(), ['$12.5', '$12.5']);
