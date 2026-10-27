@@ -550,13 +550,25 @@ export const currencyDecimals = currency => new Intl.NumberFormat('en', { style:
  * @param {Record<string, any>} props
  */
 export function CurrencyInput(props) {
-  // a currency's name follows the amount (1 real, 2 reais): the typed one, else a plural
+  // The field's value, controlled or not: a currency's name follows it (1 real, 2 reais), a plural while empty.
+  const model = $value(props, /** @type {number | string} */ (''));
   const amount = () => {
-    const v = read(props.value);
+    const v = model.get();
     return typeof v === 'number' && Number.isFinite(v) ? v : 2;
   };
   const affixes = () => currencyAffixes(read(props.currency), read(props.locale), read(props.display) ?? 'symbol', amount());
-  return <NumberInput decimals={() => currencyDecimals(read(props.currency))} {...props} fixedDecimals={() => read(props.fixedDecimals) !== false} prefix={() => affixes().prefix} suffix={() => affixes().suffix} />;
+  return (
+    <NumberInput
+      decimals={() => currencyDecimals(read(props.currency))}
+      {...props}
+      value={model.get}
+      defaultValue={undefined}
+      onChange={model.set}
+      fixedDecimals={() => read(props.fixedDecimals) !== false}
+      prefix={() => affixes().prefix}
+      suffix={() => affixes().suffix}
+    />
+  );
 }
 
 // ---------------------------------------------------------------------------

@@ -1807,6 +1807,15 @@ describe('CurrencyInput', () => {
     dispose();
   });
 
+  it('writes a typed minus before the currency, as at rest', () => {
+    const { s, dom, skia, dispose, keys, shown } = focused({ currency: 'USD', locale: 'en', controls: false });
+    assert.deepEqual(keys('-5'), ['-$', '-$5']);
+    assert.deepEqual(s.get(), [-5, -5]);
+    blur(dom, skia, 0);
+    assert.deepEqual(shown(), ['-$5.00', '-$5.00']);
+    dispose();
+  });
+
   it('shows the name for the amount typed so far, and takes every key: 150 in Portuguese', () => {
     const nb = (/** @type {string} */ t) => t.replace(/[  ]/g, ' ');
     const { s, dom, skia, dispose, keys, shown } = focused({ currency: 'BRL', locale: 'pt-BR', display: 'name', controls: false });
@@ -1818,3 +1827,101 @@ describe('CurrencyInput', () => {
   });
 });
 
+// While typing, the text a CurrencyInput shows carries its currency's text for the amount so far
+// (a name follows the amount: 1 real, 15 reais), and the next key is read against that text. Each case types key by
+// key in a display and a language, on a field controlled or not, on both renderers, and checks after every key the
+// text (the digits as typed, between Intl's currency text for the amount so far) and the value, then the text at
+// rest (all the decimals). Intl's own currency text for the value is the reference for what surrounds the digits.
+describe('CurrencyInput typed key by key in every display and language, controlled or not', () => {
+  const DISPLAYS = /** @type {const} */ (['symbol', 'narrowSymbol', 'code', 'name', 'none']);
+  const LOCALES = ['pt-BR', 'en', 'es', 'de'];
+  /** Intl's text around the number for `v` in BRL shown as `display`. @param {string} locale @param {string} display @param {number} v */
+  const around = (locale, display, v) => {
+    if (display === 'none') return { prefix: '', suffix: '' };
+    const parts = new Intl.NumberFormat(locale, { style: 'currency', currency: 'BRL', currencyDisplay: /** @type {any} */ (display) }).formatToParts(v);
+    const numeric = parts.map(p => ['integer', 'group', 'decimal', 'fraction'].includes(p.type));
+    const text = (/** @type {Intl.NumberFormatPart[]} */ some) => some.map(p => p.value).join('');
+    return { prefix: text(parts.slice(0, numeric.indexOf(true))), suffix: text(parts.slice(numeric.lastIndexOf(true) + 1)) };
+  };
+  /** `digits` (written with en's marks) between Intl's text for `v`, in `locale`'s marks. @param {string} locale @param {string} display @param {number} v @param {string} digits */
+  const money = (locale, display, v, digits) => {
+    const { prefix, suffix } = around(locale, display, v);
+    return prefix + local(locale, digits) + suffix;
+  };
+  /** en's marks swapped for a language that writes 1.234,5. @param {string} locale @param {string} text */
+  const local = (locale, text) => (locale === 'en' ? text : text.replace(/[.,]/g, c => (c === '.' ? ',' : '.')));
+  /**
+   * The flows, in en's marks: `start` the value before (a Backspace starts from one at rest), `steps` each act (a key
+   * typed, 'Backspace' at the caret, 'ArrowUp') with the digits it shows and the value after it, `rest` the digits
+   * after blur.
+   * @type {{ name: string, start?: number, steps: [string, string, number][], rest: string, value: number }[]}
+   */
+  const FLOWS = [
+    { name: 'types 150', steps: [['1', '1', 1], ['5', '15', 15], ['0', '150', 150]], rest: '150.00', value: 150 },
+    { name: 'types 1', steps: [['1', '1', 1]], rest: '1.00', value: 1 },
+    { name: 'types 1.5', steps: [['1', '1', 1], ['.', '1.', 1], ['5', '1.5', 1.5]], rest: '1.50', value: 1.5 },
+    { name: 'types 05, its leading zero dropped', steps: [['0', '0', 0], ['5', '5', 5]], rest: '5.00', value: 5 },
+    { name: 'types 0.05', steps: [['0', '0', 0], ['.', '0.', 0], ['0', '0.0', 0], ['5', '0.05', 0.05]], rest: '0.05', value: 0.05 },
+    {
+      name: 'types 1,234.5 with its group mark',
+      steps: [['1', '1', 1], [',', '1', 1], ['2', '12', 12], ['3', '123', 123], ['4', '1,234', 1234], ['.', '1,234.', 1234], ['5', '1,234.5', 1234.5]],
+      rest: '1,234.50',
+      value: 1234.5,
+    },
+    {
+      name: 'backspaces 100.00 to 100, then types 5',
+      start: 100,
+      steps: [['Backspace', '100.0', 100], ['Backspace', '100.', 100], ['Backspace', '100', 100], ['5', '1,005', 1005]],
+      rest: '1,005.00',
+      value: 1005,
+    },
+    { name: 'types 12.5, then steps up before blur', steps: [['1', '1', 1], ['2', '12', 12], ['.', '12.', 12], ['5', '12.5', 12.5], ['ArrowUp', '13.00', 13]], rest: '13.00', value: 13 },
+  ];
+  for (const display of DISPLAYS)
+    for (const locale of LOCALES)
+      for (const controlled of [true, false])
+        for (const flow of FLOWS)
+          it(`${display} in ${locale}, ${controlled ? 'controlled' : 'uncontrolled'}: ${flow.name}`, () => {
+            const s = states();
+            const view = () => {
+              const v = s.make(/** @type {number | string} */ (flow.start ?? ''));
+              const value = controlled ? { value: v } : { defaultValue: flow.start };
+              return (
+                <Rui>
+                  <CurrencyInput label="Paid" currency="BRL" locale={locale} display={display} groupMark controls={false} {...value} onChange={(/** @type {any} */ x) => $write(v, x)} />
+                </Rui>
+              );
+            };
+            const { dom, skia, dispose } = both(view);
+            const node = dom.nodes('Edit')[0];
+            node.focus();
+            items(skia, 4)[0].focus();
+            if (flow.start !== undefined) {
+              // The caret after the last digit, before any text after the number.
+              const at = money(locale, display, flow.start, '100.00').length - around(locale, display, flow.start).suffix.length;
+              caretAt(dom, skia, 0, at);
+            }
+            let acts = '';
+            for (const [act, digits, value] of flow.steps) {
+              acts += ` ${act}`;
+              if (act === 'ArrowUp') key(dom, node, skia, act);
+              else if (act === 'Backspace') {
+                const at = node.selectionStart;
+                node.value = node.value.slice(0, at - 1) + node.value.slice(at);
+                node.setSelectionRange(at - 1, at - 1);
+                node.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+                $flush(dom.root);
+                skia.skia.key('Backspace');
+                $flush(skia.root);
+              } else typeHere(dom, skia, 0, local(locale, act));
+              const want = money(locale, display, value, digits);
+              assert.deepEqual(values(dom, skia, 0), [want, want], `the text after${acts}`);
+              assert.deepEqual(s.get(), [value, value], `the value after${acts}`);
+            }
+            blur(dom, skia, 0);
+            const rest = money(locale, display, flow.value, flow.rest);
+            assert.deepEqual(values(dom, skia, 0), [rest, rest], 'the text at rest');
+            assert.deepEqual(s.get(), [flow.value, flow.value], 'the value at rest');
+            dispose();
+          });
+});
