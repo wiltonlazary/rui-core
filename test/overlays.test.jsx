@@ -270,6 +270,38 @@ describe('Modal', () => {
     dispose();
   });
 
+  it('opened again on its way out, moves the focus in and gives it back on close as on a first opening', () => {
+    const { d, s, dom, clock, isOpen, flush, dispose } = setup();
+    d.find('Open').focus();
+    s.find('Open').focus();
+    d.press('Open');
+    s.press('Open');
+    clock.advance(250);
+    flush();
+    d.key('Escape');
+    s.key('Escape');
+    assert.equal(d.focused().textContent, 'Open');
+    // Half way out: still shown, and opened again.
+    clock.advance(20);
+    flush();
+    assert.ok(dom.document.querySelector('[aria-label="Close"]') !== null, 'still on its way out');
+    d.press('Open');
+    // on Skia from the keyboard, on the opener given the focus back (the backdrop, still there, takes a pointer)
+    s.key('Enter');
+    clock.advance(250);
+    flush();
+    assert.deepEqual(isOpen(), [true, true]);
+    assert.equal(d.focused().getAttribute('aria-label'), 'Close', 'the focus moved in on the DOM');
+    assert.equal(s.focused()?.label, 'Close', 'and on Skia');
+    d.key('Escape');
+    s.key('Escape');
+    assert.equal(d.focused().textContent, 'Open', 'focus back on the DOM');
+    assert.equal(s.focused()?.text, 'Open', 'and on Skia');
+    clock.advance(250);
+    flush();
+    dispose();
+  });
+
   it('trap false: the focus stays put on open, yet refocus gives it back on close', () => {
     const { d, s, dom, clock, isOpen, flush, dispose } = setup({ trap: false });
     d.find('Open').focus();

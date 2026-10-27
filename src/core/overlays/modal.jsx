@@ -89,7 +89,15 @@ function $dialog(props, kind) {
   const close = () => state.set(false);
   const motion = () => motionOf(read(props.motion));
   const dismiss = () => dismissOf(read(props.dismiss));
-  const presence = $presence(isOpen, () => timingOf(read(props.motion), kind === 'drawer' ? 'calm' : 'base'), { exited: () => props.onExited?.(), entered: () => props.onEntered?.() });
+  /** The content while it is mounted (open, or on its way out), null once it has gone. @type {any} */
+  let content = null;
+  const presence = $presence(isOpen, () => timingOf(read(props.motion), kind === 'drawer' ? 'calm' : 'base'), {
+    exited: () => {
+      content = null;
+      props.onExited?.();
+    },
+    entered: () => props.onEntered?.(),
+  });
   /** @type {any} */
   let closer = null;
   /** @type {any} */
@@ -115,6 +123,7 @@ function $dialog(props, kind) {
    * @param {any} node the content
    */
   const enter = node => {
+    content = node;
     if (read(props.trap) === false) {
       // Untrapped, the focus stays where the content puts it (a Launcher's search), but `refocus` still
       // gives it back on close: note it once the flush that shows the content attaches it, before any frame.
@@ -146,7 +155,8 @@ function $dialog(props, kind) {
     if (from.length === 0 || under(to, from[from.length - 1].parent)) focus(to);
     else refocusFrom(from);
   };
-  $watch(R, isOpen, open => open || giveBack());
+  // Opened again on its way out, its content stays mounted (no `enter` from a new one): it moves the focus in as then.
+  $watch(R, isOpen, open => (open ? content !== null && enter(content) : giveBack()));
   const owner = $owner(R);
   if (owner != null)
     $cleanup(/** @type {any} */ (owner), () => {
