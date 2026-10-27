@@ -1806,4 +1806,15 @@ describe('CurrencyInput', () => {
     assert.deepEqual(shown(), ['$1005.50', '$1005.50']);
     dispose();
   });
+
+  it('shows the name for the amount typed so far, and takes every key: 150 in Portuguese', () => {
+    const nb = (/** @type {string} */ t) => t.replace(/[  ]/g, ' ');
+    const { s, dom, skia, dispose, keys, shown } = focused({ currency: 'BRL', locale: 'pt-BR', display: 'name', controls: false });
+    assert.deepEqual(keys('150').map(nb), ['1 Real brasileiro', '15 Reais brasileiros', '150 Reais brasileiros']);
+    assert.deepEqual(s.get(), [150, 150]);
+    blur(dom, skia, 0);
+    assert.deepEqual(shown().map(nb), ['150,00 Reais brasileiros', '150,00 Reais brasileiros']);
+    dispose();
+  });
 });
+

@@ -11,7 +11,7 @@ import { View, Edit, Action, Shape, $signal, $read, $write, $active, $after, $co
 import { styled, pressLook } from '../../theme/style.js';
 import { radiusOf, sized, pageColors } from '../../theme/resolve.js';
 import { $ui } from '../../theme/theme.jsx';
-import { heightOf, sizeOf, $value, fieldColors, clamp, chevronShape, eyeShape, marksOf, insetOf, disabledLook, stepOn, stepOf, placesOf } from './shared.js';
+import { heightOf, sizeOf, $value, fieldColors, clamp, chevronShape, eyeShape, marksOf, insetOf, disabledLook, stepOn, stepOf, placesOf, grouped } from './shared.js';
 import { composing } from '../overlays/shared.jsx';
 import { formatNumber } from '../data/display.jsx';
 import { flag } from '../../theme/meaning.js';
@@ -379,9 +379,19 @@ export function NumberInput(props) {
       fixedDecimals: read(props.fixedDecimals) === true,
     };
   };
-  // The text being typed ('1.' or '-' are not numbers yet); null shows the value.
+  // The number being typed, bare: its digits, '-' and '.' as typed ('1.' or '-' are not numbers yet, '2.0' keeps its
+  // zero), no affixes; null shows the value. It shows with the marks and with the affixes of the value now.
   const draft = $signal($active(), /** @type {string | null} */ (null));
-  const shown = () => $read(draft) ?? formatNumber(model.get(), o());
+  /** A draft as it shows, laid out as formatNumber lays a value out: sign, prefix, number (its marks, no leading zeros), suffix. @param {string} d @param {ReturnType<typeof o>} f */
+  const written = (d, f) => {
+    const sign = d.startsWith('-') ? '-' : '';
+    const [whole, part] = d.slice(sign.length).split('.');
+    return `${sign}${f.prefix ?? ''}${grouped(whole.replace(/^0+(?=\d)/, ''), f.groupMark)}${part === undefined ? '' : f.decimalMark + part}${f.suffix ?? ''}`;
+  };
+  const shown = () => {
+    const d = $read(draft);
+    return d === null ? formatNumber(model.get(), o()) : written(d, o());
+  };
   // With negative false, nothing below 0: steps and clamps run against max(min, 0).
   const bounds = () => ({ min: read(props.negative) === false ? Math.max(read(props.min) ?? -Infinity, 0) : (read(props.min) ?? -Infinity), max: read(props.max) ?? Infinity });
   const clampTo = (/** @type {number} */ n) => {
@@ -406,7 +416,7 @@ export function NumberInput(props) {
     if (!pattern.test(text)) return;
     if (decimal && f.decimals !== undefined && text.includes('.') && text.split('.')[1].length > f.decimals) return;
     if (text === '' || text === '-' || text.endsWith('.')) {
-      $write(draft, text === '' ? null : next);
+      $write(draft, text === '' ? null : text);
       if (text === '') commit('');
       return;
     }
@@ -415,12 +425,9 @@ export function NumberInput(props) {
       const c = clampTo(n);
       if (c !== n) n = c;
     }
-    // A zero after the decimal mark ('2.0', '3.50') is the number already: it commits, and the text stays as
-    // typed, unless the value committed is another (clamped), which then shows. fixedDecimals pads nothing
-    // while typing ('12' stays '12', with room for the decimal mark and digits after it): blur and Enter pad.
-    const loose = formatNumber(n, { ...f, fixedDecimals: false });
-    const typed = n !== Number(text) ? null : text.includes('.') && text.endsWith('0') ? next : loose !== formatNumber(n, f) ? loose : null;
-    $write(draft, typed);
+    // The number shows as typed where that differs from the value written ('2.0', '3.50'; '12' with fixedDecimals,
+    // padded on blur and Enter), unless the value committed is another (clamped), which then shows.
+    $write(draft, n !== Number(text) || written(text, f) === formatNumber(n, f) ? null : text);
     commit(n);
   };
   const increment = (/** @type {number} */ dir) => {

@@ -110,6 +110,9 @@ export const MARKS_KEPT = 64; // count: locales kept, not a size
 /** How many locales' marks are cached (for the tests). */
 export const marksCached = () => MARKS.size;
 
+/** Whole digits with `mark` between each three from the right ('' none): '1234567', ',' → '1,234,567'. @param {string} whole @param {string} mark */
+export const grouped = (whole, mark) => (mark === '' ? whole : whole.replace(/\B(?=(\d{3})+(?!\d))/g, mark));
+
 /**
  * A locale's number marks, from the platform's number formatting: the
  * group mark between thousands and the decimal mark. `locale` is a BCP 47

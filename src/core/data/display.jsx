@@ -11,7 +11,7 @@ import { parts } from './parts.jsx';
 import { textual } from './badge.jsx';
 import { DECOR, state } from '../../theme/meaning.js';
 import { $controlled } from '../overlays/shared.jsx';
-import { marksOf, placesOf } from '../inputs/shared.js';
+import { marksOf, placesOf, grouped } from '../inputs/shared.js';
 import { MOTION, durationOf } from '../../theme/motion.js';
 import { labelsIn } from '../../theme/labels.js';
 
@@ -130,9 +130,8 @@ export function formatNumber(value, o = {}) {
   const digits = scale == null ? plain(String(a)) : o.fixedDecimals ? fixed(scale) : plain(String(Number(a.toFixed(scale))));
   const [whole, part] = digits.split('.');
   const sep = o.groupMark === true ? marksOf(o.locale).group : typeof o.groupMark === 'string' ? o.groupMark : '';
-  const grouped = sep === '' ? whole : whole.replace(/\B(?=(\d{3})+(?!\d))/g, sep);
   const sign = n < 0 && Number(digits) !== 0 ? '-' : '';
-  return `${sign}${o.prefix ?? ''}${grouped}${part === undefined ? '' : (o.decimalMark ?? marksOf(o.locale).decimal) + part}${o.suffix ?? ''}`;
+  return `${sign}${o.prefix ?? ''}${grouped(whole, sep)}${part === undefined ? '' : (o.decimalMark ?? marksOf(o.locale).decimal) + part}${o.suffix ?? ''}`;
 }
 
 /** The format props of a component, read. @param {Record<string, any>} props @returns {NumberFormat} */
