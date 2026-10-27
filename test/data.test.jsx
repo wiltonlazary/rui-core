@@ -801,6 +801,40 @@ describe('rui-core data display: rui\'s own defaults', () => {
     dispose();
   });
 
+  it('Badge: its text\'s clip taller than the text, for accents on capitals, inside the same height', () => {
+    const T = BASE_THEME;
+    const { dom, skia, dispose } = both(() => (
+      <Rui>
+        <Stack align="start">
+          <Badge size="xs">Alimentação</Badge>
+          <Badge size="xl">Categoría</Badge>
+        </Stack>
+      </Rui>
+    ));
+    // On the DOM: the label's line box (the badge's leading on its font size) above the font size, within the badge's inner height.
+    for (const [text, height, font] of [['Alimentação', 18, 12], ['Categoría', 30, 15]]) {
+      const label = dom.nodes('Label').find((/** @type {any} */ n) => n.textContent === text);
+      const badge = label.parentElement;
+      assert.equal(label.style.overflow, 'hidden', 'the ellipsis clips the label');
+      assert.deepEqual([badge.style.height, badge.style.fontSize], [`${height}px`, `${font}px`]);
+      const line = Number(label.style.lineHeight || badge.style.lineHeight) * font;
+      assert.equal(line, T.lineHeights.xs * font, `the tight leading: ${line}`);
+      assert.ok(line > font && line <= height - 2, `${text}: a ${line} px line box for ${font} px text in ${height} px`);
+    }
+    // On Skia: the clip around each text taller than its font size, the badges as high as before.
+    const commands = skia.skia.commands();
+    const rounds = commands.filter((/** @type {any[]} */ c) => c[0] === 'round').map((/** @type {any[]} */ c) => c[4] - c[2]);
+    assert.deepEqual(rounds, [18, 30]);
+    for (const [text, font] of [['ALIMENTAÇÃO', 12], ['CATEGORÍA', 15]]) {
+      const at = commands.findIndex((/** @type {any[]} */ c) => c[0] === 'text' && c[1] === text);
+      const clip = commands.slice(0, at).findLast((/** @type {any[]} */ c) => c[0] === 'clip');
+      assert.ok(clip[4] - clip[2] > font, `${text}: a ${clip[4] - clip[2]} px clip for ${font} px text`);
+      const label = items(skia, KIND.Label).find(n => n.text.toUpperCase() === text);
+      assert.ok(Math.abs(label.h - T.lineHeights.xs * font) < 0.5, `${text}: the label's line box ${label.h}`);
+    }
+    dispose();
+  });
+
   it('Badge: never wider than its parent, a text that does not fit ending with an ellipsis', () => {
     const { dom, skia, dispose } = both(() => (
       <Rui>

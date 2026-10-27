@@ -18,8 +18,10 @@ export const textual = children => typeof children === 'string' || typeof childr
  * default: a tag, not a pill), `start`, `end`, `round` (a circle as wide
  * as high), `stretch`; its text
  * shows in upper case (`textTransform`: the data keeps it as
- * written). It is never wider than its parent and shrinks in a row it
- * does not fit: a text that does not fit ends with an ellipsis.
+ * written) at the theme's tight leading (`lineHeights.xs`), so the accents
+ * on capitals and the marks below the line show whole. It is never wider
+ * than its parent and shrinks in a row it does not fit: a text that does
+ * not fit ends with an ellipsis.
  * @param {Record<string, any>} props
  */
 export function Badge(props) {
@@ -49,7 +51,8 @@ export function Badge(props) {
       borderColor: c.border,
       fontSize: fontBelow(theme, size(theme), 2),
       fontWeight: theme.weights.bold,
-      lineHeight: 1,
+      // room in the line box for the marks above capitals and below the baseline (Ã, Ç, Ó), inside the ellipsis's clip
+      lineHeight: theme.lineHeights.xs,
       textTransform: 'uppercase',
       // it shrinks in a row it does not fit, down to its text's ellipsis (a round one stays as wide as high)
       shrink: 1,
