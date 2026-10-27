@@ -636,11 +636,11 @@ describe('Ring, Arc and Progress: rui\'s own geometry and motion', () => {
 
 describe('EmptyState in a narrow container', () => {
   const NOTE = 'Crie uma com Nova tag: seus livros-caixa podem usá-la.';
-  const view = () => (
+  const view = (heading = 'No tags yet') => (
     <Rui>
       <View style={{ width: 390 }}>
         <Container px="md">
-          <EmptyState heading="No tags yet" note={NOTE} />
+          <EmptyState heading={heading} note={NOTE} />
         </Container>
       </View>
     </Rui>
@@ -679,5 +679,27 @@ describe('EmptyState in a narrow container', () => {
     const r = label.getBoundingClientRect();
     assert.ok(r.right <= 390 - BASE_THEME.spacing.md + 0.5, `within the room on Skia: ${r.right}`);
     dispose();
+  });
+  it('wraps the heading within the room as the note does, on the DOM (laid out by the Flow) and in the CSS', () => {
+    const HEADING = 'Nenhum estabelecimento compartilhado ainda';
+    const window = new Window({ url: 'http://localhost/' });
+    const host = window.document.createElement('main');
+    Object.defineProperty(host, 'clientWidth', { value: 390 });
+    window.document.body.appendChild(host);
+    const flow = new Flow(mono);
+    const stop = mount($dom(window.document, { layout: flow }), () => view(HEADING), host);
+    const heading = /** @type {any} */ ([...host.querySelectorAll('[data-ren="Label"]')].find(n => n.textContent === HEADING));
+    const px = (/** @type {any} */ el, /** @type {string} */ k) => parseFloat(el.style[k]);
+    const room = px(heading.parentElement, 'width');
+    assert.ok(px(heading, 'left') + px(heading, 'width') <= room + 0.5, `within its column: ${px(heading, 'left')} + ${px(heading, 'width')} in ${room}`);
+    assert.ok(px(heading, 'height') > parseFloat(heading.style.fontSize) * 1.9, `on two lines or more: ${px(heading, 'height')}`);
+    stop();
+    flow.close();
+    closeWindow(window);
+
+    const dom = onDom(() => view(HEADING), { width: 390, height: 300 });
+    const css = /** @type {any} */ ([...dom.host.querySelectorAll('[data-ren="Label"]')].find(n => n.textContent === HEADING)).style;
+    assert.deepEqual([css.whiteSpace, css.overflowWrap], ['pre-wrap', 'break-word']);
+    dom.dispose();
   });
 });

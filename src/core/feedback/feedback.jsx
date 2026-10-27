@@ -323,10 +323,10 @@ function EmptyStateMark(props) {
 /** The text alignment of an EmptyState's lines. @param {Record<string, any>} own @returns {any} */
 const emptyText = own => (emptyAlign(own) === 'center' ? 'center' : emptyAlign(own));
 
-/** The heading of an EmptyState. @param {Record<string, any>} props */
+/** The heading of an EmptyState, wrapping within its room. @param {Record<string, any>} props */
 function EmptyStateHeading(props) {
   const own = /** @type {Record<string, any>} */ ($lookup(Empty));
-  const style = styled(props, theme => ({ fontSize: emptyHeading(own, theme), fontWeight: theme.headings.weight, textAlign: emptyText(own) }));
+  const style = styled(props, theme => ({ fontSize: emptyHeading(own, theme), fontWeight: theme.headings.weight, textAlign: emptyText(own), wrap: true }));
   return textual(props.children) ? <Label text={props.children} style={style} /> : <View style={style}>{props.children}</View>;
 }
 
