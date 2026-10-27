@@ -427,7 +427,8 @@ export function NumberInput(props) {
     const f = o();
     let text = next;
     // An edit inside or after the suffix is made at the number's end: the suffix stays, what it types follows the
-    // number, and a deletion takes the number's last character.
+    // number, and a deletion takes the number's last character. A deletion of the suffix's first character reads the
+    // same as Delete at the number's end, so it deletes nothing and leaves the caret at the number's end.
     const before = shown();
     const end = span(before, f)[1];
     let p = 0;
