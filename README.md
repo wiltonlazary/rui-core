@@ -474,8 +474,8 @@ focus: a ScrollBox at -1 is a skip link's target, focused by its ref's
   `aria-selected`, or with `checks` `aria-checked` true, false or mixed
   by the leaves under a row; parents `aria-expanded`; the chevrons that
   open them are decoration, the arrow keys open and close).
-- Buttons: the Action's `button`, `aria-disabled`; CloseButton named
-  'Close'.
+- Buttons: the Action's `button`, `aria-disabled`, `aria-busy` while
+  loading; CloseButton named 'Close'.
 - Navigation: Tabs `tablist`, `tab` (`aria-selected`), `tabpanel`, the
   list one Tab stop (every tab an Action, the active one at `tabIndex` 0,
   the others -1; the arrow keys, Home and End move it); NavItem
