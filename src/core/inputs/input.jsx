@@ -48,6 +48,7 @@ export function Input(props) {
  * @property {(() => number)=} rows the rows shown (Textarea's height)
  * @property {(() => { min: number, max: number } | null)=} grow rows grown with the wrapped text (Textarea's autosize), else null
  * @property {((typed: string, caret: number, shown: string) => number)=} caret where the caret goes when the text shown is not the text typed
+ * @property {((text: string) => [number, number])=} span the part of `text` the caret and the selection stay within (a number between its affixes), after a rewritten edit, on focus and on a press
  * @property {((e: any) => void)=} key
  * @property {((e: any) => void)=} blur
  * @property {((e: any) => void)=} focus
@@ -169,6 +170,16 @@ export function field(props, model) {
       placing = null;
       $after(root, place);
     });
+  /** Moves the Edit's selection into `model.span` of the text shown. */
+  const within = () => {
+    const edit = node;
+    if (model.span === undefined || typeof edit?.setSelectionRange !== 'function') return;
+    const [a, b] = [edit.selectionStart, edit.selectionEnd];
+    if (typeof a !== 'number' || typeof b !== 'number') return;
+    const [lo, hi] = model.span(model.text());
+    const [x, y] = [clamp(a, lo, hi), clamp(b, lo, hi)];
+    if (x !== a || y !== b) edit.setSelectionRange(x, y);
+  };
   const input = (/** @type {{ value: string }} */ e) => {
     const typed = e.value;
     const at = node?.selectionStart;
@@ -183,7 +194,8 @@ export function field(props, model) {
       if (strokes !== mine || node !== edit) return;
       const shown = model.text();
       if (shown === typed) return;
-      const p = clamp(place(typed, at, shown), 0, shown.length);
+      const [lo, hi] = model.span?.(shown) ?? [0, shown.length];
+      const p = clamp(place(typed, at, shown), lo, hi);
       edit.setSelectionRange(p, p);
     };
   };
@@ -197,6 +209,8 @@ export function field(props, model) {
             node = n;
             handOn(ref, n);
           },
+          // A press leaves the caret where it lands (past the suffix, on the free side of the field): it goes into the span.
+          onPointerUp: within,
           onKey: (/** @type {any} */ e) => {
             // An input method's keys are its own: the field's commands (steps, Enter, a cell's Backspace) skip them.
             if (!composing(e)) model.key?.(e);
@@ -222,6 +236,7 @@ export function field(props, model) {
         onSubmit={props.onSubmit}
         onFocus={(/** @type {any} */ e) => {
           $write(focused, true);
+          within();
           model.focus?.(e);
           props.onFocus?.(e);
         }}
@@ -389,6 +404,11 @@ export function NumberInput(props) {
     const [whole, part] = d.slice(sign.length).split('.');
     return `${sign}${f.prefix ?? ''}${grouped(whole.replace(/^0+(?=\d)/, ''), f.groupMark)}${part === undefined ? '' : f.decimalMark + part}${f.suffix ?? ''}`;
   };
+  /** Where the number is in a text shown: after the prefix it starts with, before the suffix it ends with. @param {string} t @param {ReturnType<typeof o>} f @returns {[number, number]} */
+  const span = (t, f) => {
+    const lo = f.prefix && t.startsWith(f.prefix) ? f.prefix.length : 0;
+    return [lo, f.suffix && t.endsWith(f.suffix) ? Math.max(lo, t.length - f.suffix.length) : t.length];
+  };
   const shown = () => {
     const d = $read(draft);
     return d === null ? formatNumber(model.get(), o()) : written(d, o());
@@ -406,6 +426,18 @@ export function NumberInput(props) {
   const input = (/** @type {string} */ next) => {
     const f = o();
     let text = next;
+    // An edit inside or after the suffix is made at the number's end: the suffix stays, what it types follows the
+    // number, and a deletion takes the number's last character.
+    const before = shown();
+    const end = span(before, f)[1];
+    let p = 0;
+    while (p < before.length && p < next.length && before[p] === next[p]) p++;
+    if (p > end && next !== before) {
+      let q = 0;
+      while (q < before.length - p && q < next.length - p && before[before.length - 1 - q] === next[next.length - 1 - q]) q++;
+      const typed = next.slice(p, next.length - q);
+      text = typed === '' ? before.slice(0, end - 1) : before.slice(0, end) + typed;
+    }
     if (f.prefix) text = text.split(f.prefix).join('');
     if (f.suffix) text = text.split(f.suffix).join('');
     if (f.groupMark !== '') text = text.split(f.groupMark).join('');
@@ -495,11 +527,12 @@ export function NumberInput(props) {
           text: shown,
           input,
           blur: settle,
+          span: t => span(t, o()),
           caret: (typed, at, now) => {
             // The caret stays after the same digits.
             const f = o();
             const counted = (/** @type {string} */ ch) => (ch >= '0' && ch <= '9') || ch === '-' || ch === f.decimalMark;
-            const lead = (/** @type {string} */ t) => (f.prefix && t.startsWith(f.prefix) ? f.prefix.length : 0);
+            const lead = (/** @type {string} */ t) => span(t, f)[0];
             return after(now, count(typed.slice(lead(typed), at), counted), counted, lead(now));
           },
           key: e => {

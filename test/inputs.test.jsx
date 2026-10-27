@@ -1738,7 +1738,19 @@ describe('CurrencyInput', () => {
       typeHere(dom, skia, 0, ch);
       return shown()[0];
     });
-    return { s, dom, skia, dispose, shown, keys };
+    /** Backspace at the caret on both, and the text after it. */
+    const back = () => {
+      const node = dom.nodes('Edit')[0];
+      const at = node.selectionStart;
+      node.value = node.value.slice(0, at - 1) + node.value.slice(at);
+      node.setSelectionRange(at - 1, at - 1);
+      node.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+      $flush(dom.root);
+      skia.skia.key('Backspace');
+      $flush(skia.root);
+      return shown()[0];
+    };
+    return { s, dom, skia, dispose, shown, keys, back };
   };
 
   it('keeps the text as typed while focused, writes out the decimals on blur and on a step, and empties', () => {
@@ -1782,20 +1794,9 @@ describe('CurrencyInput', () => {
   });
 
   it('keeps the text Backspace leaves, and what is typed after it', () => {
-    const { s, dom, skia, dispose, shown, keys } = focused({ currency: 'USD', locale: 'en', value: 100, controls: false });
+    const { s, dom, skia, dispose, shown, keys, back } = focused({ currency: 'USD', locale: 'en', value: 100, controls: false });
     assert.deepEqual(shown(), ['$100.00', '$100.00']);
     caretAt(dom, skia, 0, 7);
-    const node = dom.nodes('Edit')[0];
-    const back = () => {
-      const at = node.selectionStart;
-      node.value = node.value.slice(0, at - 1) + node.value.slice(at);
-      node.setSelectionRange(at - 1, at - 1);
-      node.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
-      $flush(dom.root);
-      skia.skia.key('Backspace');
-      $flush(skia.root);
-      return shown()[0];
-    };
     assert.deepEqual([back(), back(), back()], ['$100.0', '$100.', '$100']);
     assert.deepEqual(shown(), ['$100', '$100']);
     assert.deepEqual(keys('5'), ['$1005']);
@@ -1804,6 +1805,32 @@ describe('CurrencyInput', () => {
     assert.deepEqual(s.get(), [1005.5, 1005.5]);
     blur(dom, skia, 0);
     assert.deepEqual(shown(), ['$1005.50', '$1005.50']);
+    dispose();
+  });
+
+  it('keeps the caret before the currency after a refused key, so the next Backspace takes a digit', () => {
+    const { s, dom, skia, dispose, keys, back } = focused({ currency: 'BRL', locale: 'es', display: 'code', controls: false });
+    assert.deepEqual(keys('1,234'), ['1 BRL', '1, BRL', '1,2 BRL', '1,23 BRL', '1,23 BRL'], 'a third decimal refused');
+    assert.deepEqual(carets(dom, skia, 0), [4, 4], 'the caret after the digits, before the code');
+    assert.equal(back(), '1,2 BRL');
+    assert.deepEqual(s.get(), [1.2, 1.2]);
+    dispose();
+  });
+
+  it('takes the caret into the number on focus and on a press past the currency', () => {
+    const { dom, skia, dispose } = focused({ currency: 'EUR', locale: 'es', value: 100, controls: false });
+    // Focused, the caret is before the currency (the text's end on both before the field takes it).
+    assert.deepEqual(carets(dom, skia, 0), [6, 6]);
+    // A press on the field's free right side puts the caret at the text's end, then into the number.
+    caretAt(dom, skia, 0, 8);
+    const node = dom.nodes('Edit')[0];
+    node.dispatchEvent(new dom.window.PointerEvent('pointerup', { bubbles: true, pointerId: 1, buttons: 0 }));
+    $flush(dom.root);
+    const r = items(skia, 4)[0].getBoundingClientRect();
+    skia.skia.press(r.right - 2, r.top + r.height / 2);
+    skia.skia.release(r.right - 2, r.top + r.height / 2);
+    $flush(skia.root);
+    assert.deepEqual(carets(dom, skia, 0), [6, 6]);
     dispose();
   });
 
@@ -1851,10 +1878,10 @@ describe('CurrencyInput typed key by key in every display and language, controll
   /** en's marks swapped for a language that writes 1.234,5. @param {string} locale @param {string} text */
   const local = (locale, text) => (locale === 'en' ? text : text.replace(/[.,]/g, c => (c === '.' ? ',' : '.')));
   /**
-   * The flows, in en's marks: `start` the value before (a Backspace starts from one at rest), `steps` each act (a key
-   * typed, 'Backspace' at the caret, 'ArrowUp') with the digits it shows and the value after it, `rest` the digits
-   * after blur.
-   * @type {{ name: string, start?: number, steps: [string, string, number][], rest: string, value: number }[]}
+   * The flows, in en's marks: `start` the value before (a Backspace starts from one at rest, the caret after its last
+   * digit, or with `end` at the text's very end, after any text after the number), `steps` each act (a key typed,
+   * 'Backspace' at the caret, 'ArrowUp') with the digits it shows and the value after it, `rest` the digits after blur.
+   * @type {{ name: string, start?: number, end?: boolean, steps: [string, string, number][], rest: string, value: number }[]}
    */
   const FLOWS = [
     { name: 'types 150', steps: [['1', '1', 1], ['5', '15', 15], ['0', '150', 150]], rest: '150.00', value: 150 },
@@ -1874,6 +1901,14 @@ describe('CurrencyInput typed key by key in every display and language, controll
       steps: [['Backspace', '100.0', 100], ['Backspace', '100.', 100], ['Backspace', '100', 100], ['5', '1,005', 1005]],
       rest: '1,005.00',
       value: 1005,
+    },
+    {
+      name: "backspaces from the field's end",
+      start: 100,
+      end: true,
+      steps: [['Backspace', '100.0', 100], ['Backspace', '100.', 100], ['5', '100.5', 100.5], ['0', '100.50', 100.5]],
+      rest: '100.50',
+      value: 100.5,
     },
     { name: 'types 12.5, then steps up before blur', steps: [['1', '1', 1], ['2', '12', 12], ['.', '12.', 12], ['5', '12.5', 12.5], ['ArrowUp', '13.00', 13]], rest: '13.00', value: 13 },
   ];
@@ -1897,8 +1932,9 @@ describe('CurrencyInput typed key by key in every display and language, controll
             node.focus();
             items(skia, 4)[0].focus();
             if (flow.start !== undefined) {
-              // The caret after the last digit, before any text after the number.
-              const at = money(locale, display, flow.start, '100.00').length - around(locale, display, flow.start).suffix.length;
+              // The caret after the last digit, before any text after the number; or at the text's very end.
+              const text = money(locale, display, flow.start, '100.00');
+              const at = flow.end ? text.length : text.length - around(locale, display, flow.start).suffix.length;
               caretAt(dom, skia, 0, at);
             }
             let acts = '';
