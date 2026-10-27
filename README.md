@@ -368,7 +368,7 @@ presets and the layers.
 | Rating | amber, size md, `count` 5, `divisions` 1 (whole symbols) |
 | PinInput | length 6, accept 'digits', placeholder '·', gap xs |
 | NumberInput | clamp 'commit' (on blur and Enter), marks from the locale |
-| CurrencyInput | `display` 'symbol' ('narrowSymbol', 'code', 'name', 'none'), placed and spaced as the locale writes money (R$ 12,50; 12,50 €), a name following the amount; the currency's decimals (`currencyDecimals`) unless `decimals` is given; NumberInput's other defaults |
+| CurrencyInput | `display` 'symbol' ('narrowSymbol', 'code', 'name', 'none'), placed and spaced as the locale writes money (R$ 12,50; 12,50 €), a name following the amount; the currency's decimals (`currencyDecimals`) unless `decimals` is given, always written out (`fixedDecimals` true; false: as the number is); NumberInput's other defaults |
 | Combobox panels (height) | panelHeight 280 |
 | Select, MultiSelect lightbox | the theme's `control.lightbox` (null: never; a breakpoint key below which the options open in a centered lightbox titled by the field's label), a filter there past `control.typeahead` (10) options or for a searchable Select, a MultiSelect's Done; the options' height the viewport's less `sizes.box.boxed` (240), at least `panel` |
 | Combobox lists | as high as their options up to `panelHeight` (a ScrollBox.Fit), scrolling down only, without bars; an option's label too wide for the panel ends with an ellipsis (its full text still its name) |
