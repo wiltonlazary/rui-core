@@ -212,7 +212,9 @@ export function field(props, model) {
             handOn(ref, n);
           },
           // A press leaves the caret where it lands (past the suffix, on the free side of the field): it goes into the span.
+          // A touch's tap places it after its pointerup, so its click takes it into the span too.
           onPointerUp: within,
+          onPress: within,
           onKey: (/** @type {any} */ e) => {
             // An input method's keys are its own: the field's commands (steps, Enter, a cell's Backspace) skip them.
             if (!composing(e)) model.key?.(e);

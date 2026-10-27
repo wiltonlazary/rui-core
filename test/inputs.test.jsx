@@ -1865,6 +1865,24 @@ describe('CurrencyInput', () => {
     dispose();
   });
 
+  it('takes the caret into the number after a touch, whose tap places it after its pointerup', () => {
+    const { dom, skia, dispose } = focused({ currency: 'EUR', locale: 'es', value: 100, controls: false });
+    // The DOM's tap: pointerup, then the caret placed at the text's end, then the click.
+    const node = dom.nodes('Edit')[0];
+    node.dispatchEvent(new dom.window.PointerEvent('pointerup', { bubbles: true, pointerId: 1, pointerType: 'touch', buttons: 0 }));
+    $flush(dom.root);
+    node.setSelectionRange(8, 8);
+    node.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
+    $flush(dom.root);
+    // Skia's tap places the caret on the press, before its release.
+    const r = items(skia, 4)[0].getBoundingClientRect();
+    skia.skia.press(r.right - 2, r.top + r.height / 2);
+    skia.skia.release(r.right - 2, r.top + r.height / 2);
+    $flush(skia.root);
+    assert.deepEqual(carets(dom, skia, 0), [6, 6]);
+    dispose();
+  });
+
   it('writes a typed minus before the currency, as at rest', () => {
     const { s, dom, skia, dispose, keys, shown } = focused({ currency: 'USD', locale: 'en', controls: false });
     assert.deepEqual(keys('-5'), ['-$', '-$5']);
