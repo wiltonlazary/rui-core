@@ -46,7 +46,8 @@ const effectOf = position => (position.startsWith('top') ? EFFECTS.sink : EFFECT
  * `loading`, `closable`, `radius`, `style`); its
  * close button hides it, `onShow` runs once it is shown and `onHide` once
  * it is hidden. The look: each place's stack stands a `spacing.lg` step in
- * from its edge and side, its notifications a `spacing.sm` step apart; one
+ * from its edge and side, its notifications a `spacing.sm` step apart and
+ * narrowed to fit a viewport narrower than `width`; one
  * enters fading in as it sinks from a short step above (a top place) or
  * rises from one below (a bottom place), and leaves the same way back.
  * @param {Record<string, any>} props
@@ -89,15 +90,19 @@ export function Notifications(props) {
   const stack = (/** @type {NotificationPlace} */ position) => {
     const [edge, side] = position.split('-');
     // Fixed at its edge of the viewport, a `spacing.lg` step in from the
-    // edge and the side; the notifications a `spacing.sm` step apart, the
-    // newest last (at a bottom position, nearest the edge), in the store's order.
+    // edge and the side; across the viewport (a `spacing.lg` step in from
+    // both sides at a side), so a notification narrows to fit it, and the
+    // pointer passes through where none is. The notifications a
+    // `spacing.sm` step apart, the newest last (at a bottom position,
+    // nearest the edge), in the store's order.
     const style = styled({}, theme => ({
       position: 'fixed',
       [edge]: theme.spacing.lg,
-      ...(side === 'center' ? { left: 0, right: 0, align: 'center' } : { [side === 'start' ? 'left' : 'right']: theme.spacing.lg, align: 'stretch' }),
+      ...(side === 'center' ? { left: 0, right: 0, align: 'center' } : { left: theme.spacing.lg, right: theme.spacing.lg, align: side }),
       direction: 'column',
       gap: theme.spacing.sm,
       zIndex: read(props.layer) ?? LAYERS.toast,
+      pointerEvents: 'none',
     }));
     const mine = () => /** @type {Row[]} */ ($read(rows)).filter(r => placeOf(r.data) === position);
     return (
@@ -171,6 +176,7 @@ function Item(p) {
       position: 'relative',
       width: read(p.props.width) ?? theme.sizes.box.toast,
       maxWidth: '100%',
+      pointerEvents: 'auto',
       // Leaving: its height, measured as it started to leave, runs down to 0 with the transition.
       ...(p.row().leaving && h > 0 ? { height: Math.max(0, h * q), minHeight: 0, overflow: 'hidden', shrink: 0 } : null),
       ...transitionStyle(q, effectOf(p.position), theme),

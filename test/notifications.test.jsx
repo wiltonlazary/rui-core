@@ -7,7 +7,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { $root, $flush } from 'rrx-core';
 import { $active, View } from 'ren-core';
-import { Rui, Clock, manualClock, Text } from 'rui-core';
+import { Rui, Clock, manualClock, Text, Button } from 'rui-core';
 import * as notifications from 'rui-core/notifications';
 import { Notifications, $notifications, notificationsStore, NOTIFICATION_PLACES } from 'rui-core/notifications';
 import { both } from './harness.jsx';
@@ -415,6 +415,46 @@ describe('Notifications', () => {
     const opacity = Number(wrapper.style.opacity);
     assert.ok(opacity > 0 && opacity < 1, `fading in: ${opacity}`);
     assert.ok(Math.abs(s.find('Up').parent.parent.parent.r.opacity - opacity) < 0.01, 'the same on Skia');
+    dispose();
+  });
+
+  it('keeps each place\'s notifications within a viewport narrower than one, across it', () => {
+    const clock = manualClock();
+    const st = stores();
+    const { d, s, flush, dispose } = pair(app(clock, { timeout: false }, () => <st.Grab />), { width: 320, height: 600 });
+    for (const store of st.list) for (const at of NOTIFICATION_PLACES) store.show({ title: at, at });
+    clock.advance(300);
+    flush();
+    for (const at of NOTIFICATION_PLACES) {
+      const box = s.box(s.find(at).parent.parent.parent);
+      assert.ok(box.x >= 0 && box.x + box.width <= 320, `${at} within the viewport on Skia: ${box.x}..${box.x + box.width}`);
+      const wrapper = d.all('[data-ren="Label"]').find(n => n.textContent === at).parentElement.parentElement.parentElement;
+      const stack = wrapper.parentElement;
+      const sides = at.endsWith('center') ? ['0px', '0px'] : ['24px', '24px'];
+      assert.deepEqual([stack.style.left, stack.style.right, stack.style.pointerEvents, wrapper.style.maxWidth, wrapper.style.pointerEvents], [...sides, 'none', '100%', 'auto'], `${at} across the viewport on the DOM`);
+    }
+    dispose();
+  });
+
+  it('lets a press beside a notification reach the page under its place', () => {
+    const clock = manualClock();
+    const st = stores();
+    /** @type {number[]} */
+    const pressed = [];
+    const { skia, s, flush, dispose } = pair(app(clock, { at: 'top-end', timeout: false }, () => [<st.Grab />, <View style={{ direction: 'row' }}><Button onPress={() => pressed.push(1)}>Under</Button></View>]), { width: 480, height: 600 });
+    for (const store of st.list) store.show({ title: 'Beside', text: 'one\ntwo\nthree' });
+    clock.advance(300);
+    flush();
+    const under = s.box(s.find('Under'));
+    const note = s.box(s.find('Beside').parent.parent.parent);
+    // a point of the button left of the notification, within its row
+    const x = under.x + under.width / 2;
+    const y = (Math.max(under.y, note.y) + Math.min(under.y + under.height, note.y + note.height)) / 2;
+    assert.ok(x < note.x - 24 && y > note.y && y < note.y + note.height && y > under.y && y < under.y + under.height, `beside it, in its row: ${x},${y} ${JSON.stringify(note)}`);
+    skia.skia.press(x, y);
+    skia.skia.release(x, y);
+    flush();
+    assert.deepEqual(pressed, [1], 'the press reached the page on Skia');
     dispose();
   });
 
