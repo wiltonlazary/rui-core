@@ -350,6 +350,16 @@ describe('rui-core components on the DOM and on Skia', () => {
     dispose();
   });
 
+  it('line a Pressable\'s text up at the start, not at a DOM button\'s center', () => {
+    const { dom, dispose } = both(() => (
+      <Rui>
+        <Pressable>plain</Pressable>
+      </Rui>
+    ));
+    assert.equal(dom.nodes('Action')[0].style.textAlign, 'start');
+    dispose();
+  });
+
   it('pass a caller\'s data-* props on, as a Box does', () => {
     const { dom, skia, dispose } = both(() => (
       <Rui>

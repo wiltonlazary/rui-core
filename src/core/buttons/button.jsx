@@ -141,8 +141,8 @@ function reserved(text, reserve) {
 /** A press area with no style of its own: `onPress`, `onKey`. @param {Record<string, any>} props */
 export function Pressable(props) {
   const trigger = $lookup(TriggerMeaning);
-  // The page's text color: a DOM button does not inherit one.
-  const style = styled(props, (theme, scheme) => ({ background: 'transparent', color: pageColors(theme, scheme).text, border: 0, padding: 0, ...pressLook(theme) }));
+  // The page's text color and text at the start, not a DOM button's own (centered).
+  const style = styled(props, (theme, scheme) => ({ background: 'transparent', color: pageColors(theme, scheme).text, textAlign: 'start', border: 0, padding: 0, ...pressLook(theme) }));
   const onPress = pressOf(props);
   if (textual(props.children)) return <Action ref={props.ref} text={props.children} label={props.label} {...trigger} {...marks(props)} onPress={onPress} onKey={props.onKey} style={style} />;
   return (
