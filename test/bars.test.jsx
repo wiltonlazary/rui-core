@@ -135,6 +135,20 @@ describe('Bars on the DOM and on Skia', () => {
     r.dispose();
   });
 
+  it('wraps a long label within its row and keeps the value whole beside it', () => {
+    const long = 'Maintenance of the beach apartment and its shared garden'.padEnd(60, '.');
+    const r = render({ w: 320, data: [{ label: long, value: 123456 }], format: (/** @type {number} */ v) => `$ ${v.toLocaleString('en-US')}.00 · 100%` });
+    const { line } = r.parts[0];
+    const [label, value] = [...line.children];
+    const row = r.box(line);
+    const [lb, vb] = [r.box(label), r.box(value)];
+    assert.ok(vb.right <= row.right + 0.5 && lb.right <= vb.x, `the value inside the row, after the label: ${JSON.stringify({ row, lb, vb })}`);
+    assert.ok(vb.width >= '$ 123,456.00 · 100%'.length * 6, `the value whole: ${vb.width}`);
+    assert.ok(lb.height > t.lineHeights.sm * t.fontSizes.sm, `the label on more lines: ${lb.height}`);
+    assert.deepEqual([label.style.flexShrink, label.style.minWidth, value.style.flexShrink], ['1', '0px', '0']);
+    r.dispose();
+  });
+
   it('means a list of items, each a name and its raw value', () => {
     const r = render({ 'aria-label': 'Downloads', format: (/** @type {number} */ v) => `${v} dl` });
     assert.equal(r.list.getAttribute('aria-label'), 'Downloads');

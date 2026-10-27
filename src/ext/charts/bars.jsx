@@ -1,6 +1,6 @@
 // Bars: a list of labeled amounts, each a line of text (the label at the
-// start, its value at the end) over a thin track filled by its share of
-// the largest. No text sits on a bar, so any fill color reads.
+// start, wrapping within the room the value leaves; the value whole at the
+// end) over a thin track filled by its share of the largest. No text sits on a bar, so any fill color reads.
 
 import { View, Label, Action, For, Show, read } from 'ren-core';
 import { $ui } from '../../theme/theme.jsx';
@@ -75,8 +75,8 @@ export function Bars(props) {
           const gap = () => ({ gap: ui.theme().control.labelGap });
           const body = [
               <View style={line}>
-                <Label itemprop="name" text={() => String(item().label ?? '')} style={text('text', 'regular', 'sm')} />
-                <Label itemprop="value" content={() => /** @type {any} */ (fieldsOf(item()).value)} text={() => format(item().value)} style={text('text', 'strong', 'sm')} />
+                <Label itemprop="name" text={() => String(item().label ?? '')} style={() => ({ ...text('text', 'regular', 'sm')(), wrap: true, shrink: 1, minWidth: 0 })} />
+                <Label itemprop="value" content={() => /** @type {any} */ (fieldsOf(item()).value)} text={() => format(item().value)} style={() => ({ ...text('text', 'strong', 'sm')(), shrink: 0 })} />
               </View>,
               <View
                 style={() => {
