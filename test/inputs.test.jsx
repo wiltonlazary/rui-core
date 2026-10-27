@@ -1834,6 +1834,37 @@ describe('CurrencyInput', () => {
     dispose();
   });
 
+  /** Delete at the caret on both. @param {any} dom @param {any} skia */
+  const del = (dom, skia) => {
+    const node = dom.nodes('Edit')[0];
+    const at = node.selectionStart;
+    node.value = node.value.slice(0, at) + node.value.slice(at + 1);
+    node.setSelectionRange(at, at);
+    node.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+    $flush(dom.root);
+    skia.skia.key('Delete');
+    $flush(skia.root);
+  };
+
+  it('keeps the caret where a refused key inside the number started', () => {
+    const { s, dom, skia, dispose, shown, keys, back } = focused({ currency: 'EUR', locale: 'es', value: 120.5, controls: false });
+    assert.deepEqual(shown(), ['120,50 €', '120,50 €']);
+    // Before the cents, a third decimal is refused: the caret stays before them, and Delete takes the 5.
+    caretAt(dom, skia, 0, 4);
+    assert.deepEqual(keys('9'), ['120,50 €']);
+    assert.deepEqual(carets(dom, skia, 0), [4, 4]);
+    del(dom, skia);
+    assert.deepEqual(shown(), ['120,0 €', '120,0 €']);
+    assert.deepEqual(s.get(), [120, 120]);
+    // After the 1, a second decimal mark is refused: Backspace then takes the 1.
+    caretAt(dom, skia, 0, 1);
+    assert.deepEqual(keys(','), ['120,0 €']);
+    assert.deepEqual(carets(dom, skia, 0), [1, 1]);
+    assert.equal(back(), '20,0 €');
+    assert.deepEqual(s.get(), [20, 20]);
+    dispose();
+  });
+
   it('writes a typed minus before the currency, as at rest', () => {
     const { s, dom, skia, dispose, keys, shown } = focused({ currency: 'USD', locale: 'en', controls: false });
     assert.deepEqual(keys('-5'), ['-$', '-$5']);

@@ -183,6 +183,7 @@ export function field(props, model) {
   const input = (/** @type {{ value: string }} */ e) => {
     const typed = e.value;
     const at = node?.selectionStart;
+    const before = model.text();
     strokes++;
     model.input(typed);
     const place = model.caret;
@@ -195,7 +196,8 @@ export function field(props, model) {
       const shown = model.text();
       if (shown === typed) return;
       const [lo, hi] = model.span?.(shown) ?? [0, shown.length];
-      const p = clamp(place(typed, at, shown), lo, hi);
+      // A refused key leaves the text as it was: the caret goes back to where the key started.
+      const p = clamp(shown === before ? at - Math.max(0, typed.length - before.length) : place(typed, at, shown), lo, hi);
       edit.setSelectionRange(p, p);
     };
   };
