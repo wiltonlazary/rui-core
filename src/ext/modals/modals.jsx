@@ -137,7 +137,8 @@ export function Modals(props) {
 const answers = bare => styled({}, theme => ({ direction: 'column', gap: theme.spacing.xs, margin: [bare ? 0 : theme.spacing.md, 0, 0, 0] }));
 
 /**
- * One shown modal as a Modal, its title and content following updates.
+ * One shown modal as a Modal, its title and content following updates;
+ * text content wraps within it.
  * @param {{ entry: () => ModalRecord, api: Modals, host: Record<string, any>, list: any, remove: (id: string) => void, answer: (id: string, yes: boolean) => void }} p
  */
 function Entry(p) {
@@ -165,7 +166,7 @@ function Entry(p) {
     const Component = ownValue(read(p.host.named), /** @type {string} */ (first.modal));
     if (Component === undefined) throw new Error(`RUI: no named modal "${first.modal}" in <Modals named>`);
     body = () => <Component id={id} data={$read(inner)} hide={() => p.api.hide(id)} />;
-  } else body = () => textOf($read(content));
+  } else body = () => textOf($read(content), { wrap: true });
   const words = () => ({ yes: 'Yes', no: 'No', ...read(p.host.labels), ...$read(named) });
   const said = first.kind === 'ask' ? text : children;
   return (

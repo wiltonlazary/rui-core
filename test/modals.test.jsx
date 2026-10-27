@@ -19,9 +19,9 @@ function hidden(node) {
   return false;
 }
 
-/** The view on both renderers, seeing the portal layer. @param {() => any} view */
-function pair(view) {
-  const { dom, skia, dispose } = both(view);
+/** The view on both renderers, seeing the portal layer. @param {() => any} view @param {{ width?: number, height?: number }} [size] */
+function pair(view, size) {
+  const { dom, skia, dispose } = both(view, size);
   const body = dom.document.body;
   const flush = () => {
     $flush(dom.root);
@@ -85,9 +85,9 @@ function pair(view) {
 /**
  * A page with a <Modals>, its API captured per root, and a button
  * that runs `act(api)`.
- * @param {any} clock @param {Record<string, any>} host @param {(api: import('rui-core/modals').Modals) => void} act
+ * @param {any} clock @param {Record<string, any>} host @param {(api: import('rui-core/modals').Modals) => void} act @param {{ width?: number, height?: number }} [size]
  */
-function setup(clock, host, act) {
+function setup(clock, host, act, size) {
   /** @type {import('rui-core/modals').Modals[]} */
   const apis = [];
   const Page = () => {
@@ -109,7 +109,7 @@ function setup(clock, host, act) {
       </Rui>
     </Clock>
   );
-  const p = pair(view);
+  const p = pair(view, size);
   const settle = () => {
     clock.advance(250);
     p.flush();
@@ -181,6 +181,19 @@ describe('Modals', () => {
     t.settle();
     assert.deepEqual(await Promise.all(asked.slice(6)), [false, false], 'a hide answers no');
     assert.deepEqual(t.texts(), ['Go page', 'Go page']);
+    t.dispose();
+  });
+
+  it('wraps a long text within the modal, on Skia and on the DOM', () => {
+    const TEXT = 'Its history, balances and reports stay as they are';
+    const clock = manualClock();
+    const t = setup(clock, {}, api => void api.ask({ title: 'Leave?', text: TEXT }), { width: 240, height: 400 });
+    t.go();
+    t.skia.skia.present();
+    const lines = t.skia.skia.commands().filter((/** @type {any[]} */ c) => c[0] === 'text' && TEXT.includes(String(c[1]).trim())).map((/** @type {any[]} */ c) => c[1]);
+    assert.ok(lines.length > 1, `in lines on Skia: ${lines}`);
+    const label = /** @type {any} */ ([...t.dom.document.querySelectorAll('[data-ren="Label"]')].find(n => n.textContent === TEXT));
+    assert.equal(label.style.whiteSpace, 'pre-wrap', 'on the DOM');
     t.dispose();
   });
 
