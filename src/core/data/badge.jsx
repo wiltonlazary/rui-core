@@ -18,7 +18,8 @@ export const textual = children => typeof children === 'string' || typeof childr
  * default: a tag, not a pill), `start`, `end`, `round` (a circle as wide
  * as high), `stretch`; its text
  * shows in upper case (`textTransform`: the data keeps it as
- * written).
+ * written). It is never wider than its parent: a text that does not fit
+ * ends with an ellipsis.
  * @param {Record<string, any>} props
  */
 export function Badge(props) {
@@ -37,7 +38,8 @@ export function Badge(props) {
       justify: 'center',
       gap: theme.spacing.xs / 2,
       height: h,
-      minWidth: round ? h : undefined,
+      minWidth: round ? h : 0,
+      maxWidth: '100%',
       width: round ? h : read(props.stretch) ? '100%' : undefined,
       padding: [0, round ? 0 : Math.round(h * theme.ratios.inset)],
       radius: round ? theme.radius.round : radiusOf(theme, read(props.radius) ?? 'sm'),
@@ -65,7 +67,7 @@ export function Badge(props) {
     <View {...pass(props)} style={style}>
       {() => (read(props.variant) === 'dot' ? dot() : null)}
       {props.start}
-      {textual(props.children) ? <Label text={() => String(read(props.children) ?? '')} /> : props.children}
+      {textual(props.children) ? <Label text={() => String(read(props.children) ?? '')} ellipsis style={{ minWidth: 0 }} /> : props.children}
       {props.end}
     </View>
   );

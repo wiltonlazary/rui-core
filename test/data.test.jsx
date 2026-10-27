@@ -801,6 +801,23 @@ describe('rui-core data display: rui\'s own defaults', () => {
     dispose();
   });
 
+  it('Badge: never wider than its parent, a text that does not fit ending with an ellipsis', () => {
+    const { dom, skia, dispose } = both(() => (
+      <Rui>
+        <Stack w={80} align="start">
+          <Badge>a much longer badge text</Badge>
+        </Stack>
+      </Rui>
+    ));
+    assert.equal(skia.text(), 'A MUCH…');
+    const badge = skia.skia.commands().find((/** @type {any[]} */ c) => c[0] === 'round');
+    assert.equal(badge[3], 80, 'as wide as its parent on Skia');
+    const view = dom.nodes('Label').find((/** @type {any} */ n) => n.textContent === 'a much longer badge text');
+    assert.deepEqual([view.parentElement.style.maxWidth, view.parentElement.style.minWidth], ['100%', '0px'], 'at most its parent\'s width on the DOM');
+    assert.deepEqual([view.style.textOverflow, view.style.whiteSpace], ['ellipsis', 'pre']);
+    dispose();
+  });
+
   it('Card.Media sits across the card\'s top; DataList.Term and DataList.Detail pair up', () => {
     const { dom, skia, dispose } = both(() => (
       <Rui>
