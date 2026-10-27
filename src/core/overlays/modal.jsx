@@ -439,13 +439,14 @@ export function ModalHeader(props) {
 
 /**
  * The title (Modal.Title): large and bold, filling the header's
- * row, a `heading` (level 2); its text also names the content.
+ * row beside the close button and wrapping within it, a `heading`
+ * (level 2); its text also names the content.
  * @param {Record<string, any>} props
  */
 export function ModalTitle(props) {
   const c = $part();
   c.named = props.children;
-  const style = styled(props, theme => ({ fontSize: theme.fontSizes.lg, fontWeight: theme.headings.weight, lineHeight: theme.lineHeights.xs, grow: 1 }));
+  const style = styled(props, theme => ({ fontSize: theme.fontSizes.lg, fontWeight: theme.headings.weight, lineHeight: theme.lineHeights.xs, grow: 1, minWidth: 0, wrap: true }));
   return typeof props.children === 'string' || typeof props.children === 'function' || typeof props.children === 'number' ? (
     <Label role="heading" aria-level={2} text={props.children} style={style} />
   ) : (

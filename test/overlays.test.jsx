@@ -434,6 +434,22 @@ describe('Modal', () => {
     dispose();
   });
 
+  it('wraps a long title within the header, beside the close button', () => {
+    const { dom, skia, dispose } = both(() => (
+      <Rui>
+        <Modal open onOpenChange={() => {}} title="Repairs and upkeep of the beach house" full motion={{ duration: 0 }}>
+          <Text>body</Text>
+        </Modal>
+      </Rui>
+    ), { width: 240, height: 400 });
+    assert.equal(skia.text(), 'Repairs and upkeep of the beach house body');
+    const lines = skia.skia.commands().filter((/** @type {any[]} */ c) => c[0] === 'text' && c[1] !== 'body');
+    assert.ok(lines.length > 1, `on Skia, in lines: ${lines.map((/** @type {any[]} */ c) => c[1])}`);
+    const title = dom.document.querySelector('[role="heading"]');
+    assert.deepEqual([title.style.whiteSpace, title.style.minWidth], ['pre-wrap', '0px'], 'on the DOM');
+    dispose();
+  });
+
   it('closes by a press on the backdrop, not on its content (DOM)', () => {
     const { d, dom, open, isOpen, dispose } = setup();
     open();
