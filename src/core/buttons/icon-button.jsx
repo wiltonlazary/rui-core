@@ -72,7 +72,7 @@ export function IconButton(props) {
     press?.(e);
   };
   return (
-    <Action ref={props.ref} label={props.label} {...$lookup(TriggerMeaning)} {...marks(props)} aria-disabled={flag(() => read(props.disabled) || read(props.loading))} onPress={onPress} onKey={props.onKey} style={style}>
+    <Action ref={props.ref} label={props.label} {...$lookup(TriggerMeaning)} {...marks(props)} aria-disabled={flag(() => read(props.disabled) || read(props.loading))} aria-busy={flag(() => read(props.loading))} onPress={onPress} onKey={props.onKey} style={style}>
       <Show when={() => read(props.loading) === true} fallback={unjoined(props.children)}>
         <Loader size={() => Math.round(size() * ui.theme().ratios.icon)} color={() => colors().color} />
       </Show>

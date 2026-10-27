@@ -97,14 +97,14 @@ export function Button(props) {
   const sections = props.start !== undefined || props.end !== undefined;
   const reserving = props.reserve !== undefined && textual(props.children);
   if (!sections && !reserving && textual(props.children))
-    return <Action ref={props.ref} text={props.children} label={props.label} {...trigger} {...marks(props)} aria-disabled={flag(() => read(props.disabled) || read(props.loading))} onPress={onPress} onKey={props.onKey} style={style} />;
+    return <Action ref={props.ref} text={props.children} label={props.label} {...trigger} {...marks(props)} aria-disabled={flag(() => read(props.disabled) || read(props.loading))} aria-busy={flag(() => read(props.loading))} onPress={onPress} onKey={props.onKey} style={style} />;
   return (
     <Action
       ref={props.ref}
       label={reserving ? () => read(props.label) ?? String(read(props.children)) : props.label}
       {...trigger}
       {...marks(props)}
-      aria-disabled={flag(() => read(props.disabled) || read(props.loading))}
+      aria-disabled={flag(() => read(props.disabled) || read(props.loading))} aria-busy={flag(() => read(props.loading))}
       onPress={onPress}
       onKey={props.onKey}
       style={style}

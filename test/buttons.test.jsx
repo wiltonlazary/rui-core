@@ -272,6 +272,28 @@ describe('Button modifiers', () => {
     dispose();
   });
 
+  it('a loading button says it is busy, for assistive technology too', () => {
+    /** @type {any[]} */
+    const loading = [];
+    const { dom, dispose } = both(() => {
+      const busy = $signal($active(), false);
+      loading.push(busy);
+      return (
+        <Rui>
+          <Button loading={busy}>Save</Button>
+          <Button loading={busy} start={<CheckIcon />}>Save all</Button>
+          <IconButton label="add" loading={busy}><CheckIcon /></IconButton>
+        </Rui>
+      );
+    });
+    const busyOf = () => dom.nodes('Action').map((/** @type {any} */ n) => n.getAttribute('aria-busy'));
+    assert.deepEqual(busyOf(), [null, null, null]);
+    for (const busy of loading) $write(busy, true);
+    $flush(dom.root);
+    assert.deepEqual(busyOf(), ['true', 'true', 'true']);
+    dispose();
+  });
+
   it('heights from the theme: sizes.control, sizes.dense when dense, on both renderers', () => {
     const theme = themeOf({ sizes: { control: { md: 40 }, dense: { md: 20 } } });
     const { dom, skia, dispose } = both(() => (
