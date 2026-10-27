@@ -818,6 +818,26 @@ describe('rui-core data display: rui\'s own defaults', () => {
     dispose();
   });
 
+  it('Badge: shrinks in a row it does not fit, its text ending with an ellipsis; a round one keeps its size', () => {
+    const { dom, skia, dispose } = both(() => (
+      <Rui>
+        <Row w={160} wrap={false} gap={0}>
+          <Text style={{ wrap: false, shrink: 0 }}>title</Text>
+          <Badge round>9</Badge>
+          <Badge>a much longer badge text</Badge>
+        </Row>
+      </Rui>
+    ));
+    // a fill's left, top, right and bottom
+    const rounds = skia.skia.commands().filter((/** @type {any[]} */ c) => c[0] === 'round');
+    assert.match(skia.text(), /^title 9 A MUCH [A-Z ]*…$/);
+    assert.equal(rounds[0][3] - rounds[0][1], 22, 'the round one as wide as high');
+    assert.ok(rounds[1][3] <= 160, `the long one within the row: ${rounds[1]}`);
+    const view = dom.nodes('Label').find((/** @type {any} */ n) => n.textContent === 'a much longer badge text');
+    assert.equal(view.parentElement.style.flexShrink, '1');
+    dispose();
+  });
+
   it('Card.Media sits across the card\'s top; DataList.Term and DataList.Detail pair up', () => {
     const { dom, skia, dispose } = both(() => (
       <Rui>
