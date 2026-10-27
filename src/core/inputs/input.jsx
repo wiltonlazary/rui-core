@@ -534,7 +534,8 @@ export const currencyDecimals = currency => new Intl.NumberFormat('en', { style:
 /**
  * A field for an amount of money: NumberInput with `currency` (an ISO code) shown as `display` ('symbol' by default,
  * 'narrowSymbol', 'code', 'name' or 'none') on the side and with the spacing `locale` writes money with (R$ 12,50;
- * 12,50 €), the currency's decimals unless `decimals` is given, and NumberInput's other props.
+ * 12,50 €), the currency's decimals unless `decimals` is given, always written out (R$ 12,50, not R$ 12,5) unless
+ * `fixedDecimals` is false, and NumberInput's other props.
  * @param {Record<string, any>} props
  */
 export function CurrencyInput(props) {
@@ -544,7 +545,7 @@ export function CurrencyInput(props) {
     return typeof v === 'number' && Number.isFinite(v) ? v : 2;
   };
   const affixes = () => currencyAffixes(read(props.currency), read(props.locale), read(props.display) ?? 'symbol', amount());
-  return <NumberInput decimals={() => currencyDecimals(read(props.currency))} {...props} prefix={() => affixes().prefix} suffix={() => affixes().suffix} />;
+  return <NumberInput decimals={() => currencyDecimals(read(props.currency))} {...props} fixedDecimals={() => read(props.fixedDecimals) !== false} prefix={() => affixes().prefix} suffix={() => affixes().suffix} />;
 }
 
 // ---------------------------------------------------------------------------

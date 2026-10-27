@@ -1696,14 +1696,15 @@ describe('CurrencyInput', () => {
     assert.equal(currencyDecimals('JPY'), 0);
   });
 
-  it('shows its amount with the currency on both renderers; none shows the number alone', () => {
+  it('shows its amount with the currency and all its decimals on both renderers; none shows the number alone', () => {
     const view = () => (
       <Rui>
         <Stack>
-          <CurrencyInput label="Paid" currency="BRL" locale="pt-BR" defaultValue={12.5} fixedDecimals controls={false} />
-          <CurrencyInput label="Rate" currency="EUR" locale="de" defaultValue={3} fixedDecimals controls={false} />
-          <CurrencyInput label="Plain" currency="BRL" locale="pt-BR" display="none" defaultValue={7} fixedDecimals controls={false} />
+          <CurrencyInput label="Paid" currency="BRL" locale="pt-BR" defaultValue={12.5} controls={false} />
+          <CurrencyInput label="Rate" currency="EUR" locale="de" defaultValue={3} controls={false} />
+          <CurrencyInput label="Plain" currency="BRL" locale="pt-BR" display="none" defaultValue={7} controls={false} />
           <CurrencyInput label="Yen" currency="JPY" locale="en" display="code" defaultValue={1200} controls={false} />
+          <CurrencyInput label="Loose" currency="BRL" locale="pt-BR" defaultValue={12.5} fixedDecimals={false} controls={false} />
         </Stack>
       </Rui>
     );
@@ -1713,6 +1714,7 @@ describe('CurrencyInput', () => {
     assert.deepEqual(shown(1), ['3,00 €', '3,00 €'], 'after the number in German');
     assert.deepEqual(shown(2), ['7,00', '7,00'], 'none: the number alone');
     assert.deepEqual(shown(3), ['JPY 1200', 'JPY 1200'], 'the code; no decimals for the yen');
+    assert.deepEqual(shown(4), ['R$ 12,5', 'R$ 12,5'], 'fixedDecimals false: as the number is');
     dispose();
   });
 });
