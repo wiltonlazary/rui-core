@@ -273,6 +273,21 @@ describe('Stepper', () => {
     assert.equal(narrow(true), true);
   });
 
+  it('wraps a long description within the room, on both', () => {
+    const NOTE = 'Reserve the seats on the night train before they sell out';
+    for (const orientation of ['vertical', 'horizontal']) {
+      const { dom, skia, dispose } = both(trip({ orientation }, { stage: [{ description: NOTE }] }), { width: 240, height: 600 });
+      skia.text();
+      const lines = skia.skia.commands().filter((/** @type {any[]} */ c) => c[0] === 'text' && NOTE.includes(String(c[1]).trim())).map((/** @type {any[]} */ c) => c[1]);
+      assert.ok(lines.length > 1, `${orientation}: in lines on Skia: ${lines}`);
+      const box = items(skia, KIND.Label).find(i => i.text === NOTE).getBoundingClientRect();
+      assert.ok(box.x >= 0 && box.x + box.width <= 240.5, `${orientation}: within the room on Skia: ${box.x}..${box.x + box.width}`);
+      const label = /** @type {any} */ ([...dom.host.querySelectorAll('[data-ren="Label"]')].find(n => n.textContent === NOTE));
+      assert.equal(label.style.whiteSpace, 'pre-wrap', `${orientation}: on the DOM`);
+      dispose();
+    }
+  });
+
   it('means a list of listitems, the current aria-current step, buttons only where pressable', async () => {
     const out = await $json(() => (
       <Rui>

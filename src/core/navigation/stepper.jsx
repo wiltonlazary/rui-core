@@ -109,7 +109,7 @@ export function Stepper(props) {
       return { fontSize: glyph(), fontWeight: theme.weights.bold, lineHeight: 1, color, wrap: false };
     });
     const labelStyle = styled({}, (theme, scheme) => ({ fontSize: sized(theme.fontSizes, read(props.size)), fontWeight: theme.weights.strong, color: pageColors(theme, scheme).text }));
-    const noteStyle = styled({}, (theme, scheme) => ({ fontSize: fontBelow(theme, read(props.size) ?? 'md'), color: pageColors(theme, scheme).quiet }));
+    const noteStyle = styled({}, (theme, scheme) => ({ fontSize: fontBelow(theme, read(props.size) ?? 'md'), color: pageColors(theme, scheme).quiet, wrap: true }));
     const check = () => {
       const mark = stage.doneIcon ?? props.doneIcon;
       if (mark != null) return textual(mark) ? <Label text={mark} style={numberStyle} /> : mark;
@@ -196,9 +196,9 @@ export function Stepper(props) {
 }
 
 /**
- * A stage: `label`, `description`, `icon` (in place of its number),
- * `doneIcon`, `loading`, `color`, `disabled` (never pressed, dimmed); its
- * children show while it is current.
+ * A stage: `label`, `description` (wrapping within its room), `icon` (in
+ * place of its number), `doneIcon`, `loading`, `color`, `disabled` (never
+ * pressed, dimmed); its children show while it is current.
  * @param {Record<string, any>} _props
  * @returns {null}
  */
