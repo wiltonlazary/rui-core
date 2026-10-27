@@ -5,7 +5,7 @@ import { $ui } from '../../theme/theme.jsx';
 import { styled } from '../../theme/style.js';
 import { linearScale, valueAxis, num } from './scale.js';
 import { dashPattern, dashedLine } from './path.js';
-import { chartColors, tint, $chartWidth, Placed, Legend, Tip, beside, labelGap, charsWide, QUARTER, pointIn, rootProps, ChartData, datasetOf, legendAt, LEGEND_AT, shiftTip, $chartPadding } from './shared.jsx';
+import { chartColors, tint, $chartWidth, Placed, Legend, Tip, beside, labelGap, charsWide, axisWide, QUARTER, pointIn, rootProps, ChartData, datasetOf, legendAt, LEGEND_AT, shiftTip, $chartPadding } from './shared.jsx';
 import { partOf } from '../../core/overlays/shared.jsx';
 
 /** @typedef {import('./path.js').Figure} Figure */
@@ -52,13 +52,6 @@ export function scatterModel(props, theme, scheme, width, height) {
   // The axis titles: the x one under its ticks, the y one turned along the left edge.
   const xTitle = withX && xProps.title != null ? String(xProps.title) : null;
   const yTitle = withY && yProps.title != null ? String(yProps.title) : null;
-  const left = withY ? Number(yProps.width ?? theme.chart.axisWidth) : 0;
-  const { top, right } = theme.chart.frame;
-  // A tick label's gap from its tick (and a title's from the tick labels);
-  // the x axis takes a tick, the gap, a line of text and the gap.
-  const tickGap = labelGap(theme);
-  const xRow = theme.chart.tick + tickGap + theme.chart.line + tickGap;
-  const plot = { left, top, right: Math.max(left, width - right), bottom: Math.max(top, height - (withX ? xRow : top) - (xTitle === null ? 0 : theme.chart.line + tickGap)) };
   let x0 = Infinity;
   let x1 = -Infinity;
   let y0 = Infinity;
@@ -75,6 +68,14 @@ export function scatterModel(props, theme, scheme, width, height) {
     }
   const xa = valueAxis(x0, x1, xProps.domain);
   const ya = valueAxis(y0, y1, yProps.domain);
+  // A tick label's gap from its tick (and a title's from the tick labels);
+  // the x axis takes a tick, the gap, a line of text and the gap.
+  const tickGap = labelGap(theme);
+  // The y axis: yAxis.width wide, else as its tick labels.
+  const left = withY ? Number(yProps.width ?? axisWide(theme, ya.ticks.map(fy), theme.chart.tick + tickGap)) : 0;
+  const { top, right } = theme.chart.frame;
+  const xRow = theme.chart.tick + tickGap + theme.chart.line + tickGap;
+  const plot = { left, top, right: Math.max(left, width - right), bottom: Math.max(top, height - (withX ? xRow : top) - (xTitle === null ? 0 : theme.chart.line + tickGap)) };
   const sx = linearScale(xa.min, xa.max, plot.left, plot.right);
   const sy = linearScale(ya.min, ya.max, plot.bottom, plot.top);
   /** @type {Figure[]} */

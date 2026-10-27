@@ -12,7 +12,7 @@ import { alpha } from '../../theme/colors.js';
 import { pageColors } from '../../theme/resolve.js';
 import { bandScale, pointScale, linearScale, valueAxis, num } from './scale.js';
 import { curvePoints, dashPattern, dashedLine, gradientFill, runs, stackSeries, splitAt } from './path.js';
-import { chartColors, tint, formatterOf, $chartWidth, Placed, Legend, Tip, beside, labelGap, charsWide, QUARTER, pointIn, rootProps, ChartData, datasetOf, legendAt, LEGEND_AT, shiftTip, $chartPadding } from './shared.jsx';
+import { chartColors, tint, formatterOf, $chartWidth, Placed, Legend, Tip, beside, labelGap, charsWide, axisWide, QUARTER, pointIn, rootProps, ChartData, datasetOf, legendAt, LEGEND_AT, shiftTip, $chartPadding } from './shared.jsx';
 import { partOf } from '../../core/overlays/shared.jsx';
 import { tables } from '../../own.js';
 
@@ -109,7 +109,7 @@ export function cartesianModel(props, kind, theme, scheme, width, height, highli
   const xProps = xAxis ?? {};
   const yProps = yAxis ?? {};
   // A second value axis at the end (a category-along-x chart only), for
-  // the series with `axis: 'end'`, `theme.chart.axisWidth` wide.
+  // the series with `axis: 'end'`, sized as the y axis.
   const endAxis = partOf(read(props.endAxis), false);
   const withRight = withY && horizontal && endAxis !== null;
   const rProps = endAxis ?? {};
@@ -157,18 +157,6 @@ export function cartesianModel(props, kind, theme, scheme, width, height, highli
   // A tick label's gap from its tick (and a title's from the tick labels).
   const tickGap = labelGap(theme);
   const xText = angle === 0 ? theme.chart.line : typeof xProps.height === 'number' ? xProps.height : Math.ceil(Math.abs(Math.sin(turn)) * textWidth + Math.abs(Math.cos(turn)) * theme.chart.line);
-
-  // The plot: the y axis's width is yAxis.width (`theme.chart.axisWidth`) on the left.
-  const axisWidth = withY ? Number(yProps.width ?? theme.chart.axisWidth) : 0;
-  const plot = {
-    left: axisWidth,
-    top: theme.chart.frame.top,
-    right: Math.max(axisWidth, width - (withRight ? Number(rProps.width ?? theme.chart.axisWidth) : theme.chart.frame.right)),
-    bottom: Math.max(0, height - (withX ? theme.chart.tick + tickGap + xText + tickGap : theme.chart.frame.top) - (xLabel == null ? 0 : theme.chart.line + tickGap)),
-  };
-  if (plot.bottom < plot.top) plot.bottom = plot.top;
-  const [catFrom, catTo] = horizontal ? [plot.left, plot.right] : [plot.top, plot.bottom];
-  const cats = banded ? bandScale(n, catFrom, catTo) : pointScale(n, catFrom, catTo);
 
   // Values, stacked or not, per series and row.
   const stacked = type === 'stack' || percent;
@@ -238,10 +226,26 @@ export function cartesianModel(props, kind, theme, scheme, width, height, highli
     return valueAxis(dataMin, dataMax, own.domain, Number(own.tickCount ?? 5));
   };
   const axis = axisOf(false, yProps);
-  const [valFrom, valTo] = horizontal ? [plot.bottom, plot.top] : [plot.left, plot.right];
-  const scale = linearScale(axis.min, axis.max, valFrom, valTo);
   const onRight = series.some(s => s.right);
   const rAxis = onRight ? axisOf(true, rProps) : axis;
+  const rightText = (/** @type {number} */ t) => (percent ? `${t}%` : typeof rProps.format === 'function' ? String(rProps.format(t)) : format(t));
+  /** A value axis's width: its own `width`, else its ticks' labels'. @param {Record<string, any>} own @param {number[]} ticks @param {(t: number) => string} text */
+  const valueWidth = (own, ticks, text) => Number(own.width ?? axisWide(theme, ticks.map(text), theme.chart.tick + tickGap));
+
+  // The plot: the y axis on the left, yAxis.width wide (a value axis's width by its ticks, or `theme.chart.axisWidth`
+  // for the categories across).
+  const axisWidth = withY ? (horizontal ? valueWidth(yProps, axis.ticks, valueText) : Number(yProps.width ?? theme.chart.axisWidth)) : 0;
+  const plot = {
+    left: axisWidth,
+    top: theme.chart.frame.top,
+    right: Math.max(axisWidth, width - (withRight ? valueWidth(rProps, rAxis.ticks, rightText) : theme.chart.frame.right)),
+    bottom: Math.max(0, height - (withX ? theme.chart.tick + tickGap + xText + tickGap : theme.chart.frame.top) - (xLabel == null ? 0 : theme.chart.line + tickGap)),
+  };
+  if (plot.bottom < plot.top) plot.bottom = plot.top;
+  const [catFrom, catTo] = horizontal ? [plot.left, plot.right] : [plot.top, plot.bottom];
+  const cats = banded ? bandScale(n, catFrom, catTo) : pointScale(n, catFrom, catTo);
+  const [valFrom, valTo] = horizontal ? [plot.bottom, plot.top] : [plot.left, plot.right];
+  const scale = linearScale(axis.min, axis.max, valFrom, valTo);
   const scaleRight = onRight ? linearScale(rAxis.min, rAxis.max, valFrom, valTo) : scale;
   const scaleOf = (/** @type {Serie} */ s) => (s.right ? scaleRight : scale);
   const base = scale(Math.max(axis.min, Math.min(axis.max, 0)));
@@ -275,8 +279,7 @@ export function cartesianModel(props, kind, theme, scheme, width, height, highli
     else for (let i = 0; i < n; i += every) labels.push({ text: catText(i), x: 0, y: yAt(catTicks[i]), w: plot.left - theme.chart.tick - tickGap, align: 'end' });
   }
   if (withRight) {
-    const text = (/** @type {number} */ t) => (percent ? `${t}%` : typeof rProps.format === 'function' ? String(rProps.format(t)) : format(t));
-    rAxis.ticks.forEach((t, k) => labels.push({ text: text(t), x: plot.right + theme.chart.tick + tickGap, y: yAt(rightTicks[k]), w: Math.max(0, width - plot.right - theme.chart.tick - tickGap), align: 'start' }));
+    rAxis.ticks.forEach((t, k) => labels.push({ text: rightText(t), x: plot.right + theme.chart.tick + tickGap, y: yAt(rightTicks[k]), w: Math.max(0, width - plot.right - theme.chart.tick - tickGap), align: 'start' }));
   }
   if (withX) {
     const y = plot.bottom + theme.chart.tick + tickGap;
@@ -677,7 +680,8 @@ function cartesian(props, kind) {
  * along it; under the plot at its start, 'bottom-start', by default),
  * `tooltip` (true: it follows the pointer), `xAxis` and `yAxis` (true,
  * false or { title, domain, width, tickCount, format, angle, height,
- * interval }), `grid` ('rows', 'columns', 'both' or false), `ticks` ('x',
+ * interval }; a value axis without a `width` is as wide as its tick labels,
+ * `theme.chart.axisWidth` at least), `grid` ('rows', 'columns', 'both' or false), `ticks` ('x',
  * 'y', 'both' or false), `dash` (the grid's: '4 2'), `gridColor` (the grid's
  * color; the page's border, muted), `textColor` (the tick marks' color; the
  * quiet role), `references` ({ y or

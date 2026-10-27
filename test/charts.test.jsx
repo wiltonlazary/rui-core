@@ -15,6 +15,8 @@ import {
 import { dashedLine, runs, splitAt, arcPoints, angleOf, onSweep, gradientFill } from '../src/ext/charts/path.js';
 import { trendOf } from '../src/ext/charts/misc.jsx';
 import { scatterModel } from '../src/ext/charts/scatter.jsx';
+import { cartesianModel } from '../src/ext/charts/cartesian.jsx';
+import { bubbleModel } from '../src/ext/charts/bubble.jsx';
 import { both, onDom } from './harness.jsx';
 import { primitives, same, mirror, hover, leave, visits } from './chart-harness.jsx';
 
@@ -1042,4 +1044,37 @@ describe('every chart draws inside its padding and border', () => {
       }
     });
   }
+});
+
+describe('a value axis as wide as its tick labels', () => {
+  const T = BASE_THEME;
+  // "30 mil BRL": the top tick of 2,756,700, as a compact amount in Spanish
+  const long = (/** @type {number} */ t) => `${t / 100000} mil BRL`;
+  const rows = [{ m: 'a', v: 2756700, w: 2756700 }, { m: 'b', v: 1000000, w: 1000000 }];
+  /** The labels drawn from the left edge, right-aligned to their ticks. @param {{ labels: any[] }} m */
+  const left = m => m.labels.filter(l => l.x === 0 && l.align === 'end');
+  /** Whether each label's box holds its text, `charWidth` a character. @param {any[]} labels */
+  const hold = labels => labels.length >= 2 && labels.every(l => l.w >= l.text.length * T.chart.charWidth);
+  const room = T.chart.tick + T.spacing.xs / 2;
+
+  it('in a cartesian chart, on its end axis too: wider for long labels, `axisWidth` for short ones, a given width as given', () => {
+    const wide = cartesianModel({ data: rows, category: 'm', series: [{ key: 'v' }], yAxis: { format: long } }, 'bar', T, 'light', 320, 220, null);
+    assert.ok(hold(left(wide)), JSON.stringify(left(wide)));
+    assert.equal(left(wide)[0].w, '30 mil BRL'.length * T.chart.charWidth, 'as wide as the longest');
+    const short = cartesianModel({ data: [{ m: 'a', v: 3 }], category: 'm', series: [{ key: 'v' }] }, 'bar', T, 'light', 320, 220, null);
+    assert.deepEqual([...new Set(left(short).map(l => l.w))], [T.chart.axisWidth - room]);
+    const given = cartesianModel({ data: rows, category: 'm', series: [{ key: 'v' }], yAxis: { format: long, width: 60 } }, 'bar', T, 'light', 320, 220, null);
+    assert.deepEqual([...new Set(left(given).map(l => l.w))], [60 - room]);
+    const end = cartesianModel({ data: rows, category: 'm', series: [{ key: 'v' }, { key: 'w', axis: 'end' }], endAxis: { format: long } }, 'line', T, 'light', 320, 220, null);
+    const right = end.labels.filter((/** @type {any} */ l) => l.align === 'start' && /mil/.test(l.text));
+    assert.ok(hold(right), JSON.stringify(right));
+  });
+
+  it('in a scatter chart and a bubble chart', () => {
+    const scatter = scatterModel({ data: [{ points: [{ x: 0, y: 0 }, { x: 1, y: 2756700 }] }], yAxis: { format: long } }, T, 'light', 320, 220);
+    assert.ok(hold(left(scatter)), JSON.stringify(left(scatter)));
+    const bubble = bubbleModel({ data: [{ label: 'a', value: 2756700, size: 1 }, { label: 'b', value: 0, size: 2 }], format: long }, T, 'light', 320, 220);
+    const ticks = bubble.labels.filter((/** @type {any} */ l) => l.x === 0 && l.align === 'end');
+    assert.ok(ticks.length >= 2 && ticks.every((/** @type {any} */ l) => l.w >= l.text.length * T.chart.charWidth), JSON.stringify(ticks));
+  });
 });

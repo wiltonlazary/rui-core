@@ -7,7 +7,7 @@ import { $active, $memo, $read, read } from 'ren-core';
 import { $ui } from '../../theme/theme.jsx';
 import { alpha } from '../../theme/colors.js';
 import { bandScale, linearScale, valueAxis, num } from './scale.js';
-import { chartColors, tint, formatterOf, $chartWidth, beside, labelGap } from './shared.jsx';
+import { chartColors, tint, formatterOf, $chartWidth, beside, labelGap, axisWide } from './shared.jsx';
 import { partOf } from '../../core/overlays/shared.jsx';
 import { Frame } from './frame.jsx';
 
@@ -56,13 +56,6 @@ export function bubbleModel(props, theme, scheme, width, height) {
   const [least, most] = /** @type {[number, number]} */ (read(props.range) ?? [24, 400]);
   const gap = labelGap(theme);
   const line = theme.chart.line;
-  const left = yAxis === null ? 0 : Number(yAxis.width ?? theme.chart.axisWidth);
-  const plot = {
-    left,
-    top: theme.chart.frame.top,
-    right: Math.max(left, width - theme.chart.frame.right),
-    bottom: Math.max(theme.chart.frame.top, height - (withX ? theme.sizes.box.bubble.label : 0)),
-  };
   // The rows that draw a bubble: a finite value and a finite size.
   const values = data.map(d => num(d[valueKey]));
   const sizes = data.map(d => num(d[sizeKey]));
@@ -83,6 +76,14 @@ export function bubbleModel(props, theme, scheme, width, height) {
   // The largest bubble's radius keeps every bubble inside the plot.
   const inset = drawn.some(Boolean) ? Math.max(radiusOf(s0), radiusOf(s1)) : 0;
   const axis = valueAxis(v0, v1, yAxis?.domain);
+  // The value axis: yAxis.width wide, else as its tick labels.
+  const left = yAxis === null ? 0 : Number(yAxis.width ?? axisWide(theme, axis.ticks.map(t => String(format(t))), gap));
+  const plot = {
+    left,
+    top: theme.chart.frame.top,
+    right: Math.max(left, width - theme.chart.frame.right),
+    bottom: Math.max(theme.chart.frame.top, height - (withX ? theme.sizes.box.bubble.label : 0)),
+  };
   const sy = linearScale(axis.min, axis.max, plot.bottom - inset, plot.top + inset);
   if (grid === 'rows') for (const t of axis.ticks) figures.push({ kind: 'line', x: plot.left, y: sy(t), right: plot.right, bottom: sy(t), color: c.grid, stroke: 1 });
   if (yAxis !== null) {

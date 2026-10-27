@@ -342,6 +342,13 @@ export const labelGap = theme => theme.spacing.xs / 2;
 export const charsWide = (theme, n) => n * theme.chart.charWidth;
 
 /**
+ * A value axis's width when it is not given: as wide as the longest of its tick labels `texts` (`chart.charWidth` a
+ * character) and the room `beside` them (a tick, a gap), at least `chart.axisWidth`.
+ * @param {RuiThemeValue} theme @param {string[]} texts @param {number} beside
+ */
+export const axisWide = (theme, texts, beside) => Math.max(theme.chart.axisWidth, charsWide(theme, Math.max(0, ...texts.map(t => t.length))) + beside);
+
+/**
  * Where a tooltip goes beside a point (in the chart's box): on the right of
  * it in the left half, on the left in the right half, `gap` clear of it
  * (spacing sm by the charts), never measured.
