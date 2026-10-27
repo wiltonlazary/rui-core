@@ -104,8 +104,9 @@ export function Bars(props) {
                   const theme = ui.theme();
                   const page = pageColors(theme, ui.scheme());
                   const pad = theme.spacing.xs;
-                  // the padding is taken back by the margin: a pressed list keeps the plain one's place
-                  return { ...gap(), background: 'transparent', color: page.text, border: 0, padding: pad, margin: -pad, radius: theme.radius.sm, ...pressLook(theme), hover: { background: page.hover } };
+                  // the padding is taken back by the margin: a pressed list keeps the plain one's place; a wrapped label
+                  // lines up at the start, not a DOM button's center
+                  return { ...gap(), background: 'transparent', color: page.text, textAlign: 'start', border: 0, padding: pad, margin: -pad, radius: theme.radius.sm, ...pressLook(theme), hover: { background: page.hover } };
                 }}
               >
                 {body}

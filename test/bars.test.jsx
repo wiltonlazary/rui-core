@@ -179,6 +179,7 @@ describe('Bars on the DOM and on Skia', () => {
     const actions = [...r.dom.host.querySelectorAll('[data-ren="Action"]')];
     assert.deepEqual(actions.map(a => a.getAttribute('aria-label')), ['Linux: 800 dl', 'macOS: 400 dl', 'Windows: 2 dl', 'BSD: 0 dl']);
     assert.ok(actions.every(a => a.parentElement.getAttribute('role') === 'listitem'), 'each inside its list item');
+    assert.deepEqual(actions.map(a => a.style.textAlign), Array(4).fill('start'), 'a wrapped label at the start, not a DOM button\'s center');
     actions[1].dispatchEvent(new r.dom.window.MouseEvent('click', { bubbles: true }));
     r.skia.press('Windows');
     assert.deepEqual(pressed, [['macOS', 1], ['Windows', 2]]);
