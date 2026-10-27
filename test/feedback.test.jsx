@@ -80,6 +80,23 @@ describe('Alert, Notification and EmptyState', () => {
     dispose();
   });
 
+  it('wrap a long title and message within their room, on Skia and on the DOM', () => {
+    const TITLE = 'Transfer the ownership of this ledger';
+    const MESSAGE = 'The new owner manages everything here and can remove you';
+    const { dom, skia, dispose } = both(() => (
+      <Rui>
+        <Alert title={TITLE} closable>{MESSAGE}</Alert>
+        <Notification title={TITLE}>{MESSAGE}</Notification>
+      </Rui>
+    ), { width: 240, height: 600 });
+    const lines = skia.skia.commands().filter((/** @type {any[]} */ c) => c[0] === 'text').map((/** @type {any[]} */ c) => c[1]);
+    assert.ok(lines.length >= 8, `each text in lines on Skia: ${lines}`);
+    assert.ok(lines.every((/** @type {string} */ l) => TITLE.includes(l.trim()) || MESSAGE.includes(l.trim())), `only parts of them: ${lines}`);
+    const css = dom.nodes('Label').filter((/** @type {any} */ n) => n.textContent === TITLE || n.textContent === MESSAGE).map((/** @type {any} */ n) => n.style.whiteSpace);
+    assert.deepEqual(css, ['pre-wrap', 'pre-wrap', 'pre-wrap', 'pre-wrap'], 'on the DOM');
+    dispose();
+  });
+
   it('take closable as options or a node of their own', () => {
     /** @type {string[]} */
     const heard = [];

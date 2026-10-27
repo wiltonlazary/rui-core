@@ -106,7 +106,7 @@ const FILLED = ['solid', 'inverse'];
  * role the ink at `theme.opacity.muted`); elsewhere the title is the ink
  * and the message the page's roles. The theme's corner (or `radius`),
  * padding spacing sm by md, its parts `theme.control.iconGap` apart, the
- * title and message half an xs step apart.
+ * title and message half an xs step apart, each wrapping within its room.
  *
  * `closable` is a part: false (the default: none), true (a plain
  * CloseButton at size xs in the ink, labeled 'Close'), its options
@@ -146,14 +146,14 @@ export function Alert(props) {
   /** @type {() => Record<string, any>} */
   const title = () => {
     const theme = ui.theme();
-    return { fontSize: theme.fontSizes.md, fontWeight: theme.weights.strong, lineHeight: theme.lineHeights.sm, color: ink() };
+    return { fontSize: theme.fontSizes.md, fontWeight: theme.weights.strong, lineHeight: theme.lineHeights.sm, color: ink(), wrap: true };
   };
   const message = () => {
     const theme = ui.theme();
     const page = pageColors(theme, ui.scheme());
     const text = filled() ? ink() : page.text;
     const quiet = filled() ? alpha(ink(), theme.opacity.muted) : page.quiet;
-    return { fontSize: below(theme), lineHeight: theme.lineHeights.sm, color: titled() ? quiet : text };
+    return { fontSize: below(theme), lineHeight: theme.lineHeights.sm, color: titled() ? quiet : text, wrap: true };
   };
   return (
     <View role="alert" {...pass(props)} style={style}>
@@ -183,7 +183,8 @@ export function Alert(props) {
  * across every four calm motions (still, in the middle, when the user
  * asks for reduced motion); the mark stays. The surface: `pageColors` raised, the theme's corner
  * (or `radius`), shadow md, a 1 px edge, padding spacing sm by md, its
- * parts `theme.control.iconGap` apart.
+ * parts `theme.control.iconGap` apart; the title and message wrap within
+ * their room.
  *
  * `closable` is a part: true (the default: a CloseButton at size xs,
  * labeled 'Close'), false (none), its options (`{ label }` and the rest
@@ -223,12 +224,12 @@ export function Notification(props) {
   });
   const title = () => {
     const theme = ui.theme();
-    return { fontSize: theme.fontSizes.md, fontWeight: theme.weights.strong, lineHeight: theme.lineHeights.sm, color: pageColors(theme, ui.scheme()).text };
+    return { fontSize: theme.fontSizes.md, fontWeight: theme.weights.strong, lineHeight: theme.lineHeights.sm, color: pageColors(theme, ui.scheme()).text, wrap: true };
   };
   const message = () => {
     const theme = ui.theme();
     const page = pageColors(theme, ui.scheme());
-    return { fontSize: below(theme), lineHeight: theme.lineHeights.sm, color: page.text, ...(titled() ? { opacity: theme.opacity.muted } : null) };
+    return { fontSize: below(theme), lineHeight: theme.lineHeights.sm, color: page.text, wrap: true, ...(titled() ? { opacity: theme.opacity.muted } : null) };
   };
   // The loading rule: its segment sweeping in from the start and out past the end.
   const time = $elapsed(() => loading() && !$read(still));
