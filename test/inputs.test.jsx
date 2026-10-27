@@ -1834,6 +1834,19 @@ describe('CurrencyInput', () => {
     dispose();
   });
 
+  /** The Edit's selection on each renderer. @param {any} dom @param {any} skia */
+  const ranges = (dom, skia) => {
+    const [node, edit] = [dom.nodes('Edit')[0], items(skia, 4)[0]];
+    return [
+      [node.selectionStart, node.selectionEnd],
+      [edit.selectionStart, edit.selectionEnd],
+    ];
+  };
+  /** Selects `from`..`to` on both. @param {any} dom @param {any} skia @param {number} from @param {number} to */
+  const selectOn = (dom, skia, from, to) => {
+    dom.nodes('Edit')[0].setSelectionRange(from, to);
+    items(skia, 4)[0].setSelectionRange(from, to);
+  };
   /** Delete at the caret on both. @param {any} dom @param {any} skia */
   const del = (dom, skia) => {
     const node = dom.nodes('Edit')[0];
@@ -1880,6 +1893,65 @@ describe('CurrencyInput', () => {
     skia.skia.release(r.right - 2, r.top + r.height / 2);
     $flush(skia.root);
     assert.deepEqual(carets(dom, skia, 0), [6, 6]);
+    dispose();
+  });
+
+  it('keeps a selection of the whole field and a press before the currency within the number', () => {
+    for (const [props, text, lo, hi] of /** @type {[Record<string, any>, string, number, number][]} */ ([
+      [{ currency: 'EUR', locale: 'es', value: 120.5 }, '120,50 €', 0, 6],
+      [{ currency: 'BRL', locale: 'pt-BR', value: 12.5 }, 'R$ 12,50', 3, 8],
+    ])) {
+      const { dom, skia, dispose, shown } = focused({ ...props, controls: false });
+      assert.deepEqual(shown(), [text, text]);
+      const node = dom.nodes('Edit')[0];
+      const r = items(skia, 4)[0].getBoundingClientRect();
+      const y = r.top + r.height / 2;
+      // A drag or a triple click across the whole field: the DOM's selection at its pointerup and click, Skia's triple press.
+      node.setSelectionRange(0, text.length);
+      node.dispatchEvent(new dom.window.PointerEvent('pointerup', { bubbles: true, pointerId: 1, buttons: 0 }));
+      node.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
+      $flush(dom.root);
+      skia.skia.press(r.left + 4, y, 3);
+      skia.skia.release(r.left + 4, y);
+      $flush(skia.root);
+      assert.deepEqual(ranges(dom, skia), [[lo, hi], [lo, hi]], text);
+      // A press at the field's start, before any currency.
+      selectOn(dom, skia, 0, 0);
+      node.dispatchEvent(new dom.window.PointerEvent('pointerup', { bubbles: true, pointerId: 1, buttons: 0 }));
+      node.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
+      $flush(dom.root);
+      skia.skia.press(r.left + 1, y);
+      skia.skia.release(r.left + 1, y);
+      $flush(skia.root);
+      assert.deepEqual(carets(dom, skia, 0), [lo, lo], text);
+      dispose();
+    }
+  });
+
+  it('changes nothing on Delete at the number\'s end, nor on a digit typed over itself', () => {
+    const { s, dom, skia, dispose, shown, keys } = focused({ currency: 'EUR', locale: 'es', value: 120.5, controls: false });
+    caretAt(dom, skia, 0, 6);
+    del(dom, skia);
+    assert.deepEqual(shown(), ['120,50 €', '120,50 €']);
+    assert.deepEqual(s.get(), [120.5, 120.5]);
+    assert.deepEqual(carets(dom, skia, 0), [6, 6]);
+    // The 5 selected and typed again.
+    selectOn(dom, skia, 4, 5);
+    assert.deepEqual(keys('5'), ['120,50 €']);
+    assert.deepEqual(s.get(), [120.5, 120.5]);
+    dispose();
+  });
+
+  it('keeps the caret after the digits typed, before the currency, and types a key pressed inside the currency at the number\'s end', () => {
+    const { s, dom, skia, dispose, keys } = focused({ currency: 'EUR', locale: 'es', controls: false });
+    assert.deepEqual(keys('01'), ['0 €', '1 €'], 'the leading zero dropped');
+    assert.deepEqual(carets(dom, skia, 0), [1, 1]);
+    assert.deepEqual(keys('2'), ['12 €']);
+    // Between the space and the €.
+    caretAt(dom, skia, 0, 3);
+    assert.deepEqual(keys('3'), ['123 €']);
+    assert.deepEqual(s.get(), [123, 123]);
+    assert.deepEqual(carets(dom, skia, 0), [3, 3]);
     dispose();
   });
 
