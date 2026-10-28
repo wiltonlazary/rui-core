@@ -6,7 +6,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { $root, $flush } from 'rrx-core';
-import { $active, View } from 'ren-core';
+import { $active, $signal, $read, $write, View } from 'ren-core';
 import { Rui, Clock, manualClock, Text, Button } from 'rui-core';
 import * as notifications from 'rui-core/notifications';
 import { Notifications, $notifications, notificationsStore, NOTIFICATION_PLACES } from 'rui-core/notifications';
@@ -308,6 +308,52 @@ describe('Notifications', () => {
     clock.advance(1100);
     flush();
     assert.deepEqual(st.list.map(x => x.all().map(n => n.title).join()), ['Stays', 'Stays']);
+    dispose();
+  });
+
+  it('a notification shown as its <Notifications> is built again (a new language) stays once and closes on its time', () => {
+    const clock = manualClock();
+    const st = stores();
+    /** @type {any[]} */
+    const langs = [];
+    const view = () => {
+      const lang = $signal($active(), 'en');
+      langs.push(lang);
+      return (
+        <Clock value={clock}>
+          {() => {
+            const said = $read(lang);
+            return (
+              <Rui>
+                <Notifications at="bottom-end">
+                  <View style={{ padding: 20 }}>
+                    <Text>{`page ${said}`}</Text>
+                    <st.Grab />
+                  </View>
+                </Notifications>
+              </Rui>
+            );
+          }}
+        </Clock>
+      );
+    };
+    const { d, s, flush, dispose } = pair(view);
+    for (const store of new Set(st.list)) store.show({ title: 'Saved', timeout: 2500 });
+    clock.advance(300);
+    flush();
+    assert.equal(d.text(), 'page en Saved');
+    for (const lang of langs) $write(lang, 'es');
+    flush();
+    clock.advance(16);
+    flush();
+    assert.equal(d.text(), 'page es Saved', 'the DOM: shown once, built again');
+    assert.equal(s.text(), 'page es Saved', 'Skia: the same');
+    clock.advance(2500);
+    flush();
+    clock.advance(1000);
+    flush();
+    assert.equal(d.text(), 'page es', 'the DOM: it closed on its time');
+    assert.equal(s.text(), 'page es', 'Skia: the same');
     dispose();
   });
 

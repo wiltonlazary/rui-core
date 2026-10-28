@@ -6,7 +6,8 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { Window } from 'happy-dom';
-import { $flush } from 'rrx-core';
+import { $flush, $signal, $read, $write } from 'rrx-core';
+import { $active, Show } from 'ren-core';
 import { Rui, Text, BASE_THEME, pageColors, alpha } from 'rui-core';
 import { Dropzone, mimeTypes, imageTypes, audioTypes, videoTypes, documentTypes, sheetTypes, slideTypes, archiveTypes, textTypes, acceptList, accepts, sortFiles, pickFiles, REJECT_LABELS } from 'rui-core/dropzone';
 import { both, closeWindow, disposeAfter } from './harness.jsx';
@@ -361,8 +362,10 @@ describe('Dropzone interactive', () => {
 });
 
 describe('Dropzone.Screen', () => {
-  it('covers the viewport while the page is dragged over, takes the drop and hides', () => {
+  it('covers the viewport while the page is dragged over, takes the drop and hides; a shown cover leaves with it', () => {
     const rec = recorder();
+    /** @type {any[]} */
+    const heres = [];
     // The Skia root lives "in a page": a document on the thread, as a canvas in the browser.
     const page = new Window();
     const had = Object.getOwnPropertyDescriptor(globalThis, 'document');
@@ -370,12 +373,16 @@ describe('Dropzone.Screen', () => {
     try {
       const { dom, skia, dispose } = both(() => {
         const log = rec.next();
+        const here = $signal($active(), true);
+        heres.push(here);
         return (
           <Rui>
             <Text>Page</Text>
-            <Dropzone.Screen accept={imageTypes} onDrop={(/** @type {any[]} */ files) => log.push(`drop ${files.map(f => f.name)}`)}>
-              <Text>Drop anywhere</Text>
-            </Dropzone.Screen>
+            <Show when={() => $read(here)}>
+              <Dropzone.Screen accept={imageTypes} onDrop={(/** @type {any[]} */ files) => log.push(`drop ${files.map(f => f.name)}`)}>
+                <Text>Drop anywhere</Text>
+              </Dropzone.Screen>
+            </Show>
           </Rui>
         );
       });
@@ -411,6 +418,18 @@ describe('Dropzone.Screen', () => {
       dom.document.dispatchEvent(dragEvent(dom.window, 'dragenter', { types: ['text/plain'] }));
       $flush(dom.root);
       assert.equal(allText(dom), 'Page', 'a drag without files shows nothing');
+      // Shown, then the Screen goes (its page left): the cover goes with it.
+      enter(dom.window, dom.document);
+      enter(page, page.document);
+      $flush(dom.root);
+      $flush(skia.root);
+      assert.equal(allText(dom), 'Page Drop anywhere');
+      assert.equal(skia.text(), 'Page Drop anywhere');
+      for (const here of heres) $write(here, false);
+      $flush(dom.root);
+      $flush(skia.root);
+      assert.equal(allText(dom), 'Page', 'the DOM: the shown cover left with its Screen');
+      assert.equal(skia.text(), 'Page', 'Skia: the same');
       dispose();
     } finally {
       if (had === undefined) delete (/** @type {any} */ (globalThis)).document;
