@@ -151,10 +151,47 @@ function observeSizes(window, root) {
   };
 }
 
+/** The last input in each document the harness made: a key (true) or a pointer press (false). @type {WeakMap<any, { keyed: boolean }>} */
+const inputs = new WeakMap();
+/** The input types that take typed text: Chrome rings them on any focus. */
+const TYPED = /^(?:|text|search|email|url|tel|password|number)$/i;
+
+/**
+ * Gives a window's `:focus-visible` Chrome's rule, as happy-dom matches it
+ * as `:focus` (ren-dom reads it for a focus's `focusVisible`): a focused
+ * text field always; any other focused element when the last input was a
+ * key, not a pointer press, so a focus from code takes the last input's
+ * (before any input, none, as on the canvases). happy-dom's classes are
+ * shared by its windows: `matches` is wrapped once, and a document the
+ * harness did not make keeps happy-dom's own answer.
+ * @param {any} window
+ */
+function focusVisible(window) {
+  const input = { keyed: false };
+  const doc = window.document;
+  inputs.set(doc, input);
+  doc.addEventListener('keydown', () => (input.keyed = true), true);
+  doc.addEventListener('pointerdown', () => (input.keyed = false), true);
+  doc.addEventListener('mousedown', () => (input.keyed = false), true);
+  const proto = window.Element.prototype;
+  if (proto.matches.ringed === true) return;
+  const own = proto.matches;
+  /** @this {any} @param {string} selector */
+  const matches = function (selector) {
+    const last = selector === ':focus-visible' ? inputs.get(this.ownerDocument) : undefined;
+    if (last === undefined) return own.call(this, selector);
+    if (!own.call(this, ':focus')) return false;
+    return last.keyed || this.tagName === 'TEXTAREA' || this.isContentEditable === true || (this.tagName === 'INPUT' && TYPED.test(this.getAttribute('type') ?? ''));
+  };
+  matches.ringed = true;
+  proto.matches = matches;
+}
+
 /**
  * The view on the DOM, in a window of `size` (1024 × 768 by default; its
  * viewport is the root's, `$viewport`). Its window's ResizeObserver
- * reports the boxes a test gives (`report()`).
+ * reports the boxes a test gives (`report()`), and its `:focus-visible`
+ * follows Chrome's rule (`focusVisible`).
  * @param {() => any} view @param {{ width?: number, height?: number }} [size]
  */
 export function onDom(view, size = {}) {
@@ -164,6 +201,7 @@ export function onDom(view, size = {}) {
   document.body.appendChild(host);
   const root = $root('dom');
   const report = observeSizes(window, root);
+  focusVisible(window);
   const stop = renderDom(view, host, { root });
   const nodes = (/** @type {string} */ role) => /** @type {any[]} */ ([...host.querySelectorAll(`[data-ren="${role}"]`)]).filter(n => !hidden(n, host));
   return {

@@ -1325,6 +1325,18 @@ describe('Popover against the viewport', () => {
   });
 });
 
+/**
+ * Tab to the next stop, `text`: on Skia the key moves the focus; on the DOM
+ * (happy-dom moves none) the key, then the focus a browser's Tab gives.
+ * @param {any} d @param {any} s @param {string} text
+ */
+const tab = (d, s, text) => {
+  d.key('Tab');
+  d.find(text).focus();
+  s.key('Tab');
+  assert.equal(s.focused(), s.find(text), `Skia: Tab reached ${text}`);
+};
+
 describe('HoverCard and Tooltip', () => {
   it('a Popover panel pads spacing.xs by spacing.sm; a Tooltip control.labelGap / 2 by ratios.pad of its font', () => {
     const view = () => (
@@ -1364,18 +1376,63 @@ describe('HoverCard and Tooltip', () => {
       </>
     ));
     const { d, s, flush, dispose } = pair(view);
-    d.find('Save').focus();
-    s.find('Save').focus();
+    tab(d, s, 'Save');
     clock.advance(200);
     flush();
     assert.equal(d.text(), 'Save Next Saves the draft', 'no hover delay on focus (DOM)');
     assert.equal(s.text(), 'Save Next Saves the draft', 'and on Skia');
-    d.find('Next').focus();
-    s.find('Next').focus();
+    tab(d, s, 'Next');
     clock.advance(200);
     flush();
     assert.equal(d.text(), 'Save Next');
     assert.equal(s.text(), 'Save Next');
+    dispose();
+  });
+
+  it('Tooltip shows on keyboard focus only: not on a press, nor on a focus code gives after a press', () => {
+    const clock = manualClock();
+    /** @type {boolean[]} */
+    const changes = [];
+    const view = app(clock, () => (
+      <>
+        <Tooltip label="Deletes it" onOpenChange={(/** @type {boolean} */ v) => changes.push(v)}>
+          {(/** @type {any} */ t) => <Action ref={t.ref} text="Delete" onKey={t.onKey} />}
+        </Tooltip>
+        <Action text="Other" />
+      </>
+    ));
+    const { d, s, skia, flush, dispose } = pair(view);
+    // A press focuses what it presses (a browser's mousedown on a button; happy-dom focuses nothing itself).
+    d.tap(d.find('Delete'));
+    d.find('Delete').focus();
+    s.press('Delete');
+    assert.equal(s.focused(), s.find('Delete'), 'Skia: the press focused it');
+    clock.advance(200);
+    flush();
+    assert.equal(d.text(), 'Delete Other', 'a press: no tip at once (DOM)');
+    assert.equal(s.text(), 'Delete Other', 'and on Skia');
+    d.tap(d.find('Other'));
+    d.find('Other').focus();
+    s.press('Other');
+    clock.advance(200);
+    flush();
+    // A list gives the focus on by code after a press (its row deleted): still the pointer's focus.
+    d.find('Delete').focus();
+    s.find('Delete').focus();
+    clock.advance(200);
+    flush();
+    assert.equal(d.text(), 'Delete Other', "code's focus after a press: no tip (DOM)");
+    assert.equal(s.text(), 'Delete Other', 'and on Skia');
+    assert.deepEqual(changes, [], 'never shown');
+    tab(d, s, 'Other');
+    d.key('Tab');
+    d.find('Delete').focus();
+    skia.skia.key('Tab', true);
+    flush();
+    clock.advance(16);
+    flush();
+    assert.equal(d.text(), 'Delete Other Deletes it', 'Shift+Tab back: shown at once (DOM)');
+    assert.equal(s.text(), 'Delete Other Deletes it', 'and on Skia');
     dispose();
   });
 
@@ -1395,21 +1452,18 @@ describe('HoverCard and Tooltip', () => {
       </>
     ));
     const { d, s, flush, dispose } = pair(view);
-    d.find('Save').focus();
-    s.find('Save').focus();
+    tab(d, s, 'Save');
     clock.advance(200);
     flush();
     assert.equal(d.text(), 'Save Keep Next Saves the draft', 'focus bubbles to the trigger (DOM)');
     assert.equal(s.text(), 'Save Keep Next Saves the draft', 'and on Skia');
-    d.find('Keep').focus();
-    s.find('Keep').focus();
+    tab(d, s, 'Keep');
     clock.advance(200);
     flush();
     assert.equal(d.text(), 'Save Keep Next Saves the draft', 'focus moving inside keeps it (DOM)');
     assert.equal(s.text(), 'Save Keep Next Saves the draft', 'and on Skia');
     assert.deepEqual(changes, [true, true], 'shown once on each, never hidden while focus stayed inside');
-    d.find('Next').focus();
-    s.find('Next').focus();
+    tab(d, s, 'Next');
     clock.advance(200);
     flush();
     assert.equal(d.text(), 'Save Keep Next');
@@ -1442,8 +1496,7 @@ describe('HoverCard and Tooltip', () => {
       );
     });
     const { d, s, flush, dispose } = pair(view);
-    d.find('Save').focus();
-    s.find('Save').focus();
+    tab(d, s, 'Save');
     clock.advance(200);
     flush();
     assert.equal(s.text(), 'Save Draft Next Saves the draft');

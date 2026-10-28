@@ -336,7 +336,7 @@ presets and the layers.
 | Drawer | `at` 'end', size 360, offset 0, motion calm |
 | Dialog | at `{ bottom: lg, right: lg }`, padding lg, shadow lg, motion base rise; its close in flow at the first row's end |
 | Popover, Menu, HoverCard | padding 8 × 12, spacing xs × sm (Menu: panel 6, items 6 × 12, labels 600), offset 6, shadow md, motion quick; HoverCard delays 80 / 240 |
-| Tooltip | the other scheme's roles (`tooltipColors`), padding 3 × 9 (half the label gap; `ratios.pad` of its font), font xs, offset 6, delays 500 / 100, at once on keyboard focus; Tooltip.Follow at 'bottom-end', offset 12 |
+| Tooltip | the other scheme's roles (`tooltipColors`), padding 3 × 9 (half the label gap; `ratios.pad` of its font), font xs, offset 6, delays 500 / 100, at once on keyboard focus (ren-core's `focusVisible`: not a press's focus, nor one code gives after a press); Tooltip.Follow at 'bottom-end', offset 12 |
 | Combobox panels | offset 4, motion quick fade |
 | Backdrop, Busy | night.9 at `opacity.disabled` .45 (`opacity.muted` .7 dark), `opacity` fading the color or the gradient's stops (never the children); Busy while `shown`; Busy the body at .7; no blur |
 | Buttons, Chip | side padding `control.pad` (10, 12, 16, 20, 24 from xs), dense and a checked Chip `control.densePad` (5, 6, 8, 10, 12) |

@@ -36,7 +36,7 @@ import { handOn } from '../ref.js';
  * @property {() => void} enter the pointer entered the trigger or panel (hover)
  * @property {() => void} leave the pointer left them (hover)
  * @property {boolean} [focusShows] keyboard focus on the trigger shows it at once, and leaving the trigger hides it (a Tooltip)
- * @property {() => void} [focusIn] focus entered the trigger's wrapper
+ * @property {(e?: any) => void} [focusIn] focus entered the trigger's wrapper (a focusin: its `focusVisible` says the keyboard gave it)
  * @property {(e?: any) => void} [focusOut] focus left an element in the trigger's wrapper (kept open while it moves within)
  * @property {(node: any) => void} [setFirst] where focus goes as it opens by the keyboard
  * @property {() => any} [first]
@@ -172,8 +172,10 @@ export function $popover(props, mode, hovers = mode === 'hover') {
       if ($untrack(R, state.get) && opensInside(store)) return;
       delay.run(read(props.closeDelay) ?? (hovers ? HOVER_CLOSE : 0), () => shut(false));
     },
-    focusIn() {
-      if (!store.focusShows) return;
+    focusIn(e) {
+      // Keyboard focus only: a focus that shows its ring (ren-core's focusVisible, the DOM's :focus-visible),
+      // not a press's, nor code's after a press (a list giving the focus on after a delete).
+      if (!store.focusShows || e?.focusVisible !== true) return;
       delay.cancel();
       if (!$untrack(R, state.get)) state.set(true);
     },
@@ -279,8 +281,9 @@ function $store() {
  * A press (pointer down, then up, on it) or Enter or Space toggles, and
  * ArrowDown opens (click mode); hovering opens (hover mode); Escape closes.
  * Events from the panel (inline, it sits in this wrapper) are not the
- * trigger's. Focus bubbling to the wrapper (`onFocusIn`, `onFocusOut`)
- * shows a Tooltip at once and hides it as focus leaves the wrapper. A
+ * trigger's. Keyboard focus bubbling to the wrapper (`onFocusIn` with
+ * `focusVisible`, `onFocusOut`) shows a Tooltip at once and hides it as
+ * focus leaves the wrapper. A
  * function child gets the trigger props to spread on a press target
  * (`onPress`, `onKey`, `ref`: Enter and Space open it through the target's
  * press); its wrapper stretches as its parent lays
@@ -342,7 +345,7 @@ export function PopoverTrigger(props) {
         ? { 'aria-describedby': () => (store.isOpen() ? props.__describe : undefined) }
         : null;
   const meaning = own === null ? outer : { ...outer, ...own };
-  // Focus bubbles to the wrapper from any child: a Tooltip shows at once and hides as it leaves.
+  // Focus bubbles to the wrapper from any child: a Tooltip shows at once on keyboard focus and hides as it leaves.
   const focusing = { onFocusIn: store.focusIn, onFocusOut: store.focusOut };
   if (typeof children === 'function' && children.length >= 1) {
     return (
@@ -542,7 +545,9 @@ const tipPad = theme => [theme.control.labelGap / 2, Math.round(theme.fontSizes.
  * `{ size }`: 5), `wrap` (the label wraps at `w`, 250 by default),
  * `color`, `radius` ('sm'), `open` (controlled), `disabled`, `layer`
  * (`LAYERS.tip`, above any panel it explains), `portal`, `motion`
- * ('quick', a fade). Focus entering its child shows it at once and
+ * ('quick', a fade). Keyboard focus entering its child (a focus that
+ * shows its ring: ren-core's `focusVisible`, the DOM's `:focus-visible`;
+ * not a press's, nor one code gives after a press) shows it at once, and
  * focus leaving hides it; a function child gets the trigger props
  * (`onKey`, `ref`, and `aria-describedby`) to spread on the element.
  * While shown, it describes the Button, Pressable or IconButton in its
