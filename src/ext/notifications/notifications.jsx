@@ -5,7 +5,8 @@
 // leaving one also collapses: it measures its own height as it starts to
 // leave and its height runs from there to 0 with the transition, so the
 // ones after it close the gap (where nothing is laid out to measure, a
-// worker, it only fades).
+// worker, it only fades). On a narrow viewport each stack claims the room
+// it takes at its edge, which the sheets over the viewport keep clear of.
 
 import { View, Portal, For, Show, read, $active, $signal, $read, $write, $untrack, $watch } from 'ren-core';
 import { styled } from '../../theme/style.js';
@@ -17,6 +18,9 @@ import { MOTION, durationOf } from '../../theme/motion.js';
 import { EFFECTS, transitionStyle } from '../../core/misc/collapse.jsx';
 import { NOTIFICATION_PLACES, NotificationsContext, $notifications } from './store.js';
 import { labelsIn } from '../../theme/labels.js';
+import { $ui } from '../../theme/theme.jsx';
+import { $breakpoints, breakpointOf } from '../../theme/breakpoints.js';
+import { $claimRoom } from '../../core/overlays/notice-room.js';
 
 /** @typedef {import('./store.js').NotificationsStore} NotificationsStore */
 /** @typedef {import('./store.js').NotificationData} NotificationData */
@@ -49,7 +53,11 @@ const effectOf = position => (position.startsWith('top') ? EFFECTS.sink : EFFECT
  * from its edge and side, its notifications a `spacing.sm` step apart and
  * narrowed to fit a viewport narrower than `width`; one
  * enters fading in as it sinks from a short step above (a top place) or
- * rises from one below (a bottom place), and leaves the same way back.
+ * rises from one below (a bottom place), and leaves the same way back. On a
+ * viewport narrower than the theme's `sm` breakpoint, in the portal layer,
+ * each stack claims its edge's room (core/overlays/notice-room.js): the
+ * sheets open over the viewport (Modal, Drawer, Dialog) stand clear of it,
+ * so no notice lies on their controls; the notices never move for them.
  * @param {Record<string, any>} props
  */
 export function Notifications(props) {
@@ -87,6 +95,11 @@ export function Notifications(props) {
   const gone = key => $write(rows, /** @type {Row[]} */ ($untrack(R, () => $read(rows))).filter(r => r.key !== key));
   /** @param {NotificationData} data */
   const placeOf = data => data.at ?? store.at();
+  const ui = $ui();
+  const bp = $breakpoints();
+  const portaled = read(props.portal) !== false;
+  // A narrow viewport (below the theme's `sm` breakpoint: a phone) has no room beside a sheet over it.
+  const narrow = () => bp.width() < breakpointOf(ui.theme(), 'sm');
   const stack = (/** @type {NotificationPlace} */ position) => {
     const [edge, side] = position.split('-');
     // Fixed at its edge of the viewport, a `spacing.lg` step in from the
@@ -107,13 +120,28 @@ export function Notifications(props) {
     const mine = () => /** @type {Row[]} */ ($read(rows)).filter(r => placeOf(r.data) === position);
     return (
       <Show when={() => mine().length > 0}>
-        <View role="region" aria-label={() => labelsIn().notifications} style={style}>
-          <For each={mine} by={(/** @type {Row} */ r) => r.key}>
-            {(/** @type {() => Row} */ row) => {
-              return <Item row={row} data={() => row().data} store={store} props={props} position={position} duration={duration} gone={gone} />;
-            }}
-          </For>
-        </View>
+        {() => {
+          // On a narrow viewport, in the portal layer, the stack claims its edge's room (notice-room.js): from the
+          // edge to a `spacing.sm` step past its notices, as measured; the sheets open over the viewport stand clear.
+          const height = $signal(R, 0);
+          if (portaled) {
+            /** @type {'top' | 'bottom'} */
+            const at = edge === 'top' ? 'top' : 'bottom';
+            $claimRoom(at, () => {
+              const h = /** @type {number} */ ($read(height));
+              return narrow() && h > 0 ? ui.theme().spacing.lg + h + ui.theme().spacing.sm : 0;
+            });
+          }
+          return (
+            <View role="region" aria-label={() => labelsIn().notifications} style={style} onResize={(/** @type {{ height: number }} */ box) => $write(height, box.height)}>
+              <For each={mine} by={(/** @type {Row} */ r) => r.key}>
+                {(/** @type {() => Row} */ row) => {
+                  return <Item row={row} data={() => row().data} store={store} props={props} position={position} duration={duration} gone={gone} />;
+                }}
+              </For>
+            </View>
+          );
+        }}
       </Show>
     );
   };

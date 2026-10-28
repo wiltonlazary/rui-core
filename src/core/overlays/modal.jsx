@@ -4,9 +4,10 @@
 // close, and a motion on the Clock. Modal and Drawer are built from their
 // compound parts (Modal.Frame, Backdrop, Content, Header, Title, Close,
 // Body), which compose one by hand too; Modal.Stack (modal-stack.jsx)
-// layers several.
+// layers several. Placed against the viewport, they stand clear of the
+// room notices take at its edges (notice-room.js).
 
-import { View, Label, Action, Show, Portal, read, $active, $context, $lookup, $owner, $cleanup, $watch, $focus, $signal, $read, $write, $batch, $after } from 'ren-core';
+import { View, Label, Action, Show, Portal, read, $active, $context, $lookup, $owner, $cleanup, $watch, $untrack, $focus, $signal, $read, $write, $batch, $after } from 'ren-core';
 import { Clock } from '../../theme/motion.js';
 import { styled } from '../../theme/style.js';
 import { $ui } from '../../theme/theme.jsx';
@@ -19,6 +20,7 @@ import { ModalStack, StackContext, seat } from './modal-stack.jsx';
 import { tables } from '../../own.js';
 import { ScrollBox } from '../misc/misc.jsx';
 import { labelsIn } from '../../theme/labels.js';
+import { $noticeRoom } from './notice-room.js';
 
 
 
@@ -324,6 +326,11 @@ export function ModalContent(props) {
       />
     </Show>
   );
+  // In the portal layer the content stands clear of the notices' room at the viewport's edges (notice-room.js);
+  // placed in its own box (`portal` false), it is not against the viewport.
+  const portaled = () => read(root.portal) !== false;
+  const notices = $noticeRoom();
+  const room = () => (portaled() ? { top: notices.top(), bottom: notices.bottom() } : { top: 0, bottom: 0 });
   if (c.kind === 'drawer') {
     const side = () => EDGES[read(root.at) ?? 'end'] ?? 'right';
     /** The edge box: along its edge at least the layer's length (its content's where the layer has none), the gap as padding. @returns {Record<string, any>} */
@@ -331,11 +338,12 @@ export function ModalContent(props) {
       const s = side();
       const size = sizeOf(ui.theme().sizes.modal, read(root.size) ?? ui.theme().sizes.drawer);
       const across = s === 'left' || s === 'right';
+      const clear = room();
       return {
         position: 'absolute',
-        // as long as the layer along its edge: a body longer than that scrolls inside it (Modal.Body)
-        ...(across ? { top: 0, bottom: 0, width: size, maxWidth: '100%' } : { left: 0, right: 0, height: size, maxHeight: '100%' }),
-        [s]: 0,
+        // as long as the layer along its edge, less the notices' room: a body longer than that scrolls inside it (Modal.Body)
+        ...(across ? { top: clear.top, bottom: clear.bottom, width: size, maxWidth: '100%' } : { left: 0, right: 0, height: size, maxHeight: '100%' }),
+        [s]: s === 'top' || s === 'bottom' ? clear[s] : 0,
         padding: read(root.offset) ?? 0,
         direction: across ? 'column' : 'row',
         // Slides in from its edge: its own size off it, by a transform.
@@ -384,10 +392,13 @@ export function ModalContent(props) {
       ? { minHeight: '100%', direction: 'column' }
       : { minHeight: '100%', padding: [centered ? x : y, x, x, x], direction: 'column', align: 'center', justify: centered ? 'center' : 'start' };
   };
-  const portaled = () => read(root.portal) !== false;
-  // The layer's scroller: the layer's whole box (its child filling it, not a region's fixed height), a content taller
-  // than it (a long form on a phone) scrolling in it; no room kept for bars, so the content keeps the layer's width.
-  const scroller = { grow: 1, shrink: 1, minHeight: 0, alignSelf: 'stretch' };
+  // The layer's scroller: the layer's whole box (its child filling it, not a region's fixed height) less the notices'
+  // room, a content taller than it (a long form on a phone) scrolling in it; no room kept for bars, so the content
+  // keeps the layer's width.
+  const scroller = () => {
+    const clear = room();
+    return { grow: 1, shrink: 1, minHeight: 0, alignSelf: 'stretch', margin: [clear.top, 0, clear.bottom, 0] };
+  };
   const content = styled(props, (theme, scheme) => {
     const page = pageColors(theme, scheme);
     const f = full();
@@ -414,12 +425,22 @@ export function ModalContent(props) {
       </View>
     </View>
   );
-  return portaled() ? (
-    <ScrollBox bars={false} style={scroller}>
+  if (!portaled()) return placed;
+  // What lies next to the bottom room stays in view: as that room grows the content scrolls up as much (as far as it
+  // goes), and back down as it shrinks, so a bottom action seen above a notice's place stays seen above the notice.
+  const R = $active();
+  /** @type {any} */
+  let scroll = null;
+  let below = $untrack(R, () => room().bottom);
+  $watch(R, () => room().bottom, px => {
+    const by = px - below;
+    below = px;
+    if (scroll !== null && by !== 0) scroll.scrollTop += by;
+  });
+  return (
+    <ScrollBox ref={(/** @type {any} */ n) => (scroll = n)} bars={false} style={scroller}>
       {placed}
     </ScrollBox>
-  ) : (
-    placed
   );
 }
 
@@ -533,7 +554,11 @@ function Composed(props) {
  * exit, easing }`), `portal` (true), `layer` (`LAYERS.sheet`), `offset`
  * (`sizes.box.modalTop` from the top, md from the sides; or `{ x, y }`), `onEntered`,
  * `onExited`, `stack` (an id
- * in a `Modal.Stack`). Its parts, for composing one: `Modal.Frame`,
+ * in a `Modal.Stack`). In the portal layer its scroller ends at the
+ * notices' room (notice-room.js: on a narrow viewport, where notices
+ * stand at its top or bottom edge), its content scrolling up as the room
+ * below grows, so what stood above the notices stays in view; its backdrop
+ * still covers the whole layer. Its parts, for composing one: `Modal.Frame`,
  * `Modal.Backdrop`, `Modal.Content`, `Modal.Header`, `Modal.Title`,
  * `Modal.Close`, `Modal.Body`.
  * @param {Record<string, any>} props
@@ -553,7 +578,8 @@ export function Modal(props) {
  * Modal's `open`, `defaultOpen`, `onOpenChange`, `title`, `closable`,
  * `backdrop`, `dismiss`, `trap`, `refocus`, `padding`, `shadow`,
  * `motion` ('calm': a slide from its edge), `portal`, `layer`, `stack`
- * (in a `Drawer.Stack`). Its parts: `Drawer.Frame` and
+ * (in a `Drawer.Stack`). In the portal layer its edge box stands clear of
+ * the notices' room at the viewport's top and bottom. Its parts: `Drawer.Frame` and
  * Modal's others (`Drawer.Backdrop`, `Drawer.Content`, …).
  * @param {Record<string, any>} props
  */
@@ -592,7 +618,8 @@ Drawer.Stack = ModalStack;
  * both, false for neither), `closable` (false; true, `{ size,
  * label }` or a node), `at` ({ bottom: 'lg', right: 'lg' } by default;
  * any of top, right, bottom, left, in px or spacing steps), `size` (xs
- * to xl, the theme's `sizes.dialog`, or px), `bordered`, `shadow` ('lg'), `radius`, `p` ('lg'),
+ * to xl, the theme's `sizes.dialog`, or px; a top or bottom inset counts
+ * from the notices' room there, notice-room.js), `bordered`, `shadow` ('lg'), `radius`, `p` ('lg'),
  * `motion` ('base', a rise; or `{ effect, duration, exit, easing }`),
  * `portal`, `layer` (`LAYERS.sheet`). Its children stand in a column;
  * the close is no corner overlay but a part of the first row: at the
@@ -613,6 +640,7 @@ export function Dialog(props) {
     return typeof d === 'object' ? { escape: d.escape !== false, outside: d.outside === true } : dismissOf(d);
   };
   const portal = () => read(props.portal) !== false;
+  const notices = $noticeRoom();
   const style = styled(props, (theme, scheme) => {
     const page = pageColors(theme, scheme);
     const at = read(props.at) ?? { bottom: 'lg', right: 'lg' };
@@ -621,9 +649,10 @@ export function Dialog(props) {
     const pad = props.p === undefined ? { padding: theme.spacing.lg } : null;
     return {
       position: 'fixed',
-      top: inset(at.top),
+      // Fixed against the viewport: a top or bottom inset counts from the notices' room there (notice-room.js).
+      top: at.top == null ? undefined : spacing(theme, at.top) + notices.top(),
       right: inset(at.right),
-      bottom: inset(at.bottom),
+      bottom: at.bottom == null ? undefined : spacing(theme, at.bottom) + notices.bottom(),
       left: inset(at.left),
       zIndex: read(props.layer) ?? LAYERS.sheet,
       width: sizeOf(theme.sizes.dialog, read(props.size)),

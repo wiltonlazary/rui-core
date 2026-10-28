@@ -121,7 +121,13 @@ rejections `REJECT_LABELS`.
   (Modal, Drawer, Dialog, ActionBar, Window, Floater, Launcher), `float` 30
   (Popover, HoverCard, Menu, the combobox and picker panels), `tip` 35
   (tooltips), `toast` 40 (Notifications), `top` 50 (LoadBar). A sheet sits
-  under the panels it opens.
+  under the panels it opens. On a viewport narrower than the theme's `sm`
+  breakpoint a sheet fills it, so notices in the portal layer claim their
+  edge's room (`spacing.lg` in, their height and a `spacing.sm` step) and
+  the sheets placed against the viewport stand clear of it: a Modal's
+  scroller ends there (its content scrolling up with the bottom room, so
+  what stood above it stays in view), a Drawer's edge box and a Dialog's
+  top or bottom inset count from it. Wider, nothing moves.
 - Motion (`MOTION`): `quick` 110 ms, `base` 190, `calm` 300, and `hold`
   1500 (how long a confirmation stays), easing ease-out; a `motion` prop takes a preset's name or `{ effect, duration,
   exit, easing }`. Popovers, menus and tooltips move quick, Modal and

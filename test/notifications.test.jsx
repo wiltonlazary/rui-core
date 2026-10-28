@@ -7,7 +7,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { $root, $flush } from 'rrx-core';
 import { $active, $signal, $read, $write, View } from 'ren-core';
-import { Rui, Clock, manualClock, Text, Button } from 'rui-core';
+import { Rui, Clock, manualClock, Text, Button, Modal, Drawer, Dialog } from 'rui-core';
 import * as notifications from 'rui-core/notifications';
 import { Notifications, $notifications, notificationsStore, NOTIFICATION_PLACES } from 'rui-core/notifications';
 import { both } from './harness.jsx';
@@ -595,5 +595,145 @@ describe('notifications collapse as they leave', () => {
     assert.equal(d.text(), 'page Second two');
     assert.equal(s.text(), 'page Second two');
     dispose();
+  });
+});
+
+describe('notifications keep clear of the sheets over the viewport', () => {
+  /** Two boxes overlap. @param {any} a @param {any} b */
+  const overlap = (a, b) => a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+  /** The Action holding a Skia item (a button's label): the nearest item of kind 5, an Action. @param {any} item */
+  const pressOf = item => {
+    let n = item;
+    while (n !== null && n.kind !== 5) n = n.parent;
+    return n;
+  };
+  /** The notifications' stack on the DOM (its region). @param {any} d */
+  const stackOn = d => d.all('[aria-label="Notifications"]')[0];
+  /** A record form in a Modal, its action at its end, with a notice to show. @param {any} clock @param {any} st @param {Record<string, any>} [props] */
+  const form = (clock, st, props = {}) =>
+    app(clock, { at: 'bottom-end', timeout: false, ...props }, () => [
+      <st.Grab />,
+      <Modal open title="New record" motion={{ duration: 0 }}>
+        <View style={{ height: 380 }}>
+          <Text>Fields</Text>
+        </View>
+        <Button stretch>Record expense</Button>
+      </Modal>,
+    ]);
+
+  it('on a phone a notice stands below an open Modal: its bottom action stays in view above the notice', () => {
+    const clock = manualClock();
+    const st = stores();
+    const { dom, d, s, flush, dispose } = pair(form(clock, st), { width: 360, height: 640 });
+    clock.advance(50);
+    flush();
+    const action = () => s.box(pressOf(s.find('Record expense')));
+    const before = action();
+    assert.ok(before.y + before.height <= 640, `the action in view before: ${JSON.stringify(before)}`);
+    for (const store of st.list) store.show({ title: 'Merchant deleted', text: 'Creating one with its name again brings it back.' });
+    clock.advance(300);
+    flush();
+    // Skia lays out: the notice where it was placed, the action clear of it and within the scroller's view.
+    const note = s.box(s.find('Merchant deleted').parent.parent.parent);
+    assert.equal(Math.round(note.y + note.height), 640 - 24, 'the notice stays at its place');
+    assert.ok(overlap(before, note), `without room the notice would cover the action: ${JSON.stringify({ before, note })}`);
+    const after = action();
+    assert.ok(!overlap(after, note), `the action clear of the notice on Skia: ${JSON.stringify({ after, note })}`);
+    const scroller = s.items().find((/** @type {any} */ i) => i.kind === 2); // kind 2: a Scroll
+    const view = s.box(scroller);
+    assert.ok(view.y + view.height <= note.y, `the sheet's scroller ends above the notice: ${JSON.stringify(view)}`);
+    assert.ok(after.y >= view.y && after.y + after.height <= view.y + view.height, 'the action within the scroller\'s view');
+    // The DOM lays nothing out: its stack reports the height Skia measured; the scroller ends a sm step above it.
+    const stack = stackOn(d);
+    stack.getBoundingClientRect = () => ({ x: 24, y: 640 - 24 - note.height, left: 24, top: 640 - 24 - note.height, width: 312, height: note.height, right: 336, bottom: 640 - 24 });
+    dom.report();
+    const scroll = d.all('[data-ren="Scroll"]')[0];
+    assert.equal(stack.style.bottom, '24px');
+    assert.equal(scroll.style.marginBottom, `${24 + note.height + 12}px`, 'the room on the DOM: the notice and a sm step');
+    // The notice gone, the sheet has the whole layer again.
+    for (const store of st.list) store.clear();
+    clock.advance(300);
+    flush();
+    dom.report();
+    assert.equal(Math.round(s.box(scroller).height), 640, 'the whole layer on Skia');
+    assert.equal(scroll.style.marginBottom, '0px', 'and on the DOM');
+    dispose();
+  });
+
+  it('a notice at the top pushes the Modal down, so its title and Close stay clear', () => {
+    const clock = manualClock();
+    const st = stores();
+    const { s, flush, dispose } = pair(form(clock, st, { at: 'top-center' }), { width: 360, height: 640 });
+    clock.advance(50);
+    flush();
+    // closable: false, so the one Close is the Modal's
+    for (const store of st.list) store.show({ title: 'Merchant deleted', text: 'Creating one with its name again brings it back.', closable: false });
+    clock.advance(300);
+    flush();
+    const note = s.box(s.find('Merchant deleted').parent.parent.parent);
+    assert.equal(Math.round(note.y), 24);
+    for (const part of ['New record', 'Close']) {
+      const item = s.items().find((/** @type {any} */ i) => i.text === part || i.label === part);
+      assert.ok(item !== undefined, `${part} on Skia`);
+      assert.ok(!overlap(s.box(item), note), `${part} clear of the notice: ${JSON.stringify(s.box(item))}`);
+    }
+    dispose();
+  });
+
+  it('a bottom Drawer and a Dialog in a corner stand above the notices on a phone', () => {
+    const clock = manualClock();
+    const st = stores();
+    const view = app(clock, { at: 'bottom-center', timeout: false }, () => [
+      <st.Grab />,
+      <Drawer open at="bottom" size={200} title="Filters" motion={{ duration: 0 }}>
+        <Button>Apply</Button>
+      </Drawer>,
+      <Dialog open motion={{ duration: 0 }}>
+        <Button>Undo</Button>
+      </Dialog>,
+    ]);
+    const { s, flush, dispose } = pair(view, { width: 360, height: 640 });
+    clock.advance(50);
+    flush();
+    for (const store of st.list) store.show({ title: 'Saved', text: 'Your filters are kept.' });
+    clock.advance(300);
+    flush();
+    const note = s.box(s.find('Saved').parent.parent.parent);
+    for (const part of ['Apply', 'Undo']) {
+      const b = s.box(pressOf(s.find(part)));
+      assert.ok(b.y + b.height <= note.y, `${part} above the notice: ${JSON.stringify({ b, note })}`);
+    }
+    dispose();
+  });
+
+  it('on a wide screen, or with no sheet open, nothing moves for a notice', () => {
+    const clock = manualClock();
+    const st = stores();
+    const { dom, d, s, flush, dispose } = pair(form(clock, st), { width: 1024, height: 640 });
+    clock.advance(50);
+    flush();
+    const action = () => s.box(pressOf(s.find('Record expense')));
+    const before = action();
+    for (const store of st.list) store.show({ title: 'Merchant deleted' });
+    clock.advance(300);
+    flush();
+    const stack = stackOn(d);
+    stack.getBoundingClientRect = () => ({ x: 640, y: 560, left: 640, top: 560, width: 360, height: 56, right: 1000, bottom: 616 });
+    dom.report();
+    assert.deepEqual(action(), before, 'the Modal where it was on Skia');
+    assert.ok(['', '0px'].includes(d.all('[data-ren="Scroll"]')[0].style.marginBottom), 'and on the DOM');
+    dispose();
+    // No sheet: the notice stands at its place, the page as it was.
+    const clock2 = manualClock();
+    const st2 = stores();
+    const page = pair(app(clock2, { at: 'bottom-end', timeout: false }, () => <st2.Grab />), { width: 360, height: 640 });
+    for (const store of st2.list) store.show({ title: 'Alone' });
+    clock2.advance(300);
+    page.flush();
+    const box = page.s.box(page.s.find('Alone').parent.parent.parent);
+    assert.deepEqual([Math.round(box.x), Math.round(box.y + box.height)], [24, 640 - 24], 'at its place on Skia');
+    const alone = stackOn(page.d);
+    assert.deepEqual([alone.style.bottom, alone.style.left, alone.style.right], ['24px', '24px', '24px'], 'and on the DOM');
+    page.dispose();
   });
 });
