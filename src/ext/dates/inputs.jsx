@@ -298,7 +298,8 @@ export function DateInput(props) {
   const rest = { ...props };
   for (const k of ['value', 'defaultValue', 'onChange', 'format', 'parse', 'popover', 'revert']) delete rest[k];
   const picker = pickerOf(props);
-  for (const k of ['parse', 'revert', 'size']) delete picker[k];
+  // `ref` is the field's Edit's alone.
+  for (const k of ['parse', 'revert', 'size', 'ref']) delete picker[k];
   return (
     <Popover
       at="bottom-start"

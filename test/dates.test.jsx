@@ -1209,6 +1209,21 @@ describe('DateInput: the month its calendar opens on', () => {
   });
 });
 
+describe('DateInput: its ref', () => {
+  it('hands its ref the field\'s Edit alone, the open calendar never', () => {
+    /** @type {any[][]} */
+    const seen = [];
+    const t = portaled(root => {
+      seen[root] = [];
+      return { defaultValue: '2024-05-09', ref: (/** @type {any} */ n) => n != null && seen[root].push(n) };
+    });
+    t.focus();
+    assert.deepEqual(t.header(), ['May 2024', 'May 2024']);
+    assert.deepEqual([seen[0].map(n => n.getAttribute('data-ren')), seen[1].map(n => n.kind)], [['Edit'], [4]]);
+    t.dispose();
+  });
+});
+
 describe('DateTimeSelect', () => {
   it('picks a day keeping the time, types the time in the row under the calendar, and closes on Done', () => {
     const values = perRoot();
