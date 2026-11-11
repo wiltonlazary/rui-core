@@ -1080,79 +1080,79 @@ describe('DateInput', () => {
   });
 });
 
-describe('DateInput and its calendar in the portal layer', () => {
-  /**
-   * A DateInput on both renderers, its calendar in the portal layer, with drivers that act on both.
-   * @param {(root: number) => Record<string, any>} propsOf the props, per root
-   */
-  const portaled = propsOf => {
-    const clock = manualClock();
-    let root = 0;
-    const p = pair(
-      () => (
-        <Clock value={clock}>
-          <Rui>
-            <DateInput label="Born" today="2024-05-01" popover={{ motion: { duration: 0 } }} {...propsOf(root++)} />
-          </Rui>
-        </Clock>
-      ),
-      { width: 480, height: 520 },
-    );
-    const dEdit = () => p.d.nodes('Edit')[0];
-    const sEdit = () => p.s.items().find((/** @type {any} */ i) => i.kind === 4);
-    const settle = () => {
-      clock.advance(300);
-      p.flush();
-    };
-    /** The Action named `name` on each renderer (the DOM's node, Skia's item). @param {string} name */
-    const named = name => [p.d.nodes('Action').find((/** @type {any} */ n) => n.getAttribute('aria-label') === name), p.s.items().find((/** @type {any} */ i) => i.label === name)];
-    return {
-      ...p,
-      settle,
-      named,
-      /** The focus comes to the field on both, as Tab gives it. */
-      focus() {
-        dEdit().blur();
-        sEdit().blur();
-        p.flush();
-        dEdit().focus();
-        sEdit().focus();
-        settle();
-      },
-      /** A press on the Action named `name` on both; the press takes the focus, as a browser's does. @param {string} name */
-      press(name) {
-        const [node, item] = named(name);
-        node.focus();
-        p.d.tap(node);
-        const r = p.s.box(item);
-        p.s.at(r.x + r.width / 2, r.y + r.height / 2);
-        settle();
-      },
-      /** A press outside the field and the calendar: on the DOM on the backdrop, on Skia at the page's bottom corner. */
-      outside() {
-        const backdrop = [...p.dom.document.body.children].find((/** @type {any} */ n) => n !== p.dom.host && n.style.right === '0px' && n.style.bottom === '0px' && n.style.pointerEvents !== 'none');
-        backdrop?.dispatchEvent(new p.dom.window.PointerEvent('pointerdown', { bubbles: true, cancelable: true, button: 0, buttons: 1, pointerId: 1 }));
-        p.flush();
-        p.s.at(470, 510);
-        settle();
-      },
-      /** A key to what has the focus on both. @param {string} key */
-      key(key) {
-        p.d.key(key);
-        p.s.key(key);
-        settle();
-      },
-      /** The calendar's header on each renderer (its period's button), or null while it is closed. */
-      header: () => {
-        settle();
-        const months = /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{4}$/;
-        return [p.d.nodes('Action').map((/** @type {any} */ n) => n.textContent.trim()).find((/** @type {string} */ t) => months.test(t)) ?? null, p.s.items().map((/** @type {any} */ i) => String(i.text ?? '')).find((/** @type {string} */ t) => months.test(t)) ?? null];
-      },
-      /** Whether the field has the focus on each renderer. */
-      inField: () => [p.d.focused() === dEdit(), p.s.focused() === sEdit()],
-    };
+/**
+ * A DateInput on both renderers, its calendar in the portal layer, with drivers that act on both.
+ * @param {(root: number) => Record<string, any>} propsOf the props, per root
+ */
+const portaled = propsOf => {
+  const clock = manualClock();
+  let root = 0;
+  const p = pair(
+    () => (
+      <Clock value={clock}>
+        <Rui>
+          <DateInput label="Born" today="2024-05-01" popover={{ motion: { duration: 0 } }} {...propsOf(root++)} />
+        </Rui>
+      </Clock>
+    ),
+    { width: 480, height: 520 },
+  );
+  const dEdit = () => p.d.nodes('Edit')[0];
+  const sEdit = () => p.s.items().find((/** @type {any} */ i) => i.kind === 4);
+  const settle = () => {
+    clock.advance(300);
+    p.flush();
   };
+  /** The Action named `name` on each renderer (the DOM's node, Skia's item). @param {string} name */
+  const named = name => [p.d.nodes('Action').find((/** @type {any} */ n) => n.getAttribute('aria-label') === name), p.s.items().find((/** @type {any} */ i) => i.label === name)];
+  return {
+    ...p,
+    settle,
+    named,
+    /** The focus comes to the field on both, as Tab gives it. */
+    focus() {
+      dEdit().blur();
+      sEdit().blur();
+      p.flush();
+      dEdit().focus();
+      sEdit().focus();
+      settle();
+    },
+    /** A press on the Action named `name` on both; the press takes the focus, as a browser's does. @param {string} name */
+    press(name) {
+      const [node, item] = named(name);
+      node.focus();
+      p.d.tap(node);
+      const r = p.s.box(item);
+      p.s.at(r.x + r.width / 2, r.y + r.height / 2);
+      settle();
+    },
+    /** A press outside the field and the calendar: on the DOM on the backdrop, on Skia at the page's bottom corner. */
+    outside() {
+      const backdrop = [...p.dom.document.body.children].find((/** @type {any} */ n) => n !== p.dom.host && n.style.right === '0px' && n.style.bottom === '0px' && n.style.pointerEvents !== 'none');
+      backdrop?.dispatchEvent(new p.dom.window.PointerEvent('pointerdown', { bubbles: true, cancelable: true, button: 0, buttons: 1, pointerId: 1 }));
+      p.flush();
+      p.s.at(470, 510);
+      settle();
+    },
+    /** A key to what has the focus on both. @param {string} key */
+    key(key) {
+      p.d.key(key);
+      p.s.key(key);
+      settle();
+    },
+    /** The calendar's header on each renderer (its period's button), or null while it is closed. */
+    header: () => {
+      settle();
+      const months = /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{4}$/;
+      return [p.d.nodes('Action').map((/** @type {any} */ n) => n.textContent.trim()).find((/** @type {string} */ t) => months.test(t)) ?? null, p.s.items().map((/** @type {any} */ i) => String(i.text ?? '')).find((/** @type {string} */ t) => months.test(t)) ?? null];
+    },
+    /** Whether the field has the focus on each renderer. */
+    inField: () => [p.d.focused() === dEdit(), p.s.focused() === sEdit()],
+  };
+};
 
+describe('DateInput and its calendar in the portal layer', () => {
   it('a press outside and Escape in the calendar close it for good, the focus back in the field', () => {
     const t = portaled(() => ({ defaultValue: '2024-05-09' }));
     t.focus();
@@ -1166,7 +1166,7 @@ describe('DateInput and its calendar in the portal layer', () => {
     assert.deepEqual(t.header(), [null, null], 'and it stays closed');
     // ArrowDown in the field opens it again; Escape in the calendar closes it the same way.
     t.focus();
-    assert.deepEqual(t.header(), ['Jun 2024', 'Jun 2024'], 'the focus coming to the field later opens it');
+    assert.deepEqual(t.header(), ['May 2024', 'May 2024'], "the focus coming to the field later opens it, on its value's month");
     t.press('Next month');
     t.key('Escape');
     assert.deepEqual(t.header(), [null, null]);
@@ -1177,6 +1177,34 @@ describe('DateInput and its calendar in the portal layer', () => {
     t.key('Escape');
     assert.deepEqual(t.header(), [null, null], 'Escape in the calendar closes it for good');
     assert.deepEqual(t.inField(), [true, true]);
+    t.dispose();
+  });
+});
+
+describe('DateInput: the month its calendar opens on', () => {
+  it('is the value\'s after the value changed from outside, after a pick of a day of the next month, and today\'s after a clear', () => {
+    /** @type {any[]} */
+    const values = [];
+    const t = portaled(() => {
+      const v = $signal($active(), /** @type {string | null} */ ('2024-05-10'));
+      values.push(v);
+      return { value: v, onChange: (/** @type {string | null} */ d) => $write(v, d), clearable: true };
+    });
+    for (const v of values) $write(v, '2024-08-20');
+    t.focus();
+    assert.deepEqual(t.header(), ['Aug 2024', 'Aug 2024'], 'a value written from outside');
+    // A day of September shown at the end of August's weeks: picked, the calendar next opens on September.
+    t.press('Sunday, 1 September 2024');
+    assert.deepEqual(values.map(v => $read(v)), ['2024-09-01', '2024-09-01']);
+    assert.deepEqual(t.header(), [null, null]);
+    t.focus();
+    assert.deepEqual(t.header(), ['Sep 2024', 'Sep 2024'], 'a pick of a trailing day');
+    t.press('Next month');
+    t.key('Escape');
+    t.press('Clear');
+    assert.deepEqual(values.map(v => $read(v)), [null, null]);
+    t.focus();
+    assert.deepEqual(t.header(), ['May 2024', 'May 2024'], 'cleared: today\'s month, not the one last seen');
     t.dispose();
   });
 });

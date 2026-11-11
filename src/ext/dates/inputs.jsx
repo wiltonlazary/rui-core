@@ -249,7 +249,13 @@ export function DateInput(props) {
   const format = () => read(props.format) ?? 'D MMM YYYY';
   const formatted = () => (toDate(value.get()) === null ? '' : formatDate(/** @type {string} */ (value.get()), format(), settings.labels()));
   const draft = $signal(R, /** @type {string | null} */ (null));
-  const month = $signal(R, /** @type {string | null} */ ($untrack(R, () => toDate(value.get()))));
+  // The month the open calendar was turned or typed to; null shows the value's, else today's. Each opening starts there.
+  const month = $signal(R, /** @type {string | null} */ (null));
+  const show = () => {
+    if ($untrack(R, () => $read(open))) return;
+    $write(month, null);
+    $write(open, true);
+  };
   const text = () => $read(draft) ?? formatted();
   const inside = (/** @type {string} */ d) => {
     const lo = toDate(read(props.min));
@@ -270,7 +276,7 @@ export function DateInput(props) {
     const d = parse(t);
     if (d !== null && inside(d)) {
       if (d !== value.get()) value.set(d);
-      $write(month, startOfMonth(d));
+      if ($untrack(R, () => $read(open))) $write(month, startOfMonth(d));
     }
   };
   const blur = () => {
@@ -299,7 +305,7 @@ export function DateInput(props) {
       shadow="md"
       {...read(props.popover)}
       open={() => $read(open) && !disabled()}
-      onOpenChange={(/** @type {boolean} */ v) => (v ? $write(open, true) : shut())}
+      onOpenChange={(/** @type {boolean} */ v) => (v ? show() : shut())}
     >
       <Popover.Trigger>
         {(/** @type {any} */ _trigger) => (
@@ -308,7 +314,7 @@ export function DateInput(props) {
             value={text}
             onChange={input}
             onFocus={(/** @type {any} */ e) => {
-              if (!picked) $write(open, true);
+              if (!picked) show();
               props.onFocus?.(e);
             }}
             onBlur={(/** @type {any} */ e) => {
@@ -321,7 +327,7 @@ export function DateInput(props) {
                 if ($untrack(R, () => $read(open))) handled(e);
                 $write(open, false);
               }
-              else if (e.key === 'ArrowDown') $write(open, true);
+              else if (e.key === 'ArrowDown') show();
               props.onKey?.(e);
             }}
             end={
