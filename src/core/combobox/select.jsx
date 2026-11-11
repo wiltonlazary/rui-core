@@ -164,7 +164,8 @@ export function Select(props) {
       ref={store.setTrigger}
       label={() => read(props['aria-label']) ?? labelOf(value.get()) ?? read(props.placeholder) ?? ''}
       {...comboOf(props, said)}
-      onPress={() => !locked() && store.toggle()}
+      // A press closes the options it sees: open with nothing to show, the field stays open for what arrives.
+      onPress={() => !locked() && (said.isOpen() ? store.close() : store.open())}
       // its pointerdown is its own: the box's opens the panel, whose backdrop would take the press it toggles with
       onPointerDown={(/** @type {any} */ e) => e.stopPropagation()}
       onFocus={focused.onFocus}

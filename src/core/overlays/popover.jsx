@@ -61,7 +61,7 @@ const FROM_SIDE = tables(/** @type {const} */ ({ bottom: 'sink', top: 'rise', ri
 export const PopoverContext = $context(/** @type {PopoverStore | null} */ (null));
 
 /** True when `node` is `root` or inside it: the DOM's parentNode or a canvas item's parent. @param {any} root @param {any} node */
-const within = (root, node) => {
+export const within = (root, node) => {
   for (let n = node; root != null && n != null; n = n.parentNode ?? n.parent ?? null) if (n === root) return true;
   return false;
 };

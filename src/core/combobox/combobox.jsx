@@ -6,11 +6,11 @@
 // centered lightbox instead (`$boxed`): a Modal holding a filter when the
 // list is long, the options, and the field's footer.
 
-import { View, Label, Action, Edit, Shape, Show, For, read, $active, $signal, $memo, $read, $write, $context, $lookup, $owner, $cleanup, $untrack, $watch, $viewport } from 'ren-core';
+import { View, Label, Action, Edit, Shape, Show, For, read, $active, $signal, $memo, $read, $write, $context, $lookup, $owner, $cleanup, $untrack, $watch, $viewport, $presses } from 'ren-core';
 import { styled, pressLook } from '../../theme/style.js';
 import { $ui } from '../../theme/theme.jsx';
 import { fontBelow, pageColors, radiusOf, shadowOf, sized, variantColors } from '../../theme/resolve.js';
-import { Panel } from '../overlays/popover.jsx';
+import { Panel, within } from '../overlays/popover.jsx';
 import { Modal } from '../overlays/modal.jsx';
 import { $fits } from '../../hooks/platform.js';
 import { keyOf, prevent, checkFigures, ActionRow, partOf, handled } from '../overlays/shared.jsx';
@@ -75,6 +75,8 @@ export function Combobox(props) {
     enter: () => {},
     leave: () => {},
   };
+  // A key that toggles closes what is seen: open with nothing shown, the field stays open for what arrives.
+  const toggle = () => ($untrack(R, store.isOpen) && pop.shown?.() !== false ? store.close() : store.open());
   /** @type {ComboboxValue} */
   const value = {
     store,
@@ -97,11 +99,11 @@ export function Combobox(props) {
         if (open && store.pick()) prevent(e);
         else if (button) {
           prevent(e);
-          store.toggle();
+          toggle();
         }
       } else if (key === ' ' && button) {
         prevent(e);
-        store.toggle();
+        toggle();
       } else if (key === 'Escape') {
         if (open) {
           // Open with nothing shown, it closes nothing one sees: the Escape goes on to the layer around the field.
@@ -124,10 +126,24 @@ export function Combobox(props) {
  * @param {Record<string, any>} props
  */
 export function ComboboxTrigger(props) {
+  const R = $active();
   const c = $comboboxContext();
   const button = () => read(props.kind) === 'button';
+  // Open with nothing shown there is no backdrop to close it, so leaving the field does, taking no press: a press
+  // anywhere else in the root (a target that keeps its press to itself is not heard here) and the focus gone from it
+  // (which hears that one too, and every other way out).
+  const unseen = () => $untrack(R, c.store.isOpen) && c.pop.shown?.() === false;
+  $presses((/** @type {any} */ e) => {
+    if (unseen() && !within($untrack(R, c.pop.anchor), e?.target)) c.store.close();
+  });
   return (
-    <View ref={c.pop.setAnchor} style={() => ({ ...read(props.style) })} onResize={() => c.pop.follow?.()} onKey={(/** @type {any} */ e) => e !== c.pop.inside && c.keys(e, button())}>
+    <View
+      ref={c.pop.setAnchor}
+      style={() => ({ ...read(props.style) })}
+      onResize={() => c.pop.follow?.()}
+      onKey={(/** @type {any} */ e) => e !== c.pop.inside && c.keys(e, button())}
+      onFocusOut={() => void (unseen() && c.store.close())}
+    >
       {props.children}
     </View>
   );
@@ -173,8 +189,8 @@ export function $boxed(props) {
  * against the trigger (the trigger's width by default), `control.panelPad`
  * inside its edge;
  * `shown` (true; false keeps it out of sight while open, as when nothing is
- * to be shown: a press outside then goes where it lands, and
- * Escape closes it and goes on). While the combobox is `boxed` it is a centered lightbox
+ * to be shown: a press outside then goes where it lands and closes it, as
+ * the focus leaving its trigger does, and Escape closes it and goes on). While the combobox is `boxed` it is a centered lightbox
  * instead, titled by the combobox's `title`: `filter` above the options and
  * `footer` below them (each a node or an accessor of one).
  * @param {Record<string, any>} props

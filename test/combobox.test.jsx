@@ -913,6 +913,74 @@ describe('MultiSelect, TagInput, Autocomplete, Tag', () => {
     t.dispose();
   });
 
+  it('a field left while open with nothing to show is closed: what arrives later opens nothing', () => {
+    /** @type {Record<string, any[]>} */
+    const datas = { pick: [], city: [], tags: [] };
+    let presses = 0;
+    const t = setup((clock, st) =>
+      app(clock, () => {
+        const make = (/** @type {string} */ name, /** @type {any} */ first) => {
+          const d = $signal($active(), first);
+          datas[name].push(d);
+          return d;
+        };
+        const city = st.add($signal($active(), ''));
+        const tags = st.add($signal($active(), /** @type {string[]} */ ([])));
+        return (
+          <>
+            <Select placeholder="Pick" data={make('pick', [])} />
+            <Autocomplete placeholder="City" data={make('city', ['Bern'])} value={city} onChange={(/** @type {any} */ x) => $write(city, x)} />
+            <TagInput placeholder="Tags" data={make('tags', ['north'])} value={tags} onChange={(/** @type {any} */ x) => $write(tags, x)} />
+            <Button onPress={() => presses++}>Go</Button>
+          </>
+        );
+      }),
+    );
+    /** Writes a field's data on both roots. @param {string} name @param {any[]} next */
+    const give = (name, next) => {
+      for (const d of datas[name]) $write(d, next);
+      t.settle();
+    };
+    const expanded = () => [...t.dom.document.querySelectorAll('[role="combobox"]')].map(n => n.getAttribute('aria-expanded')).join(' ');
+    const backdrops = () => [...t.dom.document.body.children].filter((/** @type {any} */ n) => n !== t.dom.host && n.style.right === '0px' && n.style.bottom === '0px' && n.style.pointerEvents !== 'none').length;
+    // A Select without options: pressed, it is open with nothing to show; the press beside it closes it and is the button's.
+    t.press('Pick');
+    t.press('Go');
+    assert.equal(presses, 2, 'the button pressed once on each renderer');
+    give('pick', ['Bern', 'Basel']);
+    assert.equal(t.text(), 'Pick City Tags Go', 'options that arrive after the field was left show nowhere');
+    assert.deepEqual([expanded(), backdrops()], ['false false false', 0]);
+    t.press('Pick');
+    assert.equal(t.text(), 'Pick City Tags Go Bern Basel', 'the next press on it opens it');
+    assert.deepEqual([expanded(), backdrops()], ['true false false', 1]);
+    t.key('Escape');
+    // Pressed twice while it has nothing to show, it stays open for what arrives: no state toggled out of sight.
+    give('pick', []);
+    t.press('Pick');
+    t.press('Pick');
+    give('pick', ['Chur']);
+    assert.equal(t.text(), 'Pick City Tags Go Chur', 'still on the field: its options show as they arrive');
+    t.pick('Chur');
+    assert.equal(t.text(), 'Chur City Tags Go');
+    // An Autocomplete and a TagInput whose text matches nothing: left by a press, then by the focus alone.
+    t.focusEdit(0);
+    t.type('x');
+    t.press('Go');
+    give('city', ['Bern', 'xenon']);
+    assert.equal(t.text(), 'Chur x Tags Go', 'the suggestion that arrives opens nothing');
+    assert.deepEqual([expanded(), backdrops()], ['false false false', 0]);
+    t.focusEdit(1);
+    t.type('q');
+    t.focusEdit(0);
+    give('tags', ['north', 'quay']);
+    assert.equal(t.text(), 'Chur x q Go', 'the focus gone to another field closes it too');
+    assert.deepEqual([expanded(), backdrops()], ['false false false', 0]);
+    t.focusEdit(1);
+    t.type('u');
+    assert.equal(t.text(), 'Chur x qu Go quay', 'typing in it again suggests');
+    t.dispose();
+  });
+
   it('Autocomplete: a choice fills the text with its label; onPick gets its value and option', () => {
     /** @type {any[]} */
     const picks = [];
