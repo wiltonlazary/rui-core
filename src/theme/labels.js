@@ -155,6 +155,18 @@ export const BASE_LABELS = Object.freeze({
   scrollForward: 'Scroll forward',
   /** A Modal or Drawer whose title is no text. */
   dialog: 'Dialog',
+  /** A Sortable item's handle. */
+  reorder: 'Reorder',
+  /** How the keys move a Sortable's item, the text its handles are described by. */
+  sortableKeys: 'Press Space or Enter to lift, the arrow keys to move, Space or Enter to drop, Escape to cancel',
+  /** A Sortable's item lifted, by its place from 1 and the count. */
+  sortableTaken: (/** @type {number} */ i, /** @type {number} */ n) => `Lifted at place ${i} of ${n}`,
+  /** A Sortable's lifted item at another place. */
+  sortablePlace: (/** @type {number} */ i, /** @type {number} */ n) => `Place ${i} of ${n}`,
+  /** A Sortable's item dropped. */
+  sortableDropped: (/** @type {number} */ i, /** @type {number} */ n) => `Dropped at place ${i} of ${n}`,
+  /** A Sortable's move given up. */
+  sortableCanceled: 'Reorder canceled',
   /** Window's press that folds it. */
   minimize: 'Minimize',
   /** Window's press that unfolds it. */

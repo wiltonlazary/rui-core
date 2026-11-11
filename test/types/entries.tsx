@@ -16,7 +16,7 @@ import { Modals } from 'rui-core/modals';
 import { Snippet, tokenize } from 'rui-core/snippet';
 import { LoadBar, creep, loadBarStore } from 'rui-core/load-bar';
 import { Editor } from 'rui-core/editor';
-import { QrCode, DataTable } from 'rui-core/more';
+import { QrCode, DataTable, Sortable } from 'rui-core/more';
 import type { DataTableField, DataTableOrder } from 'rui-core/more';
 import type { Option } from 'rui-core';
 
@@ -133,6 +133,13 @@ void (
         <Editor />
         <QrCode value="rui" />
         <DataTable rows={rows} fields={fields} defaultOrder={order} />
+        <Sortable value={['a', 'b']} onCommit={(items: string[], from: number, to: number) => void [items, from, to]}>
+          {(item: () => string) => (
+            <Sortable.Item>
+              <Sortable.Handle label={() => `Reorder ${item()}`} />
+            </Sortable.Item>
+          )}
+        </Sortable>
         <Select data={['Oslo', 'Lima']} searchable match={startsWith} limit={5} />
       </Stack>
     </Modals>

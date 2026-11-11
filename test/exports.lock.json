@@ -439,6 +439,7 @@
     "Parallax": "function",
     "QrCode": "function",
     "Rings": "function",
+    "Sortable": "function",
     "Spinner": "function",
     "TextAnimate": "function",
     "Window": "function",

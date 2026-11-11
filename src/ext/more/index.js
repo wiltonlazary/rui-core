@@ -15,6 +15,7 @@ export { Onboarding } from './onboarding.jsx';
 export { Parallax } from './parallax.jsx';
 export { Gantt, rescheduled } from './gantt.jsx';
 export { Book, bookSlots } from './book.jsx';
+export { Sortable } from './sortable.jsx';
 
 /** A DataTable field's options, keyed by its row path in `fields`. @typedef {import('./data-table.jsx').DataTableField} DataTableField */
 /** A DataTable's order: `{ by, desc }`. @typedef {import('./data-table.jsx').Order} DataTableOrder */
