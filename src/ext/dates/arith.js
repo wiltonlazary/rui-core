@@ -370,8 +370,9 @@ const NAMED = {
 
 /**
  * Text read back through a format (the inverse of `formatDate` for its
- * date tokens; names matched without case): the date, or null when the text
- * does not match or names an impossible day.
+ * date tokens; names matched without case; `YY` reads as 20YY, so a year
+ * outside 2000 to 2099 written with `YY` does not read back): the date, or
+ * null when the text does not match or names an impossible day.
  * @param {string} text @param {string} format @param {Partial<DatesLabels> | null} [labels]
  * @returns {DateString | null}
  */
