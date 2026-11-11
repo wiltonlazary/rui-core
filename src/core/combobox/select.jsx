@@ -9,7 +9,7 @@ import { pageColors, sized } from '../../theme/resolve.js';
 import { $controlled } from '../overlays/shared.jsx';
 import { $combobox } from './store.js';
 import { Combobox, ComboboxTrigger, ComboboxPanel, ComboboxFilter, OptionsList, $comboboxContext, $boxed } from './combobox.jsx';
-import { FieldBox, Outer, Opener, Clear, editStyle, sizeOf, $focused, comboOf, boxPress, editPress } from './field.jsx';
+import { FieldBox, Outer, Opener, Clear, editStyle, sizeOf, $focused, comboOf, showing, boxPress, editPress } from './field.jsx';
 import { parseData, shown, grouped } from './data.js';
 import { labelsIn } from '../../theme/labels.js';
 import { $editMenu } from '../inputs/edit-menu.jsx';
@@ -104,6 +104,9 @@ export function Select(props) {
       },
     }),
   );
+  // The panel has something to show: options, or the `empty` line; a lightbox always shows.
+  const filled = () => options().length > 0 || props.empty !== undefined;
+  const said = showing(store, () => boxed.on() || filled());
   const locked = () => read(props.disabled) === true || read(props.readOnly) === true;
   const choose = (/** @type {string} */ v, /** @type {any} */ option) => {
     if (locked()) return;
@@ -138,7 +141,7 @@ export function Select(props) {
           {...menu.bind({ ref: store.setTrigger, onPointerDown: editPress(store, locked) })}
           value={shownText}
           label={() => read(props.placeholder) ?? ''}
-          {...comboOf(props, store)}
+          {...comboOf(props, said)}
           onChange={(/** @type {{ value: string }} */ e) => {
             if (locked()) return;
             search.set(e.value);
@@ -158,7 +161,7 @@ export function Select(props) {
     <Action
       ref={store.setTrigger}
       label={() => read(props['aria-label']) ?? labelOf(value.get()) ?? read(props.placeholder) ?? ''}
-      {...comboOf(props, store)}
+      {...comboOf(props, said)}
       onPress={() => !locked() && store.toggle()}
       // its pointerdown is its own: the box's opens the panel, whose backdrop would take the press it toggles with
       onPointerDown={(/** @type {any} */ e) => e.stopPropagation()}
@@ -192,7 +195,7 @@ export function Select(props) {
           </FieldBox>
         </ComboboxTrigger>
         <ComboboxPanel
-          shown={() => options().length > 0 || props.empty !== undefined}
+          shown={filled}
           filter={() =>
             filtered() ? (
               <ComboboxFilter
@@ -250,6 +253,8 @@ export function Autocomplete(props) {
   const value = $controlled(props, 'value', 'defaultValue', '', v => props.onChange?.(v));
   const options = () => shown($read(data), value.get(), props.match, read(props.limit));
   const store = $combobox(storeOf(props, {}));
+  // The panel has suggestions to show.
+  const filled = () => options().length > 0;
   const choose = (/** @type {string} */ v, /** @type {any} */ option) => {
     if (locked()) return;
     props.onPick?.(v, option);
@@ -272,7 +277,7 @@ export function Autocomplete(props) {
               {...menu.bind({ ref: store.setTrigger, onPointerDown: editPress(store, locked) })}
               value={value.get}
               label={() => read(props.placeholder) ?? ''}
-              {...comboOf(props, store)}
+              {...comboOf(props, showing(store, filled))}
               disabled={() => read(props.disabled) === true}
               readOnly={() => read(props.readOnly) === true}
               onChange={(/** @type {{ value: string }} */ e) => {
@@ -288,7 +293,7 @@ export function Autocomplete(props) {
             {menu.menu}
           </FieldBox>
         </ComboboxTrigger>
-        <ComboboxPanel shown={() => options().length > 0}>
+        <ComboboxPanel shown={filled}>
           <OptionsList options={options} checked={() => false} check={false} renderOption={props.renderOption} panelHeight={props.panelHeight} />
         </ComboboxPanel>
       </Combobox>

@@ -9,7 +9,7 @@ import { $controlled, crossFigures, keyOf, prevent } from '../overlays/shared.js
 import { $combobox } from './store.js';
 import { Combobox, ComboboxTrigger, ComboboxPanel, ComboboxFilter, OptionsList, $boxed } from './combobox.jsx';
 import { Button } from '../buttons/button.jsx';
-import { FieldBox, Outer, Opener, Clear, editStyle, $focused, comboOf, boxPress, editPress } from './field.jsx';
+import { FieldBox, Outer, Opener, Clear, editStyle, $focused, comboOf, showing, boxPress, editPress } from './field.jsx';
 import { marks, named } from '../../theme/meaning.js';
 import { parseData, shown } from './data.js';
 import { firstIndex, comboboxOf, storeOf, titleOf, long } from './select.jsx';
@@ -207,6 +207,8 @@ export function MultiSelect(props) {
     return shown(pool, read(props.searchable) === false ? '' : search.get(), props.match);
   };
   const store = $combobox(storeOf(props, { close: () => search.set('') }));
+  // The panel has something to show: options, or the `empty` line; a lightbox always shows.
+  const filled = () => options().length > 0 || props.empty !== undefined;
   const locked = () => read(props.disabled) === true || read(props.readOnly) === true;
   const full = () => {
     const max = read(props.max);
@@ -243,7 +245,7 @@ export function MultiSelect(props) {
               editMenu={props.editMenu}
               readOnly={props.readOnly}
               onPointerDown={editPress(store, locked)}
-              {...comboOf(props, store)}
+              {...comboOf(props, showing(store, () => boxed.on() || filled()))}
               size={props.size}
               disabled={props.disabled}
               value={search.get}
@@ -266,7 +268,7 @@ export function MultiSelect(props) {
           </FieldBox>
         </ComboboxTrigger>
         <ComboboxPanel
-          shown={() => options().length > 0 || props.empty !== undefined}
+          shown={filled}
           filter={() =>
             filtered() ? (
               <ComboboxFilter
@@ -326,6 +328,8 @@ export function TagInput(props) {
     return shown(dupes() ? all : all.filter(o => !tags.includes(o.value)), search.get(), props.match);
   };
   const store = $combobox(storeOf(props, {}));
+  // The panel has suggestions to show.
+  const filled = () => options().length > 0;
   const locked = () => read(props.disabled) === true || read(props.readOnly) === true;
   /**
    * Adds tags, as far as the rules allow; `taken` runs just before a change.
@@ -388,7 +392,7 @@ export function TagInput(props) {
               ref={store.setTrigger}
               editMenu={props.editMenu}
               readOnly={props.readOnly}
-              {...comboOf(props, store)}
+              {...comboOf(props, showing(store, filled))}
               size={props.size}
               disabled={props.disabled}
               value={search.get}
@@ -412,7 +416,7 @@ export function TagInput(props) {
             />
           </FieldBox>
         </ComboboxTrigger>
-        <ComboboxPanel shown={() => options().length > 0}>
+        <ComboboxPanel shown={filled}>
           <OptionsList options={options} multiple checked={() => false} check={false} panelHeight={props.panelHeight} renderOption={props.renderOption} />
         </ComboboxPanel>
       </Combobox>

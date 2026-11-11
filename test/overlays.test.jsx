@@ -2149,7 +2149,7 @@ describe('Escape closes one layer', () => {
   });
 
   it('a Select in a Modal: Escape in the open field closes the list only', () => {
-    const { p, st, settle } = inModal(() => <Select aria-label="Fruit" options={['Apple', 'Pear']} />);
+    const { p, st, settle } = inModal(() => <Select aria-label="Fruit" data={['Apple', 'Pear']} />);
     const field = p.dom.document.querySelector('[role="combobox"]');
     field.focus();
     p.d.key('ArrowDown');

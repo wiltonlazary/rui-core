@@ -104,7 +104,8 @@ export function Combobox(props) {
         store.toggle();
       } else if (key === 'Escape') {
         if (open) {
-          handled(e);
+          // Open with nothing shown, it closes nothing one sees: the Escape goes on to the layer around the field.
+          if (pop.shown?.() !== false) handled(e);
           store.close();
         }
       } else if (key === 'Tab') {
@@ -172,13 +173,15 @@ export function $boxed(props) {
  * against the trigger (the trigger's width by default), `control.panelPad`
  * inside its edge;
  * `shown` (true; false keeps it out of sight while open, as when nothing is
- * to be shown). While the combobox is `boxed` it is a centered lightbox
+ * to be shown: a press outside then goes where it lands, and
+ * Escape closes it and goes on). While the combobox is `boxed` it is a centered lightbox
  * instead, titled by the combobox's `title`: `filter` above the options and
  * `footer` below them (each a node or an accessor of one).
  * @param {Record<string, any>} props
  */
 export function ComboboxPanel(props) {
   const c = $comboboxContext();
+  c.pop.shown = () => read(c.root.boxed) === true || read(props.shown) !== false;
   return () => (read(c.root.boxed) === true ? <Lightbox {...props} /> : <Anchored {...props} />);
 }
 
@@ -226,7 +229,8 @@ function Anchored(props) {
       padding: theme.control.panelPad,
       direction: 'column',
       fontSize: sized(theme.fontSizes, sizeOf(read(root.size))),
-      ...(read(props.shown) === false ? { opacity: 0 } : null),
+      // Out of sight it has no box either, so it takes no press meant for what is under it.
+      ...(read(props.shown) === false ? { opacity: 0, padding: 0, border: 0 } : null),
     };
   });
   return (

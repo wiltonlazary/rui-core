@@ -45,6 +45,7 @@ import { handOn } from '../ref.js';
  * @property {any} [inside] the last event the panel saw: inline, the panel sits in the trigger's wrapper, and its events bubble there
  * @property {() => void} [follow] measures the placement again (the trigger resized)
  * @property {any} [panel] the panel's node (Panel sets it)
+ * @property {() => boolean} [shown] false while it is open with nothing to see (a combobox without options): its backdrop then lets the pointer through
  */
 
 /** How long a panel that hovering opens stays after the pointer leaves it, ms: time to reach the panel. */
@@ -470,7 +471,7 @@ export function Panel(props) {
         const hover = store.hovers ? { onPointerEnter: store.enter, onPointerLeave: store.leave } : null;
         return (
           <>
-            {() => (store.mode === 'click' && !store.hovers && dismiss().outside && portal() && store.isOpen() ? <Layer layer={layer} onPointerDown={store.close} prevent={props.prevent} /> : null)}
+            {() => (store.mode === 'click' && !store.hovers && dismiss().outside && portal() && store.isOpen() ? <Layer layer={layer} onPointerDown={store.close} prevent={props.prevent} style={() => (store.shown?.() === false ? { pointerEvents: 'none' } : null)} /> : null)}
             <Placed
               anchor={store.anchor}
               portal={portal}

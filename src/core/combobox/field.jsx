@@ -164,6 +164,12 @@ export function comboOf(props, store) {
 }
 
 /**
+ * A combobox's store as its trigger says it (`comboOf`): open only while its panel has something to show.
+ * @param {{ isOpen: () => boolean, activeId?: () => string | undefined }} store @param {() => boolean} shown
+ */
+export const showing = (store, shown) => ({ isOpen: () => store.isOpen() && shown(), activeId: store.activeId });
+
+/**
  * The Field around a combobox input: the input's Field props
  * (`outerOf`: `label`, `description`, `error`, `asterisk`, `size`, the
  * layout props, `style`, `outerStyle`, `outerRef`); the input carries the

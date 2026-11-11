@@ -833,6 +833,45 @@ describe('MultiSelect, TagInput, Autocomplete, Tag', () => {
     t.dispose();
   });
 
+  it('a field open with nothing to show takes no press, says it is collapsed and lets Escape pass', () => {
+    const presses = { go: 0, escape: 0 };
+    const t = setup((clock, st) =>
+      app(clock, () => {
+        const v = st.add($signal($active(), ''));
+        return (
+          <View onKey={(/** @type {any} */ e) => e.key === 'Escape' && presses.escape++}>
+            <Autocomplete placeholder="City" data={['Bern']} value={v} onChange={(/** @type {any} */ x) => $write(v, x)} />
+            <Button onPress={() => presses.go++}>Go</Button>
+          </View>
+        );
+      }),
+    );
+    /** The backdrops in the DOM's portal layer: the Views over all of it that take a press. */
+    const backdrops = () => [...t.dom.document.body.children].filter((/** @type {any} */ n) => n !== t.dom.host && n.style.right === '0px' && n.style.bottom === '0px' && n.style.pointerEvents !== 'none').length;
+    const expanded = () => t.d.nodes('Edit')[0].getAttribute('aria-expanded');
+    t.focusEdit();
+    t.type('B');
+    assert.equal(t.text(), 'B Go Bern');
+    assert.deepEqual([expanded(), backdrops()], ['true', 1], 'a suggestion: expanded, over a backdrop');
+    t.type('x');
+    assert.equal(t.text(), 'Bx Go', 'no suggestion, no panel');
+    assert.deepEqual([expanded(), backdrops()], ['false', 0], 'nothing shown: collapsed, no backdrop');
+    // One press on the button beside it reaches it: on Skia through the hit test, where a backdrop would take it.
+    t.press('Go');
+    assert.deepEqual(presses, { go: 2, escape: 0 }, 'pressed once on each renderer');
+    // Just under the field, where the panel would be: the button there takes the press.
+    const field = t.s.box(t.s.items().find(i => i.kind === 4));
+    t.s.at(field.x + 20, field.y + field.height + 10);
+    assert.equal(presses.go, 3, 'the panel out of sight is in no press\'s way');
+    t.focusEdit();
+    t.type('y');
+    t.key('Escape');
+    assert.equal(presses.escape, 2, 'Escape closed nothing shown, so it goes on (a Modal around it closes)');
+    t.type('z');
+    assert.equal(t.text(), 'Bxyz Go');
+    t.dispose();
+  });
+
   it('Autocomplete: a choice fills the text with its label; onPick gets its value and option', () => {
     /** @type {any[]} */
     const picks = [];
