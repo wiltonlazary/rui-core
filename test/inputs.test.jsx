@@ -1119,6 +1119,30 @@ describe('number and slider stepping', () => {
     dispose();
   });
 
+  it('NumberInput shows a value written from outside over the text being typed, and keeps the text of its own value', () => {
+    const s = states();
+    const view = () => {
+      const v = s.make(/** @type {any} */ (1));
+      return (
+        <Rui>
+          <NumberInput label="A" value={v} onChange={(/** @type {any} */ x) => $write(v, x)} />
+        </Rui>
+      );
+    };
+    const { dom, skia, dispose } = both(view);
+    replace(dom, skia, 0, '2.0');
+    assert.deepEqual(values(dom, skia, 0), ['2.0', '2.0'], 'its own value: the text as typed');
+    for (const v of s.list) $write(v, 50);
+    assert.deepEqual(values(dom, skia, 0), ['50', '50'], 'another value from outside shows');
+    replace(dom, skia, 0, '12.');
+    assert.deepEqual(values(dom, skia, 0), ['12.', '12.']);
+    for (const v of s.list) $write(v, '12');
+    assert.deepEqual(values(dom, skia, 0), ['12.', '12.'], 'the same number kept as a text leaves the text typed');
+    for (const v of s.list) $write(v, '');
+    assert.deepEqual(values(dom, skia, 0), ['', ''], 'emptied from outside');
+    dispose();
+  });
+
   it('NumberInput with clamp always shows the clamped value, not a typed "5.0" past max', () => {
     const s = states();
     const view = () => {

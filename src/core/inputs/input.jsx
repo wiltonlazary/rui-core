@@ -8,7 +8,7 @@
 // shows the bound value again, and a value it rewrites (a mask, a number
 // format) shows as written, the caret then placed after what was typed.
 
-import { View, Edit, Action, Shape, $signal, $read, $write, $active, $after, $commit, $owner, read } from 'ren-core';
+import { View, Edit, Action, Shape, $signal, $read, $write, $active, $after, $commit, $owner, $watch, $untrack, read } from 'ren-core';
 import { styled, pressLook } from '../../theme/style.js';
 import { radiusOf, sized, pageColors } from '../../theme/resolve.js';
 import { $ui } from '../../theme/theme.jsx';
@@ -402,6 +402,17 @@ export function NumberInput(props) {
   // The number being typed, bare: its digits, '-' and '.' as typed ('1.' keeps its mark, '-' is no number yet, '2.0'
   // keeps its zero), no affixes; null shows the value. It shows with the marks and with the affixes of the value now.
   const draft = $signal($active(), /** @type {string | null} */ (null));
+  /** The value a draft stands for: its number, or '' while it is none yet ('', '-', '.'). @param {string} d */
+  const meant = d => {
+    const digits = d.endsWith('.') ? d.slice(0, -1) : d;
+    return digits === '' || digits === '-' ? '' : Number(digits);
+  };
+  // A value from outside shows: the draft goes once the value is no longer its number.
+  const R = $active();
+  $watch(R, model.get, v => {
+    const d = $untrack(R, () => $read(draft));
+    if (d !== null && (v === '' ? '' : Number(v)) !== meant(d)) $write(draft, null);
+  });
   /** A draft as it shows, laid out as formatNumber lays a value out: sign, prefix, number (its marks, no leading zeros), suffix. @param {string} d @param {ReturnType<typeof o>} f */
   const written = (d, f) => {
     const sign = d.startsWith('-') ? '-' : '';
@@ -454,20 +465,20 @@ export function NumberInput(props) {
     if (!pattern.test(text)) return;
     if (decimal && f.decimals !== undefined && text.includes('.') && text.split('.')[1].length > f.decimals) return;
     // The number typed so far is the value: '12.' is 12; '', '-', '.' and '-.' are no number yet, so the value is ''.
-    const digits = text.endsWith('.') ? text.slice(0, -1) : text;
-    if (digits === '' || digits === '-') {
+    const typed = meant(text);
+    if (typed === '') {
       $write(draft, text === '' ? null : text);
       commit('');
       return;
     }
-    let n = Number(digits);
+    let n = typed;
     if (behavior() === 'always') {
       const c = clampTo(n);
       if (c !== n) n = c;
     }
     // The number shows as typed where that differs from the value written ('2.0', '3.50'; '12' with fixedDecimals,
     // padded on blur and Enter), unless the value committed is another (clamped), which then shows.
-    $write(draft, n !== Number(digits) || written(text, f) === formatNumber(n, f) ? null : text);
+    $write(draft, n !== typed || written(text, f) === formatNumber(n, f) ? null : text);
     commit(n);
   };
   const increment = (/** @type {number} */ dir) => {
