@@ -8,7 +8,7 @@ import { $ui } from '../../theme/theme.jsx';
 import { pageColors, sized } from '../../theme/resolve.js';
 import { $controlled } from '../overlays/shared.jsx';
 import { $combobox } from './store.js';
-import { Combobox, ComboboxTrigger, ComboboxPanel, ComboboxFilter, OptionsList, $comboboxContext, $boxed } from './combobox.jsx';
+import { Combobox, ComboboxTrigger, ComboboxPanel, ComboboxFilter, OptionsList, $comboboxContext, $boxed, $unseen } from './combobox.jsx';
 import { FieldBox, Outer, Opener, Clear, editStyle, sizeOf, $focused, comboOf, showing, boxPress, editPress } from './field.jsx';
 import { parseData, shown, grouped, same, holds } from './data.js';
 import { labelsIn } from '../../theme/labels.js';
@@ -315,7 +315,10 @@ export function Autocomplete(props) {
  * `deselectable` (true), `check` (true), `checkAt`, `panelHeight`,
  * `renderOption(option, { picked })`, `width` (`sizes.box.select`, 200), `at`
  * ('bottom-start'), and the panel's props (`popover`, `open`,
- * `defaultOpen`, `onOpenChange`).
+ * `defaultOpen`, `onOpenChange`). Open with nothing to show (no options,
+ * no `empty`, not `searchable`), its panel stays out of sight, as a
+ * Select's: the options show as they arrive, and leaving the trigger
+ * closes it.
  * @param {Record<string, any>} props
  */
 export function Picker(props) {
@@ -327,6 +330,8 @@ export function Picker(props) {
   const search = $controlled(props, 'search', 'defaultSearch', '', v => props.onSearchChange?.(v));
   const options = () => shown($read(data), read(props.searchable) ? search.get() : '', props.match, read(props.limit));
   const store = $combobox(storeOf(props, { close: () => search.set('') }));
+  // The panel has something to show: options, the `empty` line, or its search field.
+  const filled = () => options().length > 0 || props.empty !== undefined || Boolean(read(props.searchable));
   const has = (/** @type {string} */ v) => (multiple() ? holds(value.get(), v) : same(value.get(), v));
   const choose = (/** @type {string} */ v, /** @type {any} */ option) => {
     props.onPick?.(v, option);
@@ -342,7 +347,7 @@ export function Picker(props) {
   return (
     <Combobox store={store} onPick={choose} width={props.width ?? ui.theme().sizes.box.select} at={props.at ?? 'bottom-start'} {...comboboxOf(props)}>
       {props.children}
-      <ComboboxPanel>
+      <ComboboxPanel shown={filled}>
         {read(props.searchable) ? (
           <ComboboxFilter
             value={search.get}
@@ -376,6 +381,7 @@ export function Picker(props) {
  */
 function PickerTrigger(props) {
   const c = $comboboxContext();
+  const unseen = $unseen(c);
   let down = false;
   return (
     <View
@@ -387,10 +393,12 @@ function PickerTrigger(props) {
         c.store.setTrigger(e?.target ?? null);
       }}
       onPointerUp={(/** @type {any} */ e) => {
-        if (down && e !== c.pop.inside) c.store.toggle();
+        // A press closes the options it sees: open with nothing to show, it stays open for what arrives.
+        if (down && e !== c.pop.inside && !unseen()) c.store.toggle();
         down = false;
       }}
       onPointerCancel={() => (down = false)}
+      onFocusOut={() => void (unseen() && c.store.close())}
       onKey={(/** @type {any} */ e) => {
         if (e === c.pop.inside) return;
         c.store.setTrigger(e?.target ?? null);

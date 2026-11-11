@@ -1550,6 +1550,83 @@ describe('TreeSelect, Picker', () => {
     assert.equal(t.text(), 'Style');
     t.dispose();
   });
+
+  it('Picker: open with nothing to show it draws no panel, stays open for what arrives and closes as its trigger is left', () => {
+    /** @type {any[]} */
+    const datas = [];
+    let presses = 0;
+    const t = setup(clock =>
+      app(clock, () => {
+        const data = $signal($active(), /** @type {string[]} */ ([]));
+        datas.push(data);
+        return (
+          <>
+            <Picker data={data}>
+              <Picker.Trigger>
+                <Button>Style</Button>
+              </Picker.Trigger>
+            </Picker>
+            <Picker data={[]} empty="No sizes">
+              <Picker.Trigger>
+                <Button>Size</Button>
+              </Picker.Trigger>
+            </Picker>
+            <Picker data={[]} searchable searchPlaceholder="Find">
+              <Picker.Trigger>
+                <Button>Font</Button>
+              </Picker.Trigger>
+            </Picker>
+            <Button onPress={() => presses++}>Go</Button>
+          </>
+        );
+      }),
+    );
+    /** Writes the first Picker's data on both roots. @param {string[]} next */
+    const give = next => {
+      for (const d of datas) $write(d, next);
+      t.settle();
+    };
+    const layers = () => [...t.dom.document.body.children].filter((/** @type {any} */ n) => n !== t.dom.host);
+    const backdrops = () => layers().filter((/** @type {any} */ n) => n.style.right === '0px' && n.style.bottom === '0px' && n.style.pointerEvents !== 'none').length;
+    const boxes = () => layers().flatMap((/** @type {any} */ n) => [...n.querySelectorAll('[data-ren="View"]')]).filter((/** @type {any} */ n) => n.style.borderWidth === '1px').length;
+    t.press('Style');
+    assert.equal(t.text(), 'Style Size Font Go');
+    assert.deepEqual([backdrops(), boxes()], [0, 0], 'no empty panel is drawn, and no backdrop waits for a press');
+    // Pressed again it stays open for what arrives: no state is toggled out of sight.
+    t.press('Style');
+    give(['Bold']);
+    assert.equal(t.text(), 'Style Size Font Go Bold', 'the options show as they arrive');
+    assert.deepEqual([backdrops(), boxes()], [1, 1]);
+    t.press('Style');
+    assert.equal(t.text(), 'Style Size Font Go', 'a press closes the options it sees');
+    // Left by a press elsewhere while it shows nothing, it is closed: what arrives later opens nothing.
+    give([]);
+    t.press('Style');
+    t.press('Go');
+    assert.equal(presses, 2, 'the button pressed once on each renderer');
+    give(['Bold']);
+    assert.equal(t.text(), 'Style Size Font Go');
+    // And by the focus alone.
+    give([]);
+    t.press('Style');
+    t.d.find('Style').focus();
+    t.s.find('Style').focus();
+    t.d.find('Go').focus();
+    t.s.find('Go').focus();
+    t.settle();
+    give(['Bold']);
+    assert.equal(t.text(), 'Style Size Font Go', 'the focus gone from the trigger closes it too');
+    // An `empty` line or a search field is something to show: the panel opens and a second press closes it.
+    t.press('Size');
+    assert.equal(t.text(), 'Style Size Font Go No sizes');
+    t.press('Size');
+    assert.equal(t.text(), 'Style Size Font Go');
+    t.press('Font');
+    assert.equal(t.text(), 'Style Size Font Go Find');
+    t.press('Font');
+    assert.equal(t.text(), 'Style Size Font Go');
+    t.dispose();
+  });
 });
 
 describe('combobox fields in a For row', () => {

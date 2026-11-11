@@ -119,6 +119,22 @@ export function Combobox(props) {
 }
 
 /**
+ * Whether a combobox is open with nothing shown (not tracked), for its trigger. There is no backdrop to close it
+ * then, so leaving the trigger does, taking no press: a press anywhere else in the root closes it here (a target that
+ * keeps its press to itself is not heard), and the trigger closes it as the focus goes from it (which hears that one
+ * too, and every other way out).
+ * @param {ComboboxValue} c
+ */
+export function $unseen(c) {
+  const R = $active();
+  const unseen = () => $untrack(R, c.store.isOpen) && c.pop.shown?.() === false;
+  $presses((/** @type {any} */ e) => {
+    if (unseen() && !within($untrack(R, c.pop.anchor), e?.target)) c.store.close();
+  });
+  return unseen;
+}
+
+/**
  * The trigger (Combobox.Trigger): a View around the field (or button)
  * that is the panel's anchor and takes its keys (ArrowDown and ArrowUp
  * open and move the active option, Enter chooses it, Escape and Tab
@@ -126,16 +142,9 @@ export function Combobox(props) {
  * @param {Record<string, any>} props
  */
 export function ComboboxTrigger(props) {
-  const R = $active();
   const c = $comboboxContext();
   const button = () => read(props.kind) === 'button';
-  // Open with nothing shown there is no backdrop to close it, so leaving the field does, taking no press: a press
-  // anywhere else in the root (a target that keeps its press to itself is not heard here) and the focus gone from it
-  // (which hears that one too, and every other way out).
-  const unseen = () => $untrack(R, c.store.isOpen) && c.pop.shown?.() === false;
-  $presses((/** @type {any} */ e) => {
-    if (unseen() && !within($untrack(R, c.pop.anchor), e?.target)) c.store.close();
-  });
+  const unseen = $unseen(c);
   return (
     <View
       ref={c.pop.setAnchor}
