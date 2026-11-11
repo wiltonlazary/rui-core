@@ -422,6 +422,33 @@ describe('rui-core misc on the DOM and on Skia', () => {
     dispose();
   });
 
+  it('ScrollBox lays its children out by its direction, gap and align with onEnd and as a Fit too (Skia)', () => {
+    /** Where two 30 by 20 rows are in a box of this layout. @param {Record<string, any>} layout @param {Record<string, any>} more @param {any} Box */
+    const rows = (layout, more, Box = ScrollBox) => {
+      const skia = onSkia(() => (
+        <Rui>
+          <Box {...more} {...layout.props} style={{ height: 100, width: 200, ...layout.style }}>
+            <View style={{ width: 30, height: 20 }} />
+            <View style={{ width: 40, height: 20 }} />
+          </Box>
+        </Rui>
+      ));
+      skia.text();
+      const out = items(skia, KIND.View)
+        .map(n => n.getBoundingClientRect())
+        .filter(r => r.height === 20 && (r.width === 30 || r.width === 40))
+        .map(r => [r.x, r.y]);
+      skia.dispose();
+      return out;
+    };
+    for (const layout of [{ style: { gap: 10 } }, { props: { gap: 'md' } }, { style: { direction: 'row', gap: 10 } }, { style: { align: 'center' } }, { style: { align: 'end', gap: 4 } }]) {
+      const plain = rows(layout, {});
+      assert.equal(plain.length, 2);
+      assert.deepEqual(rows(layout, { onEnd: () => {} }), plain, `onEnd: ${JSON.stringify(layout)}`);
+      if (layout.style?.direction !== 'row') assert.deepEqual(rows(layout, { maxHeight: 100 }, ScrollBox.Fit), plain, `Fit: ${JSON.stringify(layout)}`);
+    }
+  });
+
   it('ScrollBox onEnd: asks at the end, again after a page that did not fill it, and stops when there is nothing to read (Skia)', async () => {
     const clock = manualClock();
     /** @type {number[]} */

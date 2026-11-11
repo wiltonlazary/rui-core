@@ -136,6 +136,12 @@ function scrollBox(props, fit) {
     ask?.();
   };
   const bars = (/** @type {any} */ theme, /** @type {'light' | 'dark'} */ scheme) => barsOf(read(props.bars), theme, scheme);
+  const look = styled(props, (theme, scheme) => ({ shrink: 0, ...bars(theme, scheme), ...(read(props.gutter) ? { padding: [0, theme.spacing.xs, 0, 0] } : null), ...fitted() }));
+  // The View measured stands between the box and its children: it lays them out as the box says.
+  const inner = () => {
+    const { direction, gap, align } = look();
+    return { shrink: 0, ...(direction === undefined ? null : { direction }), ...(gap === undefined ? null : { gap }), ...(align === undefined ? null : { align }) };
+  };
   return (
     <Scroll
       {...pass(props)}
@@ -147,9 +153,9 @@ function scrollBox(props, fit) {
       }}
       onScroll={onScroll}
       {...(ask === null ? null : { onResize: ask })}
-      style={styled(props, (theme, scheme) => ({ shrink: 0, ...bars(theme, scheme), ...(read(props.gutter) ? { padding: [0, theme.spacing.xs, 0, 0] } : null), ...fitted() }))}
+      style={look}
     >
-      {ask === null && !fit ? props.children : <View onResize={resized} style={{ shrink: 0 }}>{props.children}</View>}
+      {ask === null && !fit ? props.children : <View onResize={resized} style={inner}>{props.children}</View>}
     </Scroll>
   );
 }
