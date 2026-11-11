@@ -1785,6 +1785,27 @@ describe('CurrencyInput', () => {
     assert.equal(currencyDecimals('JPY'), 0);
   });
 
+  it('a malformed locale writes the currency as the platform does; a malformed currency shows the number with two decimals', () => {
+    assert.deepEqual(currencyAffixes('BRL', 'pt_BR', 'symbol', 2), currencyAffixes('BRL', undefined, 'symbol', 2), "the platform's locale");
+    assert.deepEqual(currencyAffixes('', 'pt-BR', 'symbol', 2), { prefix: '', suffix: '' });
+    assert.deepEqual(currencyAffixes(/** @type {any} */ (undefined), 'pt-BR', 'symbol', 2), { prefix: '', suffix: '' });
+    assert.equal(currencyDecimals(''), 2);
+    assert.equal(currencyDecimals('reais'), 2);
+    const view = () => (
+      <Rui>
+        <Stack>
+          <CurrencyInput label="Locale" currency="USD" locale="en_US" defaultValue={12.5} controls={false} />
+          <CurrencyInput label="Currency" currency="" locale="pt-BR" defaultValue={12.5} controls={false} />
+        </Stack>
+      </Rui>
+    );
+    const { dom, skia, dispose } = both(view);
+    const usd = currencyAffixes('USD', undefined, 'symbol', 12.5);
+    assert.deepEqual(values(dom, skia, 0), Array(2).fill(`${usd.prefix}12.50${usd.suffix}`));
+    assert.deepEqual(values(dom, skia, 1), ['12,50', '12,50']);
+    dispose();
+  });
+
   it('shows its amount with the currency and all its decimals on both renderers; none shows the number alone', () => {
     const view = () => (
       <Rui>

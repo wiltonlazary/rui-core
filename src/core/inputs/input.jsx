@@ -578,21 +578,39 @@ const NUMERIC = new Set(['integer', 'group', 'decimal', 'fraction', 'minusSign',
 /**
  * How `locale` writes `currency` around an amount, shown as `display` (Intl's `currencyDisplay`: 'symbol' R$,
  * 'narrowSymbol' $, 'code' BRL, 'name' reais brasileiros; 'none' nothing): the text before the number (`prefix`, its
- * space included: "R$ ") and after it (`suffix`: " €"), for `amount` (a name follows it: 1 real, 2 reais).
+ * space included: "R$ ") and after it (`suffix`: " €"), for `amount` (a name follows it: 1 real, 2 reais). A malformed
+ * `locale` reads as the platform's, as `marksOf` reads it; a malformed `currency` has neither text.
  * @param {string} currency @param {string | undefined} locale @param {'symbol' | 'narrowSymbol' | 'code' | 'name' | 'none'} display @param {number} [amount]
  * @returns {{ prefix: string, suffix: string }}
  */
 export function currencyAffixes(currency, locale, display, amount = 2) {
   if (display === 'none') return { prefix: '', suffix: '' };
-  const parts = new Intl.NumberFormat(locale, { style: 'currency', currency, currencyDisplay: display }).formatToParts(Math.abs(amount));
+  const written = (/** @type {string | undefined} */ tag) => new Intl.NumberFormat(tag, { style: 'currency', currency, currencyDisplay: display }).formatToParts(Math.abs(amount));
+  /** @type {Intl.NumberFormatPart[]} */
+  let parts;
+  try {
+    parts = written(locale);
+  } catch {
+    try {
+      parts = written(undefined);
+    } catch {
+      return { prefix: '', suffix: '' };
+    }
+  }
   const first = parts.findIndex(p => NUMERIC.has(p.type));
   const last = parts.findLastIndex(p => NUMERIC.has(p.type));
   const text = (/** @type {Intl.NumberFormatPart[]} */ some) => some.map(p => p.value).join('');
   return { prefix: text(parts.slice(0, first)), suffix: text(parts.slice(last + 1)) };
 }
 
-/** How many decimals `currency` takes (2 for BRL, 0 for JPY). @param {string} currency */
-export const currencyDecimals = currency => new Intl.NumberFormat('en', { style: 'currency', currency }).resolvedOptions().maximumFractionDigits ?? 2;
+/** How many decimals `currency` takes (2 for BRL, 0 for JPY; 2 for a malformed code). @param {string} currency */
+export const currencyDecimals = currency => {
+  try {
+    return new Intl.NumberFormat('en', { style: 'currency', currency }).resolvedOptions().maximumFractionDigits ?? 2;
+  } catch {
+    return 2;
+  }
+};
 
 /**
  * A field for an amount of money: NumberInput with `currency` (an ISO code) shown as `display` ('symbol' by default,
