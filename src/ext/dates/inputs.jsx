@@ -237,8 +237,9 @@ export function YearSelect(props) {
  * YYYY'), `parse(text)` (format's reading, then 'YYYY-MM-DD'),
  * `min`, `max`, `clearable`, `deselectable`, `revert` (true:
  * the text goes back to the value on blur), `popover`, Calendar's props,
- * and TextInput's. Focus opens the calendar; a pick closes it, as do
- * Escape and a press outside.
+ * and TextInput's. Focus opens the calendar, on its value's month (today's
+ * without one); a pick closes it (a press on the day chosen too, with no
+ * `onChange`), as do Escape and a press outside.
  * @param {Record<string, any>} props
  */
 export function DateInput(props) {
@@ -347,6 +348,11 @@ export function DateInput(props) {
             {...picker}
             value={value.get}
             onChange={pick}
+            onDayPress={(/** @type {string} */ d) => {
+              props.onDayPress?.(d);
+              // The day chosen pressed again is no change to tell, and closes as a pick does.
+              if (d === $untrack(R, value.get)) shut();
+            }}
             deselectable={read(props.deselectable) === true}
             period={() => $read(month) ?? toDate(value.get()) ?? settings.today()}
             onPeriodChange={(/** @type {string} */ d) => $write(month, d)}

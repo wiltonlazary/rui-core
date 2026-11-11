@@ -1209,7 +1209,7 @@ describe('DateInput: the month its calendar opens on', () => {
   });
 });
 
-describe('DateInput: its ref', () => {
+describe('DateInput: its ref and a press on the day chosen', () => {
   it('hands its ref the field\'s Edit alone, the open calendar never', () => {
     /** @type {any[][]} */
     const seen = [];
@@ -1220,6 +1220,25 @@ describe('DateInput: its ref', () => {
     t.focus();
     assert.deepEqual(t.header(), ['May 2024', 'May 2024']);
     assert.deepEqual([seen[0].map(n => n.getAttribute('data-ren')), seen[1].map(n => n.kind)], [['Edit'], [4]]);
+    t.dispose();
+  });
+
+  it('a press on the day chosen closes the calendar and changes nothing', () => {
+    /** @type {any[]} */
+    const heard = [];
+    /** @type {any[]} */
+    const pressed = [];
+    const t = portaled(() => ({ defaultValue: '2024-05-09', onChange: (/** @type {any} */ d) => heard.push(d), onDayPress: (/** @type {string} */ d) => pressed.push(d) }));
+    t.focus();
+    t.press('Thursday, 9 May 2024');
+    assert.deepEqual(t.header(), [null, null], 'closed');
+    assert.deepEqual(heard, [], 'no change to tell');
+    assert.deepEqual(pressed, ['2024-05-09', '2024-05-09'], 'its own onDayPress hears the press on each renderer');
+    assert.deepEqual(t.inField(), [true, true], 'the focus back in the field, which opens nothing');
+    t.focus();
+    t.press('Friday, 10 May 2024');
+    assert.deepEqual(heard, ['2024-05-10', '2024-05-10'], 'another day is a pick, told once on each renderer');
+    assert.deepEqual(t.header(), [null, null]);
     t.dispose();
   });
 });
