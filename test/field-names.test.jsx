@@ -33,6 +33,7 @@ const CONTROLS = [
   ['Textarea', 'textbox', () => <ui.Textarea placeholder="ph" />],
   ['PasswordInput', 'textbox', () => <ui.PasswordInput placeholder="ph" />],
   ['NumberInput', 'spinbutton', () => <ui.NumberInput placeholder="ph" />],
+  ['CurrencyInput', 'spinbutton', () => <ui.CurrencyInput currency="BRL" placeholder="ph" />],
   ['PinInput', 'group', () => <ui.PinInput length={3} />],
   ['MaskInput', 'textbox', () => <ui.MaskInput mask="99-99" placeholder="ph" />],
   ['JsonArea', 'textbox', () => <ui.JsonArea placeholder="ph" />],
