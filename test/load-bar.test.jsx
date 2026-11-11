@@ -153,6 +153,33 @@ describe('LoadBar', () => {
     t.dispose();
   });
 
+  it('creeps at each interval on a second run as on the first', () => {
+    const t = setup({ interval: 400, duration: 100 });
+    /** The values after each of `n` intervals of a run from 0. @param {number} n */
+    const run = n => {
+      for (const store of t.stores) store.run();
+      t.flush();
+      /** @type {number[][]} */
+      const seen = [];
+      for (let i = 0; i < n; i++) {
+        t.advance(416);
+        seen.push(t.stores.map(s => s.value()));
+      }
+      return seen;
+    };
+    /** @type {number[]} */
+    const steps = [];
+    for (let i = 0, v = 0; i < 3; i++) steps.push((v += creep(v)));
+    const expected = steps.map(v => [v, v]);
+    assert.deepEqual(run(3), expected, 'the first run: a step an interval');
+    for (const store of t.stores) store.finish();
+    t.flush();
+    t.advance(500);
+    assert.deepEqual(t.stores.map(s => s.phase()), ['idle', 'idle']);
+    assert.deepEqual(run(3), expected, 'the second run: a step an interval too, from its own start');
+    t.dispose();
+  });
+
   it('starts at defaultValue, in the theme color', () => {
     const t = setup({ defaultValue: 40, color: 'red', portal: false });
     t.advance(300);

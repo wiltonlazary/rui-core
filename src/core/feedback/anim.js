@@ -22,7 +22,8 @@ export function $elapsed(on) {
   $watch(R, () => (on === undefined ? true : on() === true), run => {
     cancel();
     cancel = () => {};
-    if (!run) return;
+    // Stopped, it reads 0 as before its first run: the next run starts there, not at the last one's time.
+    if (!run) return void $write(time, 0);
     const start = clock.now();
     const tick = (/** @type {number} */ now) => {
       $batch(R, () => $write(time, now - start));
