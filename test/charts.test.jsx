@@ -382,6 +382,37 @@ describe('cartesian charts on the DOM and on Skia', () => {
     dispose();
   });
 
+  it('BarChart onSelect: the tooltip the keys show goes as the focus leaves the chart', () => {
+    const { dom, skia, dispose } = both(() => (
+      <Rui>
+        <BarChart w={400} h={240} data={cups} category="day" series={kiosks} onSelect={() => {}} />
+      </Rui>
+    ));
+    const plain = same(dom, skia);
+    const root = dom.host.querySelector('[role="img"]');
+    skia.text();
+    /** @type {any} */
+    let item = null;
+    for (const stack = [skia.skia.root]; stack.length > 0 && item === null; ) {
+      const n = stack.shift();
+      if (n.tabIndex === 0) item = n;
+      for (let c = n.first; c !== null; c = c.next) stack.push(c);
+    }
+    root.focus();
+    item.focus();
+    root.dispatchEvent(new dom.window.KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }));
+    skia.skia.key('ArrowRight');
+    $flush(dom.root);
+    $flush(skia.root);
+    assert.match(same(dom, skia), /Mon Pier Park Gate( \d+){3}$/, 'the first category shows its tooltip on both');
+    root.blur();
+    item.blur();
+    $flush(dom.root);
+    $flush(skia.root);
+    assert.equal(same(dom, skia), plain, 'no tooltip once the focus left');
+    dispose();
+  });
+
   it('BarChart onSelect: the keys choose among the data before the chart is laid out (no width, nothing drawn)', () => {
     /** @type {number[]} */
     const chosen = [];

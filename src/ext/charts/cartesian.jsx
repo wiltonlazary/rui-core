@@ -613,7 +613,7 @@ function cartesian(props, kind) {
     const all = rows();
     if (i >= 0 && i < all.length) props.onSelect?.(i, all[i]);
   };
-  /** Category `i` active from the keys: its tooltip at its middle, once drawn. @param {number} i */
+  /** Category `i` active from the keys: its tooltip at its middle, once drawn; none once the focus leaves the chart. @param {number} i */
   const reach = i => {
     const m = $read(model);
     if (i < m.data.length) {
@@ -639,7 +639,7 @@ function cartesian(props, kind) {
   const style = styled(props, theme => ({ position: 'relative', width: '100%', height: theme.sizes.box.chart, direction: 'column' }));
   const legend = <Legend items={items} justify={() => legendAt(read(props.legend) ?? null, LEGEND_AT).justify} onActiveChange={key => $write(highlighted, key)} />;
   return (
-    <View {...rootProps(props, KINDS[kind])} {...(selecting ? { tabIndex: 0, onKey } : null)} ref={size.ref} onResize={size.onResize} style={style}>
+    <View {...rootProps(props, KINDS[kind])} {...(selecting ? { tabIndex: 0, onKey, onBlur: () => $write(active, -1) } : null)} ref={size.ref} onResize={size.onResize} style={style}>
       <Show when={() => legendShown() && !legendBottom()}>{legend}</Show>
       <View style={() => ({ position: 'relative', width: '100%', height: area(), shrink: 0 })}>
         <Shape shapes={() => $read(model).figures} style={() => ({ position: 'absolute', left: 0, top: 0, width: $read(model).width, height: $read(model).height })} />
