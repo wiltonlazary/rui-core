@@ -240,10 +240,13 @@ describe('ColorInput: the panel', () => {
     const b = setup(() => ({ swatches: SWATCHES, picker: false, sticky: false }));
     b.press();
     assert.deepEqual(b.open().slice(0, 1), [false], 'a swatch-only panel shows no hue slider');
+    // A press focuses the swatch it lands on, as a browser's does.
+    b.d.nodes('Action').find(n => n.getAttribute('aria-label') === '#2f9e44').focus();
     b.d.tap(b.d.nodes('Action').find(n => n.getAttribute('aria-label') === '#2f9e44'));
     const box = b.s.items().find(i => i.label === '#2f9e44').getBoundingClientRect();
     b.s.at(box.left + box.width / 2, box.top + box.height / 2);
     b.settle();
+    assert.deepEqual([b.d.focused() === b.d.nodes('Edit')[0], b.s.focused() === items(b.skia, 4)[0]], [true, true], 'the focus that was in the panel is back in the field');
     assert.deepEqual([b.d.nodes('Action').some(n => n.getAttribute('aria-label') === '#2f9e44'), b.s.items().some(i => i.label === '#2f9e44' && i.getBoundingClientRect().width > 0)], [false, false], 'closed after the swatch');
     assert.deepEqual(b.each('commits'), [['#2f9e44'], ['#2f9e44']]);
     b.dispose();

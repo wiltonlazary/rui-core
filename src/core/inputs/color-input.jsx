@@ -15,7 +15,8 @@ import { DECOR, state } from '../../theme/meaning.js';
 import { $eyedropper } from '../../hooks/input.js';
 import { later } from '../../hooks/shared.js';
 import { Panel, panelStyle } from '../overlays/popover.jsx';
-import { $controlled, keyOf, partOf, handled } from '../overlays/shared.jsx';
+import { $controlled, keyOf, partOf, handled, activeOf, focus } from '../overlays/shared.jsx';
+import { handOn } from '../ref.js';
 import { Swatch } from '../data/badge.jsx';
 import { IconButton } from '../buttons/icon-button.jsx';
 import { Field, outerOf, fieldOf } from './field.jsx';
@@ -176,6 +177,8 @@ export function ColorInput(props) {
   const openState = $controlled(trio, 'open', 'defaultOpen', false, v => trio.onOpenChange?.(v));
   const isOpen = () => openState.get() === true && hasPanel() && !locked();
   const anchor = $signal(R, /** @type {any} */ (null));
+  /** The field's Edit. @type {any} */
+  let edit = null;
   /** @type {Record<string, any>} */
   const root = { at: 'bottom-start', ...pop, width: () => read(pop.width) ?? (read(props.stretch) === true ? 'trigger' : undefined) };
   /** @type {import('../overlays/popover.jsx').PopoverStore} */
@@ -185,7 +188,12 @@ export function ColorInput(props) {
       if (hasPanel() && !locked() && !$untrack(R, openState.get)) openState.set(true);
     },
     close() {
-      if ($untrack(R, openState.get)) openState.set(false);
+      if (!$untrack(R, openState.get)) return;
+      // The focus in the panel (a swatch pressed, a slider) goes back to the field, as a Popover's to its trigger.
+      let inside = false;
+      for (let n = activeOf(store.panel); n != null && !inside; n = n.parentNode ?? n.parent ?? null) inside = n === store.panel;
+      openState.set(false);
+      if (inside) focus(edit);
     },
     toggle: () => ($untrack(R, isOpen) ? store.close() : store.open()),
     anchor: () => $read(anchor),
@@ -262,6 +270,10 @@ export function ColorInput(props) {
   const row = field(
     {
       ...inner,
+      ref: (/** @type {any} */ n) => {
+        edit = n;
+        handOn(props.ref, n);
+      },
       start,
       end,
       readOnly: () => readOnly() || read(props.typing) === false,
