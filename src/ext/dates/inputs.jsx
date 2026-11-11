@@ -276,14 +276,17 @@ export function DateInput(props) {
   const blur = () => {
     if (read(props.revert) !== false) $write(draft, null);
   };
-  /** A day was just picked: the focus the closing panel gives back to the field opens nothing. */
+  /** The calendar was just closed (a pick, Escape, a press outside): the focus it gives back to the field opens nothing. */
   let picked = false;
-  const pick = (/** @type {string | null} */ d) => {
-    value.set(d);
-    $write(draft, null);
+  const shut = () => {
     $write(open, false);
     picked = true;
     $after(R, () => (picked = false));
+  };
+  const pick = (/** @type {string | null} */ d) => {
+    value.set(d);
+    $write(draft, null);
+    shut();
   };
   const disabled = () => read(props.disabled) === true || read(props.readOnly) === true;
   const rest = { ...props };
@@ -296,7 +299,7 @@ export function DateInput(props) {
       shadow="md"
       {...read(props.popover)}
       open={() => $read(open) && !disabled()}
-      onOpenChange={(/** @type {boolean} */ v) => $write(open, v)}
+      onOpenChange={(/** @type {boolean} */ v) => (v ? $write(open, true) : shut())}
     >
       <Popover.Trigger>
         {(/** @type {any} */ _trigger) => (
