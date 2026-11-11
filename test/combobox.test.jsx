@@ -1006,6 +1006,25 @@ describe('MultiSelect, TagInput, Autocomplete, Tag', () => {
     }
   });
 
+  it('a searchable Select disabled or read-only: its Edit is, on both renderers', () => {
+    for (const lock of [{ disabled: true }, { readOnly: true }]) {
+      const which = Object.keys(lock)[0];
+      const t = setup((clock, st) =>
+        app(clock, () => {
+          const v = st.add($signal($active(), /** @type {any} */ ('Bern')));
+          return <Select searchable {...lock} data={['Berlin', 'Bern']} value={v} onChange={(/** @type {any} */ x) => $write(v, x)} />;
+        }),
+      );
+      const edit = t.s.items().filter((/** @type {any} */ n) => n.kind === 4)[0];
+      assert.deepEqual([t.d.nodes('Edit')[0][which], edit[which]], [true, true], `${which}: the Edit knows`);
+      t.focusEdit();
+      t.type('x');
+      assert.deepEqual(t.values(), ['Bern', 'Bern']);
+      assert.equal(t.text(), 'Bern', `${which}: typing changes nothing`);
+      t.dispose();
+    }
+  });
+
   it('Autocomplete disabled or read-only: no typing, no opening, no clearing', () => {
     for (const lock of [{ disabled: true }, { readOnly: true }]) {
       const t = setup((clock, st) =>

@@ -142,6 +142,8 @@ export function Select(props) {
           value={shownText}
           label={() => read(props.placeholder) ?? ''}
           {...comboOf(props, said)}
+          disabled={() => read(props.disabled) === true}
+          readOnly={() => read(props.readOnly) === true}
           onChange={(/** @type {{ value: string }} */ e) => {
             if (locked()) return;
             search.set(e.value);
