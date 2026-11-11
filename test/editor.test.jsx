@@ -903,6 +903,61 @@ describe('Editor on the DOM and on Skia', () => {
   });
 });
 
+describe('a Doc given as content', () => {
+  it('keeps only safe links and colors, as HTML and JSON content do; a Doc of the library reads back the same', () => {
+    const clock = manualClock();
+    /** @type {string[]} */
+    const links = [];
+    /** @type {ReturnType<typeof $editor>[]} */
+    const list = [];
+    /** A Doc-shaped value made by hand, its marks unchecked. */
+    const hostile = {
+      blocks: [
+        { id: 4, type: 'paragraph', level: 0, depth: 0, align: 'start', text: 'go there now', marks: [{ type: 'link', from: 3, to: 8, href: 'javascript:alert(1)' }, { type: 'color', from: 9, to: 12, color: 'url(//x.y/z)' }, { type: 'bold', from: 0, to: 2 }] },
+        { id: 7, type: 'paragraph', level: 0, depth: 0, align: 'start', text: 'safe', marks: [{ type: 'link', from: 0, to: 4, href: 'https://x.y' }] },
+      ],
+      next: 9,
+    };
+    const view = () => {
+      const editor = $editor({ content: hostile, editable: false });
+      list.push(editor);
+      return (
+        <Clock value={clock}>
+          <Rui>
+            <Editor store={editor}>
+              <Editor.Content onLinkPress={(/** @type {string} */ href) => links.push(href)} />
+            </Editor>
+          </Rui>
+        </Clock>
+      );
+    };
+    const { dom, skia, dispose } = both(view);
+    for (const editor of list) {
+      assert.equal(editor.html(), '<p><strong>go</strong> there now</p><p><a href="https://x.y">safe</a></p>');
+      assert.deepEqual(editor.doc().blocks.map(b => b.id), [4, 7], 'the ids kept');
+      assert.equal(editor.doc().next, 9);
+      // The library's own Doc loads as it is.
+      const own = editor.doc();
+      editor.load(own);
+      assert.deepEqual(editor.doc(), own);
+    }
+    for (const node of dom.host.querySelectorAll('*')) if (node.textContent === 'there' || node.textContent === 'go there now') node.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
+    // On Skia, a press on the word where it is painted, whatever run holds it.
+    skia.text();
+    const run = skia.skia.commands().find((/** @type {any[]} */ c) => c[0] === 'text' && String(c[1]).includes('there'));
+    skia.skia.press(run[2] + 8, run[3] - 3);
+    skia.skia.release(run[2] + 8, run[3] - 3);
+    $flush(skia.root);
+    clock.advance(16);
+    assert.deepEqual(links, [], 'no press hears the unsafe address');
+    span(dom, 'safe').dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
+    skia.press('safe');
+    clock.advance(16);
+    assert.deepEqual(links, ['https://x.y', 'https://x.y']);
+    dispose();
+  });
+});
+
 describe("the editor's actions and queries", () => {
   it('toggles marks and blocks, links, colors, aligns, reads the document out and loads another', () => {
     const clock = manualClock();

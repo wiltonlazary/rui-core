@@ -35,11 +35,17 @@ export const SHOWN = new WeakMap();
 /** @typedef {{ id: number, from: number, to: number, known: boolean }} Range */
 /** @typedef {{ row: number | null, rows: number }} Caret the drawn row of a block's caret (from 0; null: unknown) and the rows its Edit draws */
 
-/** Content as HTML, the document's JSON (`toJSON`), a Doc, or nothing. @param {any} content @returns {Doc} */
+/**
+ * Content as HTML, the document's JSON (`toJSON`), a Doc, or nothing. A Doc is built again block by block, its ids
+ * and `next` kept, so its marks pass the same guard as HTML's and JSON's (a link to an unsafe address or a color that
+ * is no plain token is dropped); one the library made reads back equal.
+ * @param {any} content @returns {Doc}
+ */
 export function docOf(content) {
   if (content == null || content === '') return M.createDoc();
   if (typeof content === 'string') return M.fromHTML(content);
-  if (Array.isArray(content.blocks) && typeof content.next === 'number') return content;
+  if (Array.isArray(content.blocks) && typeof content.next === 'number')
+    return { blocks: content.blocks.map((/** @type {Block} */ b) => M.block(b.id, b.type, b.text ?? '', b.marks ?? [], b.level, b.depth, b.align)), next: content.next };
   return M.fromJSON(content);
 }
 
