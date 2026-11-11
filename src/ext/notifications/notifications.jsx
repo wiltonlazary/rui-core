@@ -16,7 +16,7 @@ import { $tween, boxOf, $nextFrame } from '../../core/misc/tween.js';
 import { LAYERS } from '../../theme/layers.js';
 import { MOTION, durationOf } from '../../theme/motion.js';
 import { EFFECTS, transitionStyle } from '../../core/misc/collapse.jsx';
-import { NOTIFICATION_PLACES, NotificationsContext, $notifications } from './store.js';
+import { NOTIFICATION_PLACES, NotificationsContext, $notifications, SHOWS } from './store.js';
 import { labelsIn } from '../../theme/labels.js';
 import { $ui } from '../../theme/theme.jsx';
 import { $breakpoints, breakpointOf } from '../../theme/breakpoints.js';
@@ -187,6 +187,8 @@ function Item(p) {
     else timer.cancel();
   };
   $watch(R, stays, arm);
+  // Shown again by its id, it stays its whole time from then.
+  $watch(R, () => SHOWS.get(p.data()) ?? 0, arm);
   $watch(
     R,
     () => p.row().leaving,

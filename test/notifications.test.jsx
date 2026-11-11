@@ -270,6 +270,37 @@ describe('Notifications', () => {
     dispose();
   });
 
+  it('a notification shown again by its id stays its whole time from then; an update leaves its time running', () => {
+    const clock = manualClock();
+    const st = stores();
+    const { d, s, flush, dispose } = pair(app(clock, { at: 'top-end' }, () => <st.Grab />));
+    /** @param {number} ms */
+    const advance = ms => {
+      clock.advance(ms);
+      flush();
+    };
+    const ids = () => st.list.map(x => x.all().map(n => `${n.id}:${n.title}`).join());
+    for (const store of st.list) {
+      store.show({ id: 'x', title: 'Saved', timeout: 500 });
+      store.show({ id: 'u', title: 'Sent', timeout: 500 });
+    }
+    flush();
+    advance(400);
+    for (const store of st.list) {
+      store.show({ id: 'x', title: 'Saved again', timeout: 500 });
+      store.update({ id: 'u', title: 'Sent, twice' });
+    }
+    flush();
+    advance(300);
+    assert.deepEqual(ids(), ['x:Saved again', 'x:Saved again'], 'shown again 300 ms ago, it stays; the updated one closed on its first time');
+    advance(250);
+    assert.deepEqual(ids(), ['', ''], 'closed 500 ms after it was shown again');
+    advance(400);
+    assert.equal(d.text(), 'page');
+    assert.equal(s.text(), 'page');
+    dispose();
+  });
+
   it('closes by timeout on the clock (a notification\'s own, the default, or never), paused while hovered', () => {
     const clock = manualClock();
     const st = stores();

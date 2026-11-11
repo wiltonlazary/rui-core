@@ -54,6 +54,14 @@ export const NOTIFICATION_PLACES = Object.freeze(['top-start', 'top-center', 'to
  */
 
 /**
+ * Internal, reached by name by <Notifications> only (the package's entry does not export it): how many times each
+ * record in a store was shown (`show`), kept through its updates. A notification shown again by its id stays its
+ * whole time from then.
+ * @type {WeakMap<object, number>}
+ */
+export const SHOWS = new WeakMap();
+
+/**
  * A new notifications store on a root (the running one by default).
  * @param {Root} [root]
  * @returns {NotificationsStore}
@@ -112,7 +120,10 @@ export function notificationsStore(root) {
     places: () => grouped(all()),
     show(data) {
       const id = data.id ?? `notification-${++seq}`;
-      put([...now().filter(n => n.id !== id), { ...data, id }]);
+      const before = now().find(n => n.id === id);
+      const shown = { ...data, id };
+      SHOWS.set(shown, (before === undefined ? 0 : (SHOWS.get(before) ?? 0)) + 1);
+      put([...now().filter(n => n.id !== id), shown]);
       return id;
     },
     hide(id) {
@@ -123,7 +134,14 @@ export function notificationsStore(root) {
       return id;
     },
     update(data) {
-      put(now().map(n => (n.id === data.id ? { ...n, ...data } : n)));
+      put(
+        now().map(n => {
+          if (n.id !== data.id) return n;
+          const next = { ...n, ...data };
+          SHOWS.set(next, SHOWS.get(n) ?? 0);
+          return next;
+        }),
+      );
       return data.id;
     },
     clear: () => drop([]),
