@@ -833,6 +833,47 @@ describe('MultiSelect, TagInput, Autocomplete, Tag', () => {
     t.dispose();
   });
 
+  it('a number as a value is the option written as its text: Select, MultiSelect and TagInput', () => {
+    /** @type {any[]} */
+    const heard = [];
+    const data = [{ value: 1, label: 'One' }, { value: 2, label: 'Two' }, { value: 3, label: 'Three' }];
+    const t = setup((clock, st) =>
+      app(clock, () => {
+        const one = st.add($signal($active(), /** @type {any} */ (2)));
+        const many = st.add($signal($active(), /** @type {any} */ ([1, 3])));
+        const tags = st.add($signal($active(), /** @type {any} */ ([7])));
+        const hear = (/** @type {any} */ to) => (/** @type {any} */ x) => {
+          heard.push(x);
+          $write(to, x);
+        };
+        return (
+          <>
+            <Select aria-label="One of" data={data} value={one} onChange={hear(one)} />
+            <MultiSelect aria-label="Many" data={data} picked={false} value={many} onChange={hear(many)} />
+            <TagInput aria-label="Tags" data={['7', '8']} value={tags} onChange={hear(tags)} />
+          </>
+        );
+      }),
+    );
+    assert.equal(t.text(), 'Two One Three 7', 'the Select shows its label, the MultiSelect its labels');
+    // The Select's option checked is the value's: pressing it again deselects.
+    t.press('Two');
+    assert.equal(t.d.nodes('Action').filter(n => n.getAttribute('role') === 'option' && n.getAttribute('aria-selected') === 'true').map(n => n.textContent.trim()).join(), 'Two');
+    t.pick('Two');
+    assert.deepEqual(heard.splice(0), [null, null], 'the value pressed again is deselected');
+    // The MultiSelect hides what is picked, numbers too; the TagInput suggests no tag it has.
+    t.focusEdit(0);
+    t.key('ArrowDown');
+    assert.equal(t.text(), 'One Three 7 Two', 'picked false: only what is not picked');
+    t.key('Escape');
+    t.focusEdit(1);
+    t.type('7');
+    assert.equal(t.text(), 'One Three 7 7', 'no suggestion of the tag 7 it has');
+    t.key('Enter');
+    assert.deepEqual(heard, [], 'nor a second 7');
+    t.dispose();
+  });
+
   it('a field open with nothing to show takes no press, says it is collapsed and lets Escape pass', () => {
     const presses = { go: 0, escape: 0 };
     const t = setup((clock, st) =>

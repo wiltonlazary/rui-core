@@ -638,6 +638,65 @@ describe('rui-core choices on the DOM and on Skia', () => {
     dispose();
   });
 
+  it('a number as a value checks the option written as its text; a value the data lacks checks no segment', () => {
+    const s = states();
+    /** @type {any[]} */
+    const heard = [];
+    const view = () => {
+      const r = s.make(/** @type {any} */ (2));
+      const c = s.make(/** @type {any} */ ([1]));
+      const w = s.make(/** @type {any} */ ([2]));
+      const hear = (/** @type {any} */ to) => (/** @type {any} */ x) => {
+        heard.push(x);
+        $write(to, x);
+      };
+      return (
+        <Rui>
+          <Stack>
+            <Radio.Group value={r} onChange={hear(r)}>
+              <Radio value={1} label="R1" />
+              <Radio value={2} label="R2" />
+            </Radio.Group>
+            <Checkbox.Group value={c} onChange={hear(c)}>
+              <Checkbox value={1} label="C1" />
+              <Checkbox value={2} label="C2" />
+            </Checkbox.Group>
+            <Switch.Group value={w} onChange={hear(w)}>
+              <Switch value={1} label="S1" />
+              <Switch value={2} label="S2" />
+            </Switch.Group>
+            <SegmentedControl aria-label="Numbers" data={[{ value: 1, label: 'G1' }, { value: 2, label: 'G2' }]} value={/** @type {any} */ (2)} />
+            <SegmentedControl aria-label="None" data={['a', 'b']} value="x" />
+          </Stack>
+        </Rui>
+      );
+    };
+    const { dom, skia, dispose } = both(view);
+    const checked = () => {
+      $flush(dom.root);
+      $flush(skia.root);
+      const d = dom.nodes('Action').map((/** @type {any} */ n) => n.getAttribute('aria-checked') === 'true');
+      const k = items(skia, 5).map((/** @type {any} */ n) => n.selected === true);
+      assert.deepEqual(d, k, 'the same on the DOM and on Skia');
+      return d.map(Number).join('');
+    };
+    //                       R1 R2 C1 C2 S1 S2 G1 G2 a b
+    assert.equal(checked(), '0110010100');
+    assert.equal(dom.nodes('Action').slice(8).map((/** @type {any} */ n) => n.getAttribute('tabindex')).join(' '), '0 -1', 'with none checked the first segment is the Tab stop');
+    const indicator = (/** @type {string} */ label) => [...dom.host.querySelector(`[aria-label="${label}"]`).querySelectorAll('[data-ren="View"]')].find((/** @type {any} */ n) => n.style.position === 'absolute');
+    assert.deepEqual([indicator('Numbers').style.display, indicator('None').style.display], ['flex', 'none'], 'no indicator where no segment is checked');
+    press(dom, skia, 'R2');
+    assert.deepEqual(heard, [], 'the radio checked already changes nothing');
+    press(dom, skia, 'C1');
+    press(dom, skia, 'S2');
+    assert.deepEqual(heard, [[], [], [], []], 'a number unchecked leaves the list');
+    press(dom, skia, 'C2');
+    press(dom, skia, 'R1');
+    assert.deepEqual(heard.slice(4), [['2'], ['2'], '1', '1'], 'what onChange hears is the option\'s value, a text');
+    assert.equal(checked(), '1001000100');
+    dispose();
+  });
+
   it('SegmentedControl selects a segment and slides its indicator', () => {
     const clock = manualClock();
     const s = states();

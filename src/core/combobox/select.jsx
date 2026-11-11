@@ -10,7 +10,7 @@ import { $controlled } from '../overlays/shared.jsx';
 import { $combobox } from './store.js';
 import { Combobox, ComboboxTrigger, ComboboxPanel, ComboboxFilter, OptionsList, $comboboxContext, $boxed } from './combobox.jsx';
 import { FieldBox, Outer, Opener, Clear, editStyle, sizeOf, $focused, comboOf, showing, boxPress, editPress } from './field.jsx';
-import { parseData, shown, grouped } from './data.js';
+import { parseData, shown, grouped, same, holds } from './data.js';
 import { labelsIn } from '../../theme/labels.js';
 import { $editMenu } from '../inputs/edit-menu.jsx';
 
@@ -19,7 +19,7 @@ import { $editMenu } from '../inputs/edit-menu.jsx';
 /** The keyboard index (the shown order) of `value` among `options`, -1 when not shown. @param {Option[]} options @param {string | null} value */
 export function indexOf(options, value) {
   if (value == null) return -1;
-  for (const run of grouped(options)) for (const e of run.options) if (e.option.value === value) return e.index;
+  for (const run of grouped(options)) for (const e of run.options) if (same(value, e.option.value)) return e.index;
   return -1;
 }
 
@@ -83,7 +83,7 @@ export function Select(props) {
   const ui = $ui();
   const boxed = $boxed(props);
   const data = $memo(R, () => parseData(read(props.data)));
-  const find = (/** @type {string | null} */ v) => /** @type {Option[]} */ ($read(data)).find(o => o.value === v) ?? null;
+  const find = (/** @type {string | null} */ v) => /** @type {Option[]} */ ($read(data)).find(o => same(v, o.value)) ?? null;
   const value = $controlled(props, 'value', 'defaultValue', /** @type {string | null} */ (null), v => props.onChange?.(v));
   const labelOf = (/** @type {string | null} */ v) => find(v)?.label ?? '';
   const searchable = () => read(props.searchable) === true;
@@ -112,7 +112,7 @@ export function Select(props) {
     if (locked()) return;
     props.onPick?.(v, option);
     const current = $untrack(R, value.get);
-    const next = current === v && read(props.deselectable) !== false ? null : v;
+    const next = same(current, v) && read(props.deselectable) !== false ? null : v;
     if (next !== current) value.set(next);
     if (inField()) search.set(labelOf(next));
     else if (filtered()) search.set('');
@@ -212,7 +212,7 @@ export function Select(props) {
         >
           <OptionsList
             options={options}
-            checked={v => value.get() === v}
+            checked={v => same(value.get(), v)}
             check={props.check}
             checkAt={props.checkAt}
             renderOption={props.renderOption}
@@ -324,16 +324,16 @@ export function Picker(props) {
   const search = $controlled(props, 'search', 'defaultSearch', '', v => props.onSearchChange?.(v));
   const options = () => shown($read(data), read(props.searchable) ? search.get() : '', props.match, read(props.limit));
   const store = $combobox(storeOf(props, { close: () => search.set('') }));
-  const has = (/** @type {string} */ v) => (multiple() ? (value.get() ?? []).includes(v) : value.get() === v);
+  const has = (/** @type {string} */ v) => (multiple() ? holds(value.get(), v) : same(value.get(), v));
   const choose = (/** @type {string} */ v, /** @type {any} */ option) => {
     props.onPick?.(v, option);
     if (multiple()) {
       const list = /** @type {string[]} */ ($untrack(R, value.get) ?? []);
-      value.set(list.includes(v) ? list.filter(x => x !== v) : [...list, v]);
+      value.set(holds(list, v) ? list.filter(x => String(x) !== v) : [...list, v]);
       return;
     }
     const current = $untrack(R, value.get);
-    value.set(current === v && read(props.deselectable) !== false ? null : v);
+    value.set(same(current, v) && read(props.deselectable) !== false ? null : v);
     store.close();
   };
   return (

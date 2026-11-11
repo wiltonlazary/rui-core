@@ -11,7 +11,7 @@ import { Combobox, ComboboxTrigger, ComboboxPanel, ComboboxFilter, OptionsList, 
 import { Button } from '../buttons/button.jsx';
 import { FieldBox, Outer, Opener, Clear, editStyle, $focused, comboOf, showing, boxPress, editPress } from './field.jsx';
 import { marks, named } from '../../theme/meaning.js';
-import { parseData, shown } from './data.js';
+import { parseData, shown, same, holds } from './data.js';
 import { firstIndex, comboboxOf, storeOf, titleOf, long } from './select.jsx';
 import { labelsIn } from '../../theme/labels.js';
 import { $editMenu } from '../inputs/edit-menu.jsx';
@@ -197,13 +197,13 @@ export function MultiSelect(props) {
   const ui = $ui();
   const boxed = $boxed(props);
   const data = $memo(R, () => parseData(read(props.data)));
-  const labelOf = (/** @type {string} */ v) => /** @type {import('./data.js').Option[]} */ ($read(data)).find(o => o.value === v)?.label ?? v;
+  const labelOf = (/** @type {string} */ v) => /** @type {import('./data.js').Option[]} */ ($read(data)).find(o => same(v, o.value))?.label ?? v;
   const value = $controlled(props, 'value', 'defaultValue', /** @type {string[]} */ ([]), v => props.onChange?.(v));
   const search = $controlled(props, 'search', 'defaultSearch', '', v => props.onSearchChange?.(v));
   const options = () => {
     const picked = value.get();
     const all = /** @type {import('./data.js').Option[]} */ ($read(data));
-    const pool = read(props.picked) === false ? all.filter(o => !picked.includes(o.value)) : all;
+    const pool = read(props.picked) === false ? all.filter(o => !holds(picked, o.value)) : all;
     return shown(pool, read(props.searchable) === false ? '' : search.get(), props.match);
   };
   const store = $combobox(storeOf(props, { close: () => search.set('') }));
@@ -214,12 +214,12 @@ export function MultiSelect(props) {
     const max = read(props.max);
     return max != null && value.get().length >= max;
   };
-  const remove = (/** @type {string} */ v) => !locked() && value.set($untrack(R, value.get).filter(x => x !== v));
+  const remove = (/** @type {string} */ v) => !locked() && value.set($untrack(R, value.get).filter(x => String(x) !== String(v)));
   const choose = (/** @type {string} */ v, /** @type {any} */ option) => {
     if (locked()) return;
     const list = $untrack(R, value.get);
     // A pick max refuses is no pick: onPick hears only a change.
-    if (list.includes(v)) {
+    if (holds(list, v)) {
       props.onPick?.(v, option);
       remove(v);
     } else if (!$untrack(R, full)) {
@@ -290,7 +290,7 @@ export function MultiSelect(props) {
           <OptionsList
             options={options}
             multiple
-            checked={v => value.get().includes(v)}
+            checked={v => holds(value.get(), v)}
             check={props.check}
             checkAt={props.checkAt}
             renderOption={props.renderOption}
@@ -325,7 +325,7 @@ export function TagInput(props) {
   const options = () => {
     const tags = value.get();
     const all = /** @type {import('./data.js').Option[]} */ ($read(data));
-    return shown(dupes() ? all : all.filter(o => !tags.includes(o.value)), search.get(), props.match);
+    return shown(dupes() ? all : all.filter(o => !holds(tags, o.value)), search.get(), props.match);
   };
   const store = $combobox(storeOf(props, {}));
   // The panel has suggestions to show.
@@ -341,7 +341,7 @@ export function TagInput(props) {
     for (const raw of texts) {
       const t = raw.trim();
       if (t === '') continue;
-      if (!dupes() && list.includes(t)) {
+      if (!dupes() && holds(list, t)) {
         props.onRepeat?.(t);
         continue;
       }

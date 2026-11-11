@@ -85,3 +85,9 @@ export function grouped(options) {
   for (const run of runs) for (const entry of run.options) entry.index = i++;
   return runs;
 }
+
+/** Whether a value given is the option value `v`: a number given is its text, as an option's value is. @param {unknown} given @param {string} v */
+export const same = (given, v) => given != null && String(given) === v;
+
+/** Whether the values given hold the option value `v` (`same`). @param {unknown[] | null | undefined} list @param {string} v */
+export const holds = (list, v) => (list ?? []).some(x => String(x) === v);

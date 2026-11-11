@@ -208,10 +208,10 @@ function CheckboxGroup(props) {
   const model = $value(props, /** @type {string[]} */ ([]));
   /** @type {GroupApi} */
   const api = {
-    has: v => model.get().includes(v),
+    has: v => model.get().some(x => String(x) === v),
     toggle: v => {
       const list = model.get();
-      if (list.includes(v)) model.set(list.filter(x => x !== v));
+      if (api.has(v)) model.set(list.filter(x => String(x) !== v));
       else {
         const max = read(props.max);
         if (max !== undefined && list.length >= max) return;
@@ -305,7 +305,7 @@ export function Radio(props) {
 function RadioGroup(props) {
   const model = $value(props, /** @type {string | null} */ (null));
   /** @type {GroupApi} */
-  const api = { has: v => model.get() === v, toggle: v => model.get() !== v && model.set(v), size: props.size, disabled: props.disabled };
+  const api = { has: v => model.get() != null && String(model.get()) === v, toggle: v => !api.has(v) && model.set(v), size: props.size, disabled: props.disabled };
   return group(RadioContext, api, props, true, 'radiogroup');
 }
 Radio.Group = RadioGroup;
@@ -477,8 +477,8 @@ function SwitchGroup(props) {
   const model = $value(props, /** @type {string[]} */ ([]));
   /** @type {GroupApi} */
   const api = {
-    has: v => model.get().includes(v),
-    toggle: v => model.set(model.get().includes(v) ? model.get().filter(x => x !== v) : [...model.get(), v]),
+    has: v => model.get().some(x => String(x) === v),
+    toggle: v => model.set(api.has(v) ? model.get().filter(x => String(x) !== v) : [...model.get(), v]),
     size: props.size,
     disabled: props.disabled,
   };
@@ -595,7 +595,7 @@ function Cut(props) {
 /**
  * One of several segments: `data` (strings or
  * `{ value, label, disabled }`), `value` + `onChange` or `defaultValue`
- * (the first by default), `stretch`, `orientation` ('horizontal' or
+ * (the first by default; a value the data lacks checks none), `stretch`, `orientation` ('horizontal' or
  * 'vertical'), `size`, `radius`, `color` (the indicator's; the raised
  * surface by default), `disabled`, `readOnly`, `duration` (a MOTION
  * preset's name or ms; `base` by default). The
@@ -613,8 +613,15 @@ export function SegmentedControl(props) {
   const items = () =>
     (read(props.data) ?? []).map((/** @type {any} */ d) => (typeof d === 'string' ? { value: d, label: d, disabled: false } : { value: String(d.value), label: d.label ?? String(d.value), disabled: d.disabled === true }));
   const model = $value(props, /** @type {string | null} */ (null));
-  const current = () => model.get() ?? items()[0]?.value ?? null;
-  const index = () => Math.max(0, items().findIndex((/** @type {any} */ d) => d.value === current()));
+  // A value given as a number is its text, as a segment's value is.
+  const current = () => {
+    const v = model.get();
+    return v == null ? (items()[0]?.value ?? null) : String(v);
+  };
+  /** The checked segment's index; -1 when the data has no such value: no segment is checked. */
+  const found = () => items().findIndex((/** @type {any} */ d) => d.value === current());
+  /** The segment the indicator, the Tab stop and the keys go by: the checked one, the first with none. */
+  const index = () => Math.max(0, found());
   const vertical = () => read(props.orientation) === 'vertical';
   // The root and clock the slide runs on, taken now (the slide starts from a Watch, as Switch's does).
   const R = $active();
@@ -724,7 +731,7 @@ export function SegmentedControl(props) {
       const theme = ui.theme();
       const scheme = ui.scheme();
       const [py, px] = optionPadOf(theme, sizeOf(read(props.size)));
-      const active = index() === i;
+      const active = found() === i;
       const colored = read(props.color) != null;
       const page = pageColors(theme, scheme);
       const text = d.disabled ? page.disabledText : active ? (colored ? theme.white : page.text) : page.quiet;
@@ -745,8 +752,8 @@ export function SegmentedControl(props) {
       };
     };
     const off = flag(() => d.disabled || read(props.disabled));
-    const checked = () => index() === i;
-    // One Tab stop: the checked segment is in the Tab order; the arrows reach the others.
+    const checked = () => found() === i;
+    // One Tab stop: the checked segment (the first with none checked) is in the Tab order; the arrows reach the others.
     return (
       <Action
         ref={(/** @type {any} */ n) => (nodes[i] = n)}
@@ -754,7 +761,7 @@ export function SegmentedControl(props) {
         aria-checked={() => (checked() ? 'true' : 'false')}
         aria-disabled={off}
         selected={checked}
-        tabIndex={() => (checked() ? 0 : -1)}
+        tabIndex={() => (index() === i ? 0 : -1)}
         onPress={() => {
           // The segment it checks takes the focus, as a radio does, so the arrows go on from there.
           if (select(d)) refocus();
@@ -769,7 +776,7 @@ export function SegmentedControl(props) {
   return (
     <View ref={props.ref} role="radiogroup" {...$nameOf(props, props['aria-label'])} style={root}>
       <View style={() => ({ direction: vertical() ? 'column' : 'row', grow: 1 })}>
-        <View {...DECOR} style={indicator} />
+        <View {...DECOR} hidden={() => found() < 0} style={indicator} />
         <View style={grid}>{() => ((nodes.length = 0), items().map(segment))}</View>
       </View>
     </View>
