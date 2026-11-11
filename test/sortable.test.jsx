@@ -413,6 +413,11 @@ describe('Sortable: the pointer', () => {
     t.flush();
     assert.equal(row.style.translate, `0px ${30 + GAP + 4}px`, 'the held item stays with its own pointer');
     assert.deepEqual(t.pressed('a'), ['true', 'true']);
+    // That finger taken back by the platform is not the held one's end either.
+    other.dispatchEvent(new t.dom.window.PointerEvent('pointercancel', { bubbles: true, pointerId: 2 }));
+    t.flush();
+    assert.equal(row.style.translate, `0px ${30 + GAP + 4}px`, 'another finger taken back gives nothing up');
+    assert.deepEqual(t.pressed('a'), ['true', 'true']);
     assert.deepEqual(t.told('commits'), [[], []]);
     for (const off of offs) $write(off, true);
     t.settle();

@@ -14,28 +14,35 @@ export const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
  * A drag with pointer capture: `down(e, state)` starts it (capturing the
  * pointer on the pressed primitive), `move(e)` calls `onMove(dx, dy,
  * state)` while it lasts, `up(e)` ends it with `onEnd(state, moved)`;
- * `cancel()` (a press the browser took back) ends it where the last move
+ * `cancel(e)` (a press the browser took back) ends it where the last move
  * left it, with `onEnd` only when it moved (a taken-back press is no click).
+ * It follows the pointer that started it, by its id: another finger's
+ * moves, release and taking back are not its own, and one put down beside
+ * the first (not the primary pointer) starts nothing.
  * @template S
  * @param {{ onMove: (dx: number, dy: number, state: S, e: any) => void, onEnd?: (state: S, moved: boolean, e: any) => void }} on
  */
 export function dragger(on) {
-  /** @type {{ x: number, y: number, state: S, moved: boolean } | null} */
+  /** @type {{ x: number, y: number, state: S, moved: boolean, id: any } | null} */
   let drag = null;
+  /** Whether an event is another pointer's than the one dragging (an event without an id is taken as its own). @param {any} e */
+  const other = e => drag !== null && drag.id != null && e?.pointerId != null && e.pointerId !== drag.id;
   return {
     active: () => drag !== null,
     /** @param {any} e @param {S} state */
     down(e, state) {
       if ((e?.button ?? 0) !== 0) return false;
+      // A second finger beside the one dragging; a primary pointer starts anew (the first one's release was never heard).
+      if (other(e) && e.isPrimary === false) return false;
       const p = pointOf(e);
-      drag = { x: p.x, y: p.y, state, moved: false };
+      drag = { x: p.x, y: p.y, state, moved: false, id: e?.pointerId };
       capture(e);
       e?.preventDefault?.();
       return true;
     },
     /** @param {any} e */
     move(e) {
-      if (drag === null) return;
+      if (drag === null || other(e)) return;
       const p = pointOf(e);
       const dx = p.x - drag.x;
       const dy = p.y - drag.y;
@@ -44,13 +51,14 @@ export function dragger(on) {
     },
     /** @param {any} e */
     up(e) {
-      if (drag === null) return;
+      if (drag === null || other(e)) return;
       const d = drag;
       drag = null;
       on.onEnd?.(d.state, d.moved, e);
     },
-    cancel() {
-      if (drag === null) return;
+    /** @param {any} [e] the pointercancel, or none to end it from outside the pointer's events */
+    cancel(e) {
+      if (drag === null || other(e)) return;
       const d = drag;
       drag = null;
       if (d.moved) on.onEnd?.(d.state, true, null);

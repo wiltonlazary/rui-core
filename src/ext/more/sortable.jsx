@@ -44,6 +44,7 @@ import { labelsIn } from '../../theme/labels.js';
  * @property {(e: any) => void} track the held pointer moved
  * @property {(e: any) => void} up the held pointer let go
  * @property {() => void} abort the move ends where it started, with no change told
+ * @property {(e: any) => void} cancel the platform took the held pointer back
  * @property {(row: SortableRow, e: any) => void} key a key on a row's handle
  * @property {string} help the id of the text that says how the keys move an item
  */
@@ -246,6 +247,7 @@ export function Sortable(props) {
     track: e => void (mine(e) && pointer.move(e)),
     up: e => void (mine(e) && pointer.up(e)),
     abort,
+    cancel: e => void (mine(e) && abort()),
     key(row, e) {
       const k = keyOf(e);
       const m = now();
@@ -440,7 +442,7 @@ function SortableHandle(props) {
       onPointerDown={(/** @type {any} */ e) => live && api.down(row, e)}
       onPointerMove={(/** @type {any} */ e) => live && api.track(e)}
       onPointerUp={(/** @type {any} */ e) => live && api.up(e)}
-      onPointerCancel={() => live && api.abort()}
+      onPointerCancel={(/** @type {any} */ e) => live && api.cancel(e)}
       onKey={(/** @type {any} */ e) => {
         if (live && !off()) api.key(row, e);
         props.onKey?.(e);

@@ -9,7 +9,8 @@ import { $active } from 'ren-core';
 import { Rui, Clock as Time, manualClock, Text, Button, Pressable, LAYERS } from 'rui-core';
 import { TextAnimate, Flip, Window, Onboarding, Parallax, Gantt, Book, segmentsOf, rescheduled, bookSlots } from 'rui-core/more';
 import { both } from './harness.jsx';
-import { primitives, drag, mirror, center, pressLabel, keyOn, action, allText, domPress } from './more-harness.jsx';
+import { primitives, drag, mirror, center, pressLabel, keyOn, action, allText, domPress, domAt } from './more-harness.jsx';
+import { dragger } from '../src/ext/more/shared.js';
 
 /** A Skia Label item by its text. @param {any} skia @param {string} text */
 const labelOf = (skia, text) => primitives(skia).find(i => i.kind === 3 && i.caption === text);
@@ -242,6 +243,40 @@ describe('Flip on the DOM and on Skia', () => {
   });
 });
 
+describe('dragger', () => {
+  it('follows the pointer that started it by its id; a primary pointer starts anew, an event without an id is its own', () => {
+    /** @type {any[]} */
+    const heard = [];
+    const d = dragger({ onMove: (dx, dy, s) => heard.push([s, dx, dy]), onEnd: (s, moved, e) => heard.push([s, moved ? 'moved' : 'still', e === null ? 'taken back' : 'released']) });
+    assert.equal(d.down({ pointerId: 4, isPrimary: true, clientX: 10, clientY: 10 }, 'a'), true);
+    assert.equal(d.down({ pointerId: 5, isPrimary: false, clientX: 50, clientY: 50 }, 'b'), false, 'a second finger beside the first starts nothing');
+    d.move({ pointerId: 5, clientX: 90, clientY: 90 });
+    d.up({ pointerId: 5, clientX: 90, clientY: 90 });
+    d.cancel({ pointerId: 5 });
+    assert.deepEqual(heard, []);
+    assert.equal(d.active(), true);
+    d.move({ pointerId: 4, clientX: 13, clientY: 14 });
+    // Events without an id (a renderer that tells no pointers apart) are the drag's own.
+    d.move({ clientX: 15, clientY: 15 });
+    d.cancel({ pointerId: 4 });
+    assert.deepEqual(heard, [['a', 3, 4], ['a', 5, 5], ['a', 'moved', 'taken back']]);
+    assert.equal(d.active(), false);
+    // A release never heard (the primitive left under the finger): the next sole press, primary, starts anew.
+    heard.length = 0;
+    d.down({ pointerId: 6, isPrimary: true, clientX: 0, clientY: 0 }, 'c');
+    assert.equal(d.down({ pointerId: 7, isPrimary: true, clientX: 20, clientY: 20 }, 'd'), true);
+    d.move({ pointerId: 6, clientX: 99, clientY: 99 });
+    d.move({ pointerId: 7, clientX: 21, clientY: 22 });
+    d.up({ pointerId: 7 });
+    assert.deepEqual(heard.slice(0, 1), [['d', 1, 2]]);
+    assert.equal(heard[1][0], 'd');
+    // Ended from outside the pointer's events: no event to tell.
+    d.down({ pointerId: 8, clientX: 0, clientY: 0 }, 'e');
+    d.cancel();
+    assert.equal(d.active(), false);
+  });
+});
+
 describe('Window on the DOM and on Skia', () => {
   it('drags by its title bar, resizes by its corner, minimizes and closes', () => {
     /** @type {any[]} */
@@ -291,6 +326,47 @@ describe('Window on the DOM and on Skia', () => {
     assert.deepEqual(folds, [true, true, false, false], 'onCollapsedChange on each, minimized then restored');
     pressLabel(dom, skia, 'Close window');
     assert.equal(closed, 2);
+    dispose();
+  });
+
+  it('a drag follows the pointer that started it: another finger on the bar moves, ends and restarts nothing', () => {
+    /** @type {any[]} */
+    const moves = [];
+    /** @type {string[]} */
+    const phases = [];
+    const view = () => (
+      <Rui>
+        <Window title="Notes" defaultPosition={{ x: 10, y: 10 }} defaultSize={{ width: 240, height: 160 }} onMove={(/** @type {string} */ p) => phases.push(p)} onPositionChange={(/** @type {any} */ p) => moves.push(p)}>
+          <Text>Body</Text>
+        </Window>
+      </Rui>
+    );
+    const { dom, skia, dispose } = both(view, { width: 480, height: 360 });
+    mirror(dom, skia);
+    const title = labelOf(skia, 'Notes').getBoundingClientRect();
+    const [x, y] = [title.left + 5, title.top + 5];
+    const bar = domAt(dom, x, y);
+    /** A pointer event on the title bar, as the DOM tells its fingers apart. @param {string} type @param {number} id @param {number} px @param {number} py */
+    const send = (type, id, px, py) => {
+      bar.dispatchEvent(new dom.window.PointerEvent(type, { clientX: px, clientY: py, bubbles: true, cancelable: true, pointerId: id, isPrimary: id === 1, pointerType: 'touch', button: 0, buttons: type === 'pointerup' ? 0 : 1 }));
+      $flush(dom.root);
+    };
+    send('pointerdown', 1, x, y);
+    send('pointermove', 1, x + 10, y + 10);
+    assert.deepEqual(moves.at(-1), { x: 20, y: 20 });
+    // A second finger lands on the bar, moves, and is lifted; a third is taken back by the platform.
+    send('pointerdown', 2, x + 100, y);
+    send('pointermove', 2, x + 150, y + 90);
+    assert.deepEqual(moves.at(-1), { x: 20, y: 20 }, 'another finger moves nothing');
+    send('pointerup', 2, x + 150, y + 90);
+    send('pointercancel', 3, 0, 0);
+    assert.deepEqual(phases, ['start'], 'nor does it end the drag');
+    send('pointermove', 1, x + 40, y + 20);
+    assert.deepEqual(moves.at(-1), { x: 50, y: 30 }, 'the first finger still drags, from where it pressed');
+    send('pointerup', 1, x + 40, y + 20);
+    assert.deepEqual(phases, ['start', 'end']);
+    send('pointermove', 1, x + 90, y + 90);
+    assert.deepEqual(moves.at(-1), { x: 50, y: 30 }, 'released, it moves no more');
     dispose();
   });
 
@@ -661,6 +737,38 @@ describe('Gantt on the DOM and on Skia', () => {
     const xe = 101 + 6 * 30 - 4;
     drag(dom, skia, [[xe, y], [xe + 31, y]]);
     assert.deepEqual(changes.slice(2), ['a 2026-09-03 2026-09-06', 'a 2026-09-03 2026-09-06']);
+    dispose();
+  });
+
+  it('a bar follows the finger that took it: another finger on it reschedules nothing and ends nothing', () => {
+    /** @type {string[]} */
+    const changes = [];
+    const tasks = [{ id: 'a', name: 'Design', start: '2026-09-01', end: '2026-09-03' }];
+    const view = () => (
+      <Rui>
+        <Gantt tasks={tasks} dayWidth={30} rowHeight={36} labelWidth={100} onTaskChange={(/** @type {any} */ t) => changes.push(`${t.start} ${t.end}`)} />
+      </Rui>
+    );
+    const { dom, skia, dispose } = both(view, { width: 480, height: 300 });
+    mirror(dom, skia);
+    const row = labelOf(skia, 'Design').getBoundingClientRect();
+    const y = row.top + row.height / 2;
+    const x0 = 101 + 30 + 45;
+    const bar = domAt(dom, x0, y);
+    /** @param {string} type @param {number} id @param {number} px */
+    const send = (type, id, px) => {
+      bar.dispatchEvent(new dom.window.PointerEvent(type, { clientX: px, clientY: y, bubbles: true, cancelable: true, pointerId: id, isPrimary: id === 1, pointerType: 'touch', button: 0, buttons: type === 'pointerup' ? 0 : 1 }));
+      $flush(dom.root);
+    };
+    send('pointerdown', 1, x0);
+    send('pointermove', 1, x0 + 31);
+    send('pointerdown', 2, x0 + 10);
+    send('pointermove', 2, x0 + 130);
+    send('pointerup', 2, x0 + 130);
+    assert.deepEqual(changes, [], 'the second finger lifted ends nothing');
+    send('pointermove', 1, x0 + 62);
+    send('pointerup', 1, x0 + 62);
+    assert.deepEqual(changes, ['2026-09-03 2026-09-05'], 'two days later, as the first finger went');
     dispose();
   });
 
