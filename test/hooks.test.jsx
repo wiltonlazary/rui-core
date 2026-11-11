@@ -299,6 +299,25 @@ describe('time hooks (mock timers)', () => {
     assert.deepEqual(calls, ['b'], 'cleared with its owner');
   });
 
+  it('a timer hook armed after its owner ended arms nothing', () => {
+    /** @type {any[]} */
+    const calls = [];
+    const [made, scope] = owned(() => ({
+      debounced: $debounce(R, (/** @type {any} */ x) => calls.push(['debounce', x]), 50),
+      timeout: $timeout(R, (/** @type {any} */ x) => calls.push(['timeout', x]), 50),
+      interval: $interval(R, () => calls.push(['interval']), 50),
+      idle: $idle(R, 50),
+    }));
+    $stop(scope);
+    made.debounced(1);
+    made.timeout.start(2);
+    made.interval.start();
+    made.idle.reset();
+    mock.timers.tick(500);
+    assert.deepEqual(calls, [], 'no call from a hook whose owner ended');
+    assert.deepEqual([made.debounced.pending(), now(made.timeout.value), now(made.interval.value), now(made.idle.value)], [false, false, false, false], 'and none says it waits or runs');
+  });
+
   it('$idle turns idle after the timeout and active on activity', () => {
     const idle = $idle(R, 1000);
     assert.equal($read(idle.value), false);

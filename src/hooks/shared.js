@@ -37,22 +37,28 @@ export function later(R, callback) {
 
 /**
  * One timer at a time, cleared when the owner ends: `set(fn, ms)` replaces
- * the pending one, `clear()` drops it. Reads the global `setTimeout` at each
- * call, so node:test's mock timers drive it.
+ * the pending one, `clear()` drops it. Once the owner has ended (`over()`)
+ * `set` arms nothing: no later end would clear it. Reads the global
+ * `setTimeout` at each call, so node:test's mock timers drive it.
  * @param {Root} R
  */
 export function timer(R) {
   /** @type {any} */
   let id = null;
+  let ended = false;
   const clear = () => {
     if (id !== null) clearTimeout(id);
     id = null;
   };
-  ending(R, clear);
+  ending(R, () => {
+    ended = true;
+    clear();
+  });
   return {
     /** @param {() => void} fn @param {number} ms */
     set(fn, ms) {
       clear();
+      if (ended) return;
       // timer: feature, the delay of a debounce, throttle, timeout or idle hook.
       id = setTimeout(() => {
         id = null;
@@ -61,6 +67,7 @@ export function timer(R) {
     },
     clear,
     pending: () => id !== null,
+    over: () => ended,
   };
 }
 

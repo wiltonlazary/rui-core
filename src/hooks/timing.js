@@ -62,6 +62,8 @@ export function $debounce(...args) {
       return;
     }
     quiet = false;
+    // Its owner ended: nothing waits.
+    if (t.over()) return;
     pending = call;
     t.set(() => {
       quiet = true;
@@ -121,12 +123,15 @@ export function $interval(...args) {
     id = null;
     $write(running, false);
   };
+  let ended = false;
   const start = () => {
-    if (id !== null) return;
+    // Its owner ended: no later end would clear it.
+    if (id !== null || ended) return;
     id = setInterval(() => later(R, fn), ms); // timer: feature, the interval is the hook.
     $write(running, true);
   };
   ending(R, () => {
+    ended = true;
     if (id !== null) clearInterval(id);
     id = null;
   });
@@ -167,6 +172,8 @@ export function $timeout(...args) {
       fn(...call);
     }, delay);
   const start = (/** @type {any[]} */ ...call) => {
+    // Its owner ended: nothing waits.
+    if (t.over()) return;
     $write(pending, true);
     arm(call);
   };
