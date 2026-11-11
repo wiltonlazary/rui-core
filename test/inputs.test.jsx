@@ -1090,7 +1090,7 @@ describe('rui-core sliders on the DOM and on Skia', () => {
 });
 
 describe('number and slider stepping', () => {
-  it('NumberInput commits a value typed with trailing zeros, showing the text as typed; a draft stays a draft', () => {
+  it('NumberInput commits a value typed with trailing zeros or a trailing mark, showing the text as typed', () => {
     const s = states();
     const view = () => {
       const v = s.make(/** @type {any} */ (2.05));
@@ -1107,9 +1107,15 @@ describe('number and slider stepping', () => {
     replace(dom, skia, 0, '3.50');
     assert.deepEqual(s.get(), [3.5, 3.5], '"3.50" commits 3.5');
     replace(dom, skia, 0, '4.');
-    assert.deepEqual(s.get(), [3.5, 3.5], 'a trailing mark is a draft');
+    assert.deepEqual(s.get(), [4, 4], 'a trailing mark commits the number before it');
+    assert.deepEqual(values(dom, skia, 0), ['4.', '4.'], 'and the text stays as typed');
     replace(dom, skia, 0, '-');
-    assert.deepEqual(s.get(), [3.5, 3.5], 'a lone minus is a draft');
+    assert.deepEqual(s.get(), ['', ''], 'a lone minus is no number yet: the value is empty');
+    assert.deepEqual(values(dom, skia, 0), ['-', '-']);
+    replace(dom, skia, 0, '-7');
+    replace(dom, skia, 0, '.');
+    assert.deepEqual(s.get(), ['', ''], 'nor is a lone mark');
+    assert.deepEqual(values(dom, skia, 0), ['.', '.']);
     dispose();
   });
 
@@ -1791,6 +1797,17 @@ describe('CurrencyInput', () => {
     blur(yen.dom, yen.skia, 0);
     assert.deepEqual(yen.shown(), ['¥125', '¥125']);
     yen.dispose();
+  });
+
+  it('commits the number Backspace leaves before the decimal mark', () => {
+    const { s, dom, skia, dispose, shown, back } = focused({ currency: 'BRL', locale: 'pt-BR', value: 12.5, controls: false });
+    assert.deepEqual(shown(), ['R$ 12,50', 'R$ 12,50']);
+    caretAt(dom, skia, 0, 8);
+    assert.deepEqual([back(), back()], ['R$ 12,5', 'R$ 12,']);
+    assert.deepEqual(s.get(), [12, 12], 'the value is the number shown, not the one before the edit');
+    blur(dom, skia, 0);
+    assert.deepEqual(shown(), ['R$ 12,00', 'R$ 12,00']);
+    dispose();
   });
 
   it('keeps the text Backspace leaves, and what is typed after it', () => {

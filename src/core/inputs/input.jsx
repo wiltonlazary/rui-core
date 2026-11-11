@@ -399,8 +399,8 @@ export function NumberInput(props) {
       fixedDecimals: read(props.fixedDecimals) === true,
     };
   };
-  // The number being typed, bare: its digits, '-' and '.' as typed ('1.' or '-' are not numbers yet, '2.0' keeps its
-  // zero), no affixes; null shows the value. It shows with the marks and with the affixes of the value now.
+  // The number being typed, bare: its digits, '-' and '.' as typed ('1.' keeps its mark, '-' is no number yet, '2.0'
+  // keeps its zero), no affixes; null shows the value. It shows with the marks and with the affixes of the value now.
   const draft = $signal($active(), /** @type {string | null} */ (null));
   /** A draft as it shows, laid out as formatNumber lays a value out: sign, prefix, number (its marks, no leading zeros), suffix. @param {string} d @param {ReturnType<typeof o>} f */
   const written = (d, f) => {
@@ -453,19 +453,21 @@ export function NumberInput(props) {
     // A rejected edit changes nothing: the controlled Edit shows the value again.
     if (!pattern.test(text)) return;
     if (decimal && f.decimals !== undefined && text.includes('.') && text.split('.')[1].length > f.decimals) return;
-    if (text === '' || text === '-' || text.endsWith('.')) {
+    // The number typed so far is the value: '12.' is 12; '', '-', '.' and '-.' are no number yet, so the value is ''.
+    const digits = text.endsWith('.') ? text.slice(0, -1) : text;
+    if (digits === '' || digits === '-') {
       $write(draft, text === '' ? null : text);
-      if (text === '') commit('');
+      commit('');
       return;
     }
-    let n = Number(text);
+    let n = Number(digits);
     if (behavior() === 'always') {
       const c = clampTo(n);
       if (c !== n) n = c;
     }
     // The number shows as typed where that differs from the value written ('2.0', '3.50'; '12' with fixedDecimals,
     // padded on blur and Enter), unless the value committed is another (clamped), which then shows.
-    $write(draft, n !== Number(text) || written(text, f) === formatNumber(n, f) ? null : text);
+    $write(draft, n !== Number(digits) || written(text, f) === formatNumber(n, f) ? null : text);
     commit(n);
   };
   const increment = (/** @type {number} */ dir) => {
