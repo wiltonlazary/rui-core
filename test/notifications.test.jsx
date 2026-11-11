@@ -301,6 +301,22 @@ describe('Notifications', () => {
     dispose();
   });
 
+  it('the list set again as fresh objects leaves each notification its time running', () => {
+    const clock = manualClock();
+    const st = stores();
+    const { flush, dispose } = pair(app(clock, { at: 'top-end' }, () => <st.Grab />));
+    for (const store of st.list) store.show({ id: 'x', title: 'Saved', timeout: 500 });
+    flush();
+    clock.advance(400);
+    flush();
+    for (const store of st.list) store.set(store.all().map(n => ({ ...n })));
+    flush();
+    clock.advance(200);
+    flush();
+    assert.deepEqual(st.list.map(x => x.all().length), [0, 0], 'closed 500 ms after it was shown, not after the set');
+    dispose();
+  });
+
   it('closes by timeout on the clock (a notification\'s own, the default, or never), paused while hovered', () => {
     const clock = manualClock();
     const st = stores();

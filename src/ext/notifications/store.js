@@ -148,7 +148,15 @@ export function notificationsStore(root) {
     clearWaiting() {
       drop(showing(now()));
     },
-    set: next => drop([...next]),
+    set(next) {
+      // A record given for an id the list has keeps that one's count of shows, as an update does: its time runs on.
+      const before = new Map(now().map(n => [n.id, n]));
+      for (const n of next) {
+        const was = before.get(n.id);
+        if (was !== undefined && was !== n && !SHOWS.has(n)) SHOWS.set(n, SHOWS.get(was) ?? 0);
+      }
+      drop([...next]);
+    },
     limit: () => 4,
     at: () => 'top-end',
   };
