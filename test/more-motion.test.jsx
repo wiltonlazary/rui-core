@@ -394,6 +394,15 @@ describe('Window on the DOM and on Skia', () => {
     drawn('release', 1, x + 40, y + 20);
     assert.deepEqual(moves.at(-1), { x: 50, y: 30 });
     assert.deepEqual(phases, ['start', 'end']);
+    // A finger whose release is never heard leaves its drag behind: the next press, a mouse's (primary), starts anew.
+    drawn('press', 3, x + 40, y + 20);
+    drawn('move', 3, x + 45, y + 25);
+    assert.deepEqual(moves.at(-1), { x: 55, y: 35 });
+    skia.skia.press(x + 50, y + 25);
+    skia.skia.move(x + 60, y + 30);
+    $flush(skia.root);
+    assert.deepEqual(moves.at(-1), { x: 65, y: 40 }, 'Skia: the mouse drags from where it pressed');
+    skia.skia.release(x + 60, y + 30);
     dispose();
   });
 
