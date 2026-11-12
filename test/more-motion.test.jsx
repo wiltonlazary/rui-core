@@ -367,7 +367,7 @@ describe('Window on the DOM and on Skia', () => {
     assert.deepEqual(phases, ['start', 'end']);
     send('pointermove', 1, x + 90, y + 90);
     assert.deepEqual(moves.at(-1), { x: 50, y: 30 }, 'released, it moves no more');
-    // On Skia, by the ids its pointer events carry: another finger's move, release and taking back are not the drag's.
+    // On Skia, by the ids its pointer events carry: another finger's press, move, release and taking back are not the drag's.
     moves.length = 0;
     phases.length = 0;
     /** @param {'press' | 'move' | 'release' | 'cancel'} what @param {number} id @param {number} px @param {number} py */
@@ -380,14 +380,19 @@ describe('Window on the DOM and on Skia', () => {
     drawn('press', 1, x, y);
     drawn('move', 1, x + 10, y + 10);
     assert.deepEqual(moves.at(-1), { x: 20, y: 20 });
+    // The second finger down is not the primary pointer there either, and the bar keeps the first one's capture.
+    drawn('press', 2, x + 100, y);
     drawn('move', 2, x + 150, y + 90);
     assert.deepEqual(moves.at(-1), { x: 20, y: 20 }, 'Skia: another finger moves nothing');
     drawn('release', 2, x + 150, y + 90);
     drawn('cancel', 3, 0, 0);
     assert.deepEqual(phases, ['start'], 'Skia: nor does it end the drag');
+    // Off the bar, the first finger's moves and release are still the bar's (its capture).
+    drawn('move', 1, x + 40, y + 120);
+    assert.deepEqual(moves.at(-1), { x: 50, y: 130 }, 'Skia: the first finger still drags, from where it pressed');
     drawn('move', 1, x + 40, y + 20);
-    assert.deepEqual(moves.at(-1), { x: 50, y: 30 }, 'Skia: the first finger still drags, from where it pressed');
     drawn('release', 1, x + 40, y + 20);
+    assert.deepEqual(moves.at(-1), { x: 50, y: 30 });
     assert.deepEqual(phases, ['start', 'end']);
     dispose();
   });
@@ -794,6 +799,7 @@ describe('Gantt on the DOM and on Skia', () => {
     // On Skia, by the ids its pointer events carry.
     skia.skia.press(x0, y, 1, false, { pointerId: 1, pointerType: 'touch' });
     skia.skia.move(x0 + 31, y, { pointerId: 1 });
+    skia.skia.press(x0 + 40, y, 1, false, { pointerId: 2, pointerType: 'touch' });
     skia.skia.move(x0 + 130, y, { pointerId: 2 });
     skia.skia.release(x0 + 130, y, { pointerId: 2 });
     $flush(skia.root);

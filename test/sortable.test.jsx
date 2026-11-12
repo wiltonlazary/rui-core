@@ -410,7 +410,13 @@ describe('Sortable: the pointer', () => {
     other.dispatchEvent(new t.dom.window.PointerEvent('pointerdown', { clientX: x, clientY: 120, bubbles: true, cancelable: true, pointerId: 2, button: 0, buttons: 1 }));
     other.dispatchEvent(new t.dom.window.PointerEvent('pointermove', { clientX: x, clientY: 20, bubbles: true, cancelable: true, pointerId: 2, buttons: 1 }));
     other.dispatchEvent(new t.dom.window.PointerEvent('pointerup', { clientX: x, clientY: 20, bubbles: true, cancelable: true, pointerId: 2 }));
+    // On Skia too: the second finger's press leaves the first one's capture, and its moves and release are its own.
+    const [ox, oy] = t.at('d');
+    t.skia.skia.press(ox, oy, 1, false, { pointerId: 2, pointerType: 'touch' });
+    t.skia.skia.move(ox, 20, { pointerId: 2 });
+    t.skia.skia.release(ox, 20, { pointerId: 2 });
     t.flush();
+    assert.equal(t.item('Reorder a').hasPointerCapture(1), true, 'Skia: the held handle keeps its pointer');
     assert.equal(row.style.translate, `0px ${30 + GAP + 4}px`, 'the held item stays with its own pointer');
     assert.deepEqual(t.pressed('a'), ['true', 'true']);
     // That finger taken back by the platform is not the held one's end either.
