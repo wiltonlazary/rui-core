@@ -415,6 +415,8 @@ describe('Sortable: the pointer', () => {
     assert.deepEqual(t.pressed('a'), ['true', 'true']);
     // That finger taken back by the platform is not the held one's end either.
     other.dispatchEvent(new t.dom.window.PointerEvent('pointercancel', { bubbles: true, pointerId: 2 }));
+    // Skia's goes to the handle that holds the pointer, with the other finger's id.
+    t.skia.skia.cancel(x, 20, { pointerId: 2 });
     t.flush();
     assert.equal(row.style.translate, `0px ${30 + GAP + 4}px`, 'another finger taken back gives nothing up');
     assert.deepEqual(t.pressed('a'), ['true', 'true']);

@@ -367,6 +367,28 @@ describe('Window on the DOM and on Skia', () => {
     assert.deepEqual(phases, ['start', 'end']);
     send('pointermove', 1, x + 90, y + 90);
     assert.deepEqual(moves.at(-1), { x: 50, y: 30 }, 'released, it moves no more');
+    // On Skia, by the ids its pointer events carry: another finger's move, release and taking back are not the drag's.
+    moves.length = 0;
+    phases.length = 0;
+    /** @param {'press' | 'move' | 'release' | 'cancel'} what @param {number} id @param {number} px @param {number} py */
+    const drawn = (what, id, px, py) => {
+      const info = { pointerId: id, pointerType: 'touch' };
+      if (what === 'press') skia.skia.press(px, py, 1, false, info);
+      else skia.skia[what](px, py, info);
+      $flush(skia.root);
+    };
+    drawn('press', 1, x, y);
+    drawn('move', 1, x + 10, y + 10);
+    assert.deepEqual(moves.at(-1), { x: 20, y: 20 });
+    drawn('move', 2, x + 150, y + 90);
+    assert.deepEqual(moves.at(-1), { x: 20, y: 20 }, 'Skia: another finger moves nothing');
+    drawn('release', 2, x + 150, y + 90);
+    drawn('cancel', 3, 0, 0);
+    assert.deepEqual(phases, ['start'], 'Skia: nor does it end the drag');
+    drawn('move', 1, x + 40, y + 20);
+    assert.deepEqual(moves.at(-1), { x: 50, y: 30 }, 'Skia: the first finger still drags, from where it pressed');
+    drawn('release', 1, x + 40, y + 20);
+    assert.deepEqual(phases, ['start', 'end']);
     dispose();
   });
 
@@ -769,6 +791,17 @@ describe('Gantt on the DOM and on Skia', () => {
     send('pointermove', 1, x0 + 62);
     send('pointerup', 1, x0 + 62);
     assert.deepEqual(changes, ['2026-09-03 2026-09-05'], 'two days later, as the first finger went');
+    // On Skia, by the ids its pointer events carry.
+    skia.skia.press(x0, y, 1, false, { pointerId: 1, pointerType: 'touch' });
+    skia.skia.move(x0 + 31, y, { pointerId: 1 });
+    skia.skia.move(x0 + 130, y, { pointerId: 2 });
+    skia.skia.release(x0 + 130, y, { pointerId: 2 });
+    $flush(skia.root);
+    assert.equal(changes.length, 1, 'Skia: another finger lifted ends nothing');
+    skia.skia.move(x0 + 62, y, { pointerId: 1 });
+    skia.skia.release(x0 + 62, y, { pointerId: 1 });
+    $flush(skia.root);
+    assert.deepEqual(changes, ['2026-09-03 2026-09-05', '2026-09-03 2026-09-05'], 'Skia: two days later, as the first finger went');
     dispose();
   });
 
