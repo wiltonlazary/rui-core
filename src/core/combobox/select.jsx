@@ -138,7 +138,7 @@ export function Select(props) {
     return (
       <>
         <Edit
-          {...menu.bind({ ref: store.setTrigger, onPointerDown: editPress(store, locked) })}
+          {...menu.bind({ ref: store.setTrigger, ...editPress(store, locked) })}
           value={shownText}
           label={() => read(props.placeholder) ?? ''}
           {...comboOf(props, said)}
@@ -192,7 +192,7 @@ export function Select(props) {
             end={right}
             focused={focused.get}
             pressed={() => !inField()}
-            onPointerDown={boxPress(store, locked)}
+            {...boxPress(store, locked)}
           >
             {trigger}
           </FieldBox>
@@ -275,9 +275,9 @@ export function Autocomplete(props) {
     <Outer {...props}>
       <Combobox store={store} onPick={choose} {...comboboxOf(props)} keys={() => !locked() && read(props.keys) !== false}>
         <ComboboxTrigger>
-          <FieldBox size={props.size} radius={props.radius} error={props.error} invalid={props.invalid} disabled={props.disabled} variant={props.variant} start={props.start} end={right} focused={focused.get} onPointerDown={boxPress(store, locked)}>
+          <FieldBox size={props.size} radius={props.radius} error={props.error} invalid={props.invalid} disabled={props.disabled} variant={props.variant} start={props.start} end={right} focused={focused.get} {...boxPress(store, locked)}>
             <Edit
-              {...menu.bind({ ref: store.setTrigger, onPointerDown: editPress(store, locked) })}
+              {...menu.bind({ ref: store.setTrigger, ...editPress(store, locked) })}
               value={value.get}
               label={() => read(props.placeholder) ?? ''}
               {...comboOf(props, showing(store, filled))}
@@ -374,30 +374,43 @@ export function Picker(props) {
 }
 
 /**
- * Picker's trigger (Picker.Trigger): a press on it (pointer down, then up)
- * or Enter, Space or ArrowDown opens the options; the arrows, Enter and
- * Escape work the options.
+ * Picker's trigger (Picker.Trigger): a press on it (pointer down, then up;
+ * a finger's or a pen's tap once it is over, on its press, the DOM's click:
+ * toggled at its pointerup, the tap's click would land on the options just
+ * shown under it) or Enter, Space or ArrowDown opens the options; the
+ * arrows, Enter and Escape work the options.
  * @param {Record<string, any>} props
  */
 function PickerTrigger(props) {
   const c = $comboboxContext();
   const unseen = $unseen(c);
   let down = false;
+  let tapped = false;
+  // A press closes the options it sees: open with nothing to show, it stays open for what arrives.
+  const toggle = () => void (!unseen() && c.store.toggle());
   return (
     <View
       ref={c.pop.setAnchor}
       style={{ self: 'start', align: 'start' }}
       onPointerDown={(/** @type {any} */ e) => {
+        tapped = false;
         if (e === c.pop.inside) return;
         down = (e?.button ?? 0) === 0;
         c.store.setTrigger(e?.target ?? null);
       }}
       onPointerUp={(/** @type {any} */ e) => {
-        // A press closes the options it sees: open with nothing to show, it stays open for what arrives.
-        if (down && e !== c.pop.inside && !unseen()) c.store.toggle();
+        if (down && e !== c.pop.inside) {
+          if (e?.pointerType === 'touch' || e?.pointerType === 'pen') tapped = true;
+          else toggle();
+        }
         down = false;
       }}
-      onPointerCancel={() => (down = false)}
+      onPress={(/** @type {any} */ e) => {
+        if (!tapped || e === c.pop.inside) return;
+        tapped = false;
+        toggle();
+      }}
+      onPointerCancel={() => (down = tapped = false)}
       onFocusOut={() => void (unseen() && c.store.close())}
       onKey={(/** @type {any} */ e) => {
         if (e === c.pop.inside) return;

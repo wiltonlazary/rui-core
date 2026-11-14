@@ -474,7 +474,7 @@ export function Cascader(props) {
   const trigger = searchable() ? (
     <>
       <Edit
-        {...menu.bind({ ref: store.setTrigger, onPointerDown: editPress(store, locked), onKey })}
+        {...menu.bind({ ref: store.setTrigger, ...editPress(store, locked), onKey })}
         value={shownText}
         label={() => read(props.placeholder) ?? ''}
         {...comboOf(props, store)}
@@ -522,7 +522,7 @@ export function Cascader(props) {
             end={right}
             focused={focused.get}
             pressed={() => !searchable()}
-            onPointerDown={boxPress(store, locked)}
+            {...boxPress(store, locked)}
           >
             {trigger}
           </FieldBox>

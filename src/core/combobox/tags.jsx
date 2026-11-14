@@ -143,7 +143,7 @@ function TagEntry(props) {
   return (
     <>
       <Edit
-        {...menu.bind({ ref: props.ref, onPointerDown: props.onPointerDown, onKey: props.onKey })}
+        {...menu.bind({ ref: props.ref, onPointerDown: props.onPointerDown, onPointerCancel: props.onPointerCancel, onPress: props.onPress, onKey: props.onKey })}
         value={props.value}
         label={() => read(props.placeholder) ?? ''}
         aria-disabled={() => (disabled() ? true : undefined)}
@@ -238,13 +238,13 @@ export function MultiSelect(props) {
     <Outer {...props}>
       <Combobox store={store} onPick={choose} {...comboboxOf(props)} boxed={boxed.on} title={titleOf(props)} keys={() => !locked() && read(props.keys) !== false}>
         <ComboboxTrigger>
-          <FieldBox size={props.size} radius={props.radius} error={props.error} invalid={props.invalid} disabled={props.disabled} variant={props.variant} start={props.start} end={right} focused={focused.get} multiline onPointerDown={boxPress(store, locked)}>
+          <FieldBox size={props.size} radius={props.radius} error={props.error} invalid={props.invalid} disabled={props.disabled} variant={props.variant} start={props.start} end={right} focused={focused.get} multiline {...boxPress(store, locked)}>
             {tags(value.get, labelOf, remove, props)}
             <TagEntry
               ref={store.setTrigger}
               editMenu={props.editMenu}
               readOnly={props.readOnly}
-              onPointerDown={editPress(store, locked)}
+              {...editPress(store, locked)}
               {...comboOf(props, showing(store, () => boxed.on() || filled()))}
               size={props.size}
               disabled={props.disabled}

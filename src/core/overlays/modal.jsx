@@ -178,13 +178,37 @@ function $dialog(props, kind) {
       close();
     }
   };
-  // A press on the backdrop closes it on pointerdown, and the focus goes back at once; the press's default
+  // A mouse's press on the backdrop closes it on pointerdown, and the focus goes back at once; the press's default
   // (a browser's mousedown, a canvas's press) would then focus what is under the pointer, the backdrop still
   // there on its way out, and drop the focus to nothing. Prevented, it leaves the focus where it went back.
-  const onBackdrop = (/** @type {any} */ e) => {
-    if (e == null || e.target !== e.currentTarget || !dismiss().outside) return;
-    e.preventDefault?.();
-    close();
+  // A finger's or a pen's closes it once its tap is over, on the tap's own press (the DOM's click): closed at its
+  // pointerdown, the rest of that tap would land on what the backdrop covered (a field under it, opening again);
+  // a touch the browser takes for a scroll (pointercancel) closes nothing.
+  // The backdrop's parts nest (the layer, the box around the content): the press that armed one bubbles through the
+  // others, which leave it armed; a press that began anywhere else (in the dialog) disarms it.
+  /** @type {unknown} */
+  let armed = null;
+  const onBackdrop = {
+    onPointerDown: (/** @type {any} */ e) => {
+      if (e == null) return;
+      if (e.target !== e.currentTarget || !dismiss().outside) {
+        if (e.target !== armed) armed = null;
+        return;
+      }
+      armed = null;
+      if (e.pointerType === 'touch' || e.pointerType === 'pen') {
+        armed = e.target;
+        return;
+      }
+      e.preventDefault?.();
+      close();
+    },
+    onPointerCancel: () => void (armed = null),
+    onPress: (/** @type {any} */ e) => {
+      if (armed === null || e == null || e.target !== e.currentTarget || e.target !== armed) return;
+      armed = null;
+      if (dismiss().outside) close();
+    },
   };
   return {
     isOpen,
@@ -259,7 +283,7 @@ function Frame(given, kind) {
     <DialogContext value={ctx}>
       <Show when={d.presence.mounted}>
         {() => (
-          <Layer layer={d.layer} portal={props.portal} onKey={d.onKey} onPointerDown={d.onBackdrop}>
+          <Layer layer={d.layer} portal={props.portal} onKey={d.onKey} {...d.onBackdrop}>
             {given.children}
           </Layer>
         )}
@@ -282,7 +306,7 @@ export function ModalBackdrop(props) {
     const opacity = read(props.opacity) ?? o?.opacity ?? shadeOpacity(theme, scheme);
     return { position: 'absolute', inset: 0, background: o !== null ? alpha(color, opacity * d.presence.t()) : 'transparent' };
   });
-  return <View {...DECOR} style={style} onPointerDown={d.onBackdrop} />;
+  return <View {...DECOR} style={style} {...d.onBackdrop} />;
 }
 
 /** The drawer effects by edge. */
@@ -363,7 +387,7 @@ export function ModalContent(props) {
       };
     });
     return (
-      <View style={edge} onPointerDown={d.onBackdrop}>
+      <View style={edge} {...d.onBackdrop}>
         <View ref={d.enter} trap={d.trap} {...dialog} style={panel}>
           {props.children}
           {holder()}
@@ -418,7 +442,7 @@ export function ModalContent(props) {
     };
   });
   const placed = (
-    <View style={inner} onPointerDown={d.onBackdrop}>
+    <View style={inner} {...d.onBackdrop}>
       <View ref={d.enter} trap={d.trap} {...dialog} style={content}>
         {props.children}
         {holder()}

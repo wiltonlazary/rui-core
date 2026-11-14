@@ -274,12 +274,12 @@ export const activeOf = node => (node != null && typeof node.getRootNode === 'fu
  * box for a root nested in one; on ren-canv the portal layer is as wide
  * and as high as the viewport. `prevent` cancels those default actions
  * on it (a menu's backdrop: the browser's context menu).
- * @param {{ layer?: any, portal?: any, into?: any, style?: any, children?: any, onPointerDown?: any, onKey?: any, ref?: any, prevent?: any }} props
+ * @param {{ layer?: any, portal?: any, into?: any, style?: any, children?: any, onPointerDown?: any, onPointerCancel?: any, onPress?: any, onKey?: any, ref?: any, prevent?: any }} props
  */
 export function Layer(props) {
   const style = () => ({ position: 'absolute', inset: 0, zIndex: read(props.layer) ?? LAYERS.sheet, ...read(props.style) });
   const content = (
-    <View ref={props.ref} style={style} onKey={props.onKey} onPointerDown={props.onPointerDown} prevent={props.prevent}>
+    <View ref={props.ref} style={style} onKey={props.onKey} onPointerDown={props.onPointerDown} onPointerCancel={props.onPointerCancel} onPress={props.onPress} prevent={props.prevent}>
       {props.children}
     </View>
   );

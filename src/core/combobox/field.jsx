@@ -26,7 +26,7 @@ function borderOf(theme, scheme, state) {
  * The field box: `size`, `radius`, `error` and `invalid` (the invalid
  * look, as `invalidOf`), `disabled`, `variant`
  * ('outline', 'soft', 'bare'), `start`, `end`, `focused` (an accessor),
- * `onPointerDown`, `onKey`; children in between. `multiline` lets it grow
+ * `onPointerDown`, `onPointerCancel`, `onPress` (`boxPress`'s), `onKey`; children in between. `multiline` lets it grow
  * (tags). `pressed`: it is pressed, not typed in, so all of it shows the
  * theme's hand; opening on a press (`onPointerDown`), its end (the
  * chevron) shows it always.
@@ -51,7 +51,8 @@ export function FieldBox(props) {
       background: variant === 'soft' ? page.sunken : variant === 'bare' ? 'transparent' : page.field,
       color: error ? colorOf(theme, scheme, 'red') : page.text,
       fontSize: sized(theme.fontSizes, size()),
-      ...(read(props.disabled) ? { ...disabledLook(theme), background: page.disabled } : read(props.pressed) ? pressLook(theme) : null),
+      // Typed in, it keeps the platform's cursors (its Edit's text one): its `onPress` (a finger's tap opening it) shows no hand.
+      ...(read(props.disabled) ? { ...disabledLook(theme), background: page.disabled } : read(props.pressed) ? pressLook(theme) : { cursor: null }),
     };
   });
   const section = (/** @type {any} */ content, /** @type {boolean} */ opens) => {
@@ -85,7 +86,7 @@ export function FieldBox(props) {
     };
   });
   return (
-    <View ref={props.ref} style={style} onPointerDown={props.onPointerDown} onPointerUp={props.onPointerUp} onKey={props.onKey}>
+    <View ref={props.ref} style={style} onPointerDown={props.onPointerDown} onPointerUp={props.onPointerUp} onPointerCancel={props.onPointerCancel} onPress={props.onPress} onKey={props.onKey}>
       {props.start === undefined ? null : section(props.start, false)}
       <View style={inner}>{props.children}</View>
       {props.end === undefined ? null : section(props.end, props.onPointerDown !== undefined)}
@@ -93,33 +94,78 @@ export function FieldBox(props) {
   );
 }
 
+/** A press of a finger or a pen, as the pointer's `pointerType` says (a mouse's, or one that says nothing, is not). @param {any} e */
+const touched = e => e?.pointerType === 'touch' || e?.pointerType === 'pen';
+
 /**
  * A field box's press: it opens the panel from all of the box, its padding
- * and chevron too, the focus on the field so its keys work (the press
- * prevented, as a DOM mousedown: no focus moves away). Nothing while
+ * and chevron too, the focus on the field so its keys work. A mouse opens
+ * it on pointerdown (the press prevented, as a DOM mousedown: no focus
+ * moves away). A finger or a pen opens it only once its tap is over, on the
+ * tap's own press (`onPress`, the DOM's click): opened at its pointerdown,
+ * the rest of that tap (its pointerup, its click) would land on the panel
+ * or the lightbox that just showed under it, picking an option there or
+ * pressing its backdrop; and a touch the browser takes for a scroll
+ * (`pointercancel`) opens nothing. A press that started in a part keeping
+ * its pointerdown (a clear button, a tag's remove, the trigger) arms
+ * nothing, so its press, bubbling here, opens nothing either. Nothing while
  * `locked`, nor for another button than the main one (a right press is a
- * menu's).
+ * menu's). The box's `onPointerDown`, `onPointerCancel` and `onPress`.
  * @param {{ open: () => void, focus: () => void }} store @param {() => boolean} locked
  */
-export const boxPress = (store, locked) => (/** @type {any} */ e) => {
-  if (locked() || (e?.button ?? 0) !== 0) return;
-  e?.preventDefault?.();
-  store.focus();
-  store.open();
-};
+export function boxPress(store, locked) {
+  let armed = false;
+  return {
+    onPointerDown: (/** @type {any} */ e) => {
+      armed = false;
+      if (locked() || (e?.button ?? 0) !== 0) return;
+      if (touched(e)) {
+        armed = true;
+        return;
+      }
+      e?.preventDefault?.();
+      store.focus();
+      store.open();
+    },
+    onPointerCancel: () => void (armed = false),
+    onPress: () => {
+      if (!armed) return;
+      armed = false;
+      if (locked()) return;
+      store.focus();
+      store.open();
+    },
+  };
+}
 
 /**
  * The press of an Edit inside a field box: its own (the caret goes where it
- * is pressed, not the box's), and it opens the panel. Another button than
- * the main one opens nothing and goes on: a right press is the field's
- * menu's (rui's, the platform's or a ContextMenu's around).
+ * is pressed, not the box's), and it opens the panel: a mouse's at its
+ * pointerdown, a finger's or a pen's once its tap is over, on its press, as
+ * the box's (`boxPress`). Another button than the main one opens nothing
+ * and goes on: a right press is the field's menu's (rui's, the platform's
+ * or a ContextMenu's around). The Edit's `onPointerDown`, `onPointerCancel`
+ * and `onPress`.
  * @param {{ open: () => void }} store @param {() => boolean} locked
  */
-export const editPress = (store, locked) => (/** @type {any} */ e) => {
-  if ((e?.button ?? 0) !== 0) return;
-  e?.stopPropagation?.();
-  if (!locked()) store.open();
-};
+export function editPress(store, locked) {
+  let armed = false;
+  return {
+    onPointerDown: (/** @type {any} */ e) => {
+      armed = false;
+      if ((e?.button ?? 0) !== 0) return;
+      e?.stopPropagation?.();
+      if (touched(e)) armed = true;
+      else if (!locked()) store.open();
+    },
+    onPointerCancel: () => void (armed = false),
+    onPress: () => {
+      if (!armed) return;
+      armed = false;
+      if (!locked()) store.open();
+    },
+  };
+}
 
 /**
  * The style of an Edit inside a FieldBox: no box of its own, the field's

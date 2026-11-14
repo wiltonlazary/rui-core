@@ -295,7 +295,7 @@ export function TreeSelect(props) {
     return (
       <>
         <Edit
-          {...menu.bind({ ref: store.setTrigger, onPointerDown: editPress(store, locked), onKey })}
+          {...menu.bind({ ref: store.setTrigger, ...editPress(store, locked), onKey })}
           value={() => ($read(typed) ? search.get() : many() || values().length === 0 ? '' : labelOf(values()[0]))}
           label={() => (many() && values().length > 0 ? '' : (read(props.placeholder) ?? ''))}
           {...comboOf(props, store)}
@@ -330,7 +330,7 @@ export function TreeSelect(props) {
             focused={focused.get}
             pressed={() => !searchable()}
             multiline={many}
-            onPointerDown={boxPress(store, locked)}
+            {...boxPress(store, locked)}
           >
             <Show when={many}>
               <For each={values} by="position">

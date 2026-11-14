@@ -1705,6 +1705,51 @@ describe('Lightbox', () => {
     t.dispose();
   });
 
+  it('a finger opens it once its tap is over, from the chevron too, and a tap on the backdrop closes it the same way; a scroll does neither', () => {
+    const t = field({ lightbox: true });
+    const w = t.dom.window;
+    /** A touch event of `type` on `node` (pointer 7, the main button). @param {any} node @param {string} type */
+    const touch = (node, type) => {
+      const init = { bubbles: true, cancelable: true, button: 0, buttons: type === 'pointerdown' ? 1 : 0, pointerId: 7, pointerType: 'touch', isPrimary: true };
+      node.dispatchEvent(type === 'click' ? new w.MouseEvent('click', { bubbles: true, cancelable: true }) : new w.PointerEvent(type, init));
+      t.settle();
+    };
+    // the chevron, in the field box's padding: its pointerdown opens nothing yet, or the rest of the tap (its pointerup,
+    // its click, which the browser sends to what is under the finger then) would land on the options just shown
+    const chevron = t.d.nodes('Shape')[0];
+    touch(chevron, 'pointerdown');
+    assert.doesNotMatch(t.d.text(), /Apple/, 'nothing open while the finger is down');
+    touch(chevron, 'pointerup');
+    assert.doesNotMatch(t.d.text(), /Apple/, 'nor at its pointerup: the click comes after it');
+    touch(chevron, 'click');
+    assert.match(t.d.text(), /Apple Banana Cherry/, 'the tap over, it opens');
+    // on Skia a touch's press is its pointerdown's own, so the same tap opens it there as well
+    const label = t.s.box(t.s.find('Your pick'));
+    const info = { pointerType: 'touch', pointerId: 7, isPrimary: true };
+    t.skia.skia.press(330, label.y + label.height / 2, 1, false, info);
+    t.skia.skia.release(330, label.y + label.height / 2, info);
+    t.settle();
+    assert.match(t.text(), /Apple Banana Cherry/);
+    // the backdrop: a finger's pointerdown leaves it open, its click closes it (on the DOM; Skia's tap is one press)
+    const backdrop = t.dom.document.querySelector('[role="dialog"]').parentElement;
+    touch(backdrop, 'pointerdown');
+    assert.match(t.d.text(), /Apple/, 'still open while the finger is down on the backdrop');
+    touch(backdrop, 'click');
+    assert.doesNotMatch(t.d.text(), /Apple/, 'closed by the tap');
+    // a touch the browser takes for a scroll (pointercancel, no click) opens nothing
+    touch(chevron, 'pointerdown');
+    touch(chevron, 'pointercancel');
+    assert.doesNotMatch(t.d.text(), /Apple/, 'a scroll opens nothing');
+    // a stray click after it (a press that began elsewhere) opens nothing either: only a tap that began here does
+    touch(chevron, 'click');
+    assert.doesNotMatch(t.d.text(), /Apple/);
+    // a mouse still opens it at its pointerdown, as a desktop's select
+    chevron.dispatchEvent(new w.PointerEvent('pointerdown', { bubbles: true, cancelable: true, button: 0, buttons: 1, pointerId: 1, pointerType: 'mouse' }));
+    t.settle();
+    assert.match(t.d.text(), /Apple/, 'a mouse opens it at once');
+    t.dispose();
+  });
+
   it('a long list shows its filter, which narrows with keys; a short one none; Escape closes', () => {
     const t = field({ lightbox: true, data: MANY });
     t.press('Your pick');
